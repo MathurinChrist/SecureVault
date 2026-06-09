@@ -1,0 +1,70 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Inscription - SecureVault{% endblock %}
+
+{% block body %}
+<div class="max-w-2xl mx-auto">
+    <div class="glass p-8 rounded-3xl shadow-2xl">
+        <div class="text-center mb-8">
+            <div class="inline-flex items-center justify-center h-16 w-16 rounded-2xl bg-indigo-600/20 text-indigo-400 mb-4 border border-indigo-500/30">
+                <svg class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
+                </svg>
+            </div>
+            <h1 class="text-3xl font-bold">Créer un compte</h1>
+            <p class="text-slate-400 mt-2">Rejoignez la révolution de la sécurité</p>
+        </div>
+
+        {{ form_start(registrationForm, {'attr': {'class': 'space-y-6'}}) }}
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <label class="block text-sm font-medium text-slate-300">Prénom</label>
+                    {{ form_widget(registrationForm.firstName, {'attr': {'class': 'mt-1 block w-full px-4 py-3 bg-slate-800 border border-white/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 transition'}}) }}
+                    {{ form_errors(registrationForm.firstName) }}
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-slate-300">Nom</label>
+                    {{ form_widget(registrationForm.lastName, {'attr': {'class': 'mt-1 block w-full px-4 py-3 bg-slate-800 border border-white/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 transition'}}) }}
+                    {{ form_errors(registrationForm.lastName) }}
+                </div>
+            </div>
+
+            <div>
+                <label class="block text-sm font-medium text-slate-300">Email</label>
+                {{ form_widget(registrationForm.email, {'attr': {'class': 'mt-1 block w-full px-4 py-3 bg-slate-800 border border-white/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 transition'}}) }}
+                {{ form_errors(registrationForm.email) }}
+            </div>
+
+            <div>
+                <label class="block text-sm font-medium text-slate-300">Mot de passe</label>
+                {{ form_widget(registrationForm.plainPassword, {'attr': {'class': 'mt-1 block w-full px-4 py-3 bg-slate-800 border border-white/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 transition'}}) }}
+                <p class="mt-1 text-xs text-slate-500">Minimum 6 caractères</p>
+                {{ form_errors(registrationForm.plainPassword) }}
+            </div>
+
+            <div class="flex items-start">
+                <div class="flex items-center h-5">
+                    {{ form_widget(registrationForm.agreeTerms, {'attr': {'class': 'h-4 w-4 bg-slate-800 border-white/10 rounded text-indigo-600 focus:ring-indigo-500'}}) }}
+                </div>
+                <div class="ml-3 text-sm">
+                    <label for="{{ registrationForm.agreeTerms.vars.id }}" class="text-slate-400">
+                        J'accepte les <a href="#" class="text-indigo-400 hover:underline">conditions d'utilisation</a> et la politique de confidentialité.
+                    </label>
+                    {{ form_errors(registrationForm.agreeTerms) }}
+                </div>
+            </div>
+
+            <button type="submit" class="w-full btn btn-primary py-4 text-lg">
+                S'inscrire
+            </button>
+        {{ form_end(registrationForm) }}
+
+        <div class="mt-8 pt-6 border-t border-white/5 text-center">
+            <p class="text-sm text-slate-400">
+                Vous avez déjà un compte ? 
+                <a href="{{ path('app_login') }}" class="font-medium text-indigo-400 hover:text-indigo-300">Se connecter</a>
+            </p>
+        </div>
+    </div>
+</div>
+{% endblock %}
