@@ -8,10 +8,10 @@ class EncryptionService
 
     public function encrypt(string $data, string $key): string
     {
-        $iv = openssl_random_pseudo_bytes(openssl_cipher_iv_length(self::METHOD));
+        $iv = random_bytes(openssl_cipher_iv_length(self::METHOD));
         $tag = '';
         $ciphertext = openssl_encrypt($data, self::METHOD, $key, OPENSSL_RAW_DATA, $iv, $tag);
-        
+
         return base64_encode($iv . $tag . $ciphertext);
     }
 
@@ -23,6 +23,11 @@ class EncryptionService
         $tag = substr($decoded, $ivLen, 16);
         $ciphertext = substr($decoded, $ivLen + 16);
 
-        return openssl_decrypt($ciphertext, self::METHOD, $key, OPENSSL_RAW_DATA, $iv, $tag);
+        $result = openssl_decrypt($ciphertext, self::METHOD, $key, OPENSSL_RAW_DATA, $iv, $tag);
+        if ($result === false) {
+            throw new \RuntimeException('Decryption failed: invalid ciphertext or key.');
+        }
+
+        return $result;
     }
 }
