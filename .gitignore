@@ -1,20 +1,13 @@
-
-###> symfony/framework-bundle ###
+/.idea/
+/vendor/
+/var/
+/public/bundles/
+/public/uploads/
 /.env.local
 /.env.local.php
 /.env.*.local
-/config/secrets/prod/prod.decrypt.private.php
-/public/bundles/
-/var/
-/vendor/
-###< symfony/framework-bundle ###
-
-###> phpunit/phpunit ###
+/config/secrets/*.local.php
+/config/jwt/*
+!/config/jwt/checkpoint
 /phpunit.xml
-/.phpunit.cache/
-###< phpunit/phpunit ###
-
-###> symfony/asset-mapper ###
-/public/assets/
-/assets/vendor/
-###< symfony/asset-mapper ###
+/.phpunit.result.cache
