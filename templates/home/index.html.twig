@@ -1,0 +1,83 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Accueil - SecureVault{% endblock %}
+
+{% block body %}
+<div class="relative overflow-hidden">
+    <div class="max-w-7xl mx-auto">
+        <div class="relative z-10 pb-8 sm:pb-16 md:pb-20 lg:max-w-2xl lg:w-full lg:pb-28 xl:pb-32">
+            <main class="mt-10 mx-auto max-w-7xl px-4 sm:mt-12 sm:px-6 md:mt-16 lg:mt-20 lg:px-8 xl:mt-28">
+                <div class="sm:text-center lg:text-left">
+                    <h1 class="text-4xl tracking-tight font-extrabold sm:text-5xl md:text-6xl">
+                        <span class="block xl:inline">La sécurité de vos données</span>
+                        <span class="block text-indigo-500 xl:inline">dans un coffre inviolable.</span>
+                    </h1>
+                    <p class="mt-3 text-base text-slate-400 sm:mt-5 sm:text-lg sm:max-w-xl sm:mx-auto md:mt-5 md:text-xl lg:mx-0">
+                        SecureVault vous permet de stocker, organiser et partager vos identifiants en toute simplicité. Chiffrement AES-256-GCM de bout en bout pour une tranquillité d'esprit totale.
+                    </p>
+                    <div class="mt-5 sm:mt-8 sm:flex sm:justify-center lg:justify-start">
+                        <div class="rounded-md shadow">
+                            <a href="{{ path('app_register') }}" class="w-full flex items-center justify-center px-8 py-3 border border-transparent text-base font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 md:py-4 md:text-lg md:px-10 transition">
+                                Commencer maintenant
+                            </a>
+                        </div>
+                        <div class="mt-3 sm:mt-0 sm:ml-3">
+                            <a href="#features" class="w-full flex items-center justify-center px-8 py-3 border border-transparent text-base font-medium rounded-md text-indigo-400 bg-white/5 hover:bg-white/10 md:py-4 md:text-lg md:px-10 transition">
+                                En savoir plus
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+    <div class="lg:absolute lg:inset-y-0 lg:right-0 lg:w-1/2">
+        <img class="h-56 w-full object-cover sm:h-72 md:h-96 lg:w-full lg:h-full opacity-50 contrast-125 grayscale" src="https://images.unsplash.com/photo-1550751827-4bd374c3f58b?ixlib=rb-1.2.1&auto=format&fit=crop&q=80&w=2070" alt="Cyber Security">
+    </div>
+</div>
+
+<div id="features" class="py-24 bg-slate-900/50">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="lg:text-center">
+            <h2 class="text-base text-indigo-400 font-semibold tracking-wide uppercase">Fonctionnalités</h2>
+            <p class="mt-2 text-3xl leading-8 font-extrabold tracking-tight sm:text-4xl">
+                Une meilleure façon de protéger vos accès
+            </p>
+        </div>
+
+        <div class="mt-20">
+            <dl class="space-y-10 md:space-y-0 md:grid md:grid-cols-3 md:gap-x-8 md:gap-y-10">
+                <div class="glass p-6 rounded-2xl">
+                    <div class="flex items-center justify-center h-12 w-12 rounded-md bg-indigo-500 text-white mb-4">
+                        <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                        </svg>
+                    </div>
+                    <dt class="text-lg leading-6 font-medium">Coffres Sécurisés</dt>
+                    <dd class="mt-2 text-base text-slate-400">Organisez vos mots de passe dans des coffres thématiques pour une gestion plus fine.</dd>
+                </div>
+
+                <div class="glass p-6 rounded-2xl">
+                    <div class="flex items-center justify-center h-12 w-12 rounded-md bg-indigo-500 text-white mb-4">
+                        <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
+                        </svg>
+                    </div>
+                    <dt class="text-lg leading-6 font-medium">Partage Sécurisé</dt>
+                    <dd class="mt-2 text-base text-slate-400">Partagez l'accès à vos coffres avec des membres de votre équipe en contrôlant les droits.</dd>
+                </div>
+
+                <div class="glass p-6 rounded-2xl">
+                    <div class="flex items-center justify-center h-12 w-12 rounded-md bg-indigo-500 text-white mb-4">
+                        <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                        </svg>
+                    </div>
+                    <dt class="text-lg leading-6 font-medium">Générateur Puissant</dt>
+                    <dd class="mt-2 text-base text-slate-400">Créez des mots de passe robustes et uniques en un clic grâce à notre générateur intégré.</dd>
+                </div>
+            </dl>
+        </div>
+    </div>
+</div>
+{% endblock %}

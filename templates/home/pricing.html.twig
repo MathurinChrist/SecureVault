@@ -1,0 +1,51 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Tarifs - SecureVault{% endblock %}
+
+{% block body %}
+<div class="py-24 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="text-center mb-16">
+        <h1 class="text-5xl font-extrabold mb-4">Un plan pour chaque besoin.</h1>
+        <p class="text-xl text-slate-400">Commencez gratuitement, évoluez selon vos besoins.</p>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+        <!-- Free -->
+        <div class="glass-card p-8 rounded-3xl flex flex-col">
+            <h3 class="text-2xl font-bold mb-2">Personnel</h3>
+            <p class="text-4xl font-extrabold mb-6">0€ <span class="text-lg text-slate-500 font-normal">/ mois</span></p>
+            <ul class="space-y-4 mb-8 flex-1">
+                <li class="text-slate-400">✓ Coffres illimités</li>
+                <li class="text-slate-400">✓ 100 mots de passe</li>
+                <li class="text-slate-400">✓ Partage limité (1 pers)</li>
+            </ul>
+            <a href="{{ path('app_register') }}" class="btn bg-white/10 text-center hover:bg-white/20">Choisir ce plan</a>
+        </div>
+        <!-- Pro -->
+        <div class="glass-card p-8 rounded-3xl border-indigo-500/50 shadow-indigo-500/10 shadow-2xl flex flex-col relative transform scale-105 z-10">
+            <div class="absolute -top-4 left-1/2 -translate-x-1/2 bg-indigo-600 text-white text-xs font-bold px-3 py-1 rounded-full uppercase tracking-widest">Recommandé</div>
+            <h3 class="text-2xl font-bold mb-2">Premium</h3>
+            <p class="text-4xl font-extrabold mb-6">4.99€ <span class="text-lg text-slate-500 font-normal">/ mois</span></p>
+            <ul class="space-y-4 mb-8 flex-1">
+                <li class="text-slate-200 font-bold">✓ Tout du plan Personnel</li>
+                <li class="text-slate-200">✓ Mots de passe illimités</li>
+                <li class="text-slate-200">✓ Partage d'équipe (10 pers)</li>
+                <li class="text-slate-200">✓ Support prioritaire</li>
+            </ul>
+            <a href="{{ path('app_register') }}" class="btn btn-primary text-center">Essayer gratuitement</a>
+        </div>
+        <!-- Entreprise -->
+        <div class="glass-card p-8 rounded-3xl flex flex-col">
+            <h3 class="text-2xl font-bold mb-2">Entreprise</h3>
+            <p class="text-4xl font-extrabold mb-6">Sur devis</p>
+            <ul class="space-y-4 mb-8 flex-1 text-slate-400">
+                <li>✓ Tout du plan Premium</li>
+                <li>✓ SSO & SAML</li>
+                <li>✓ Console d'administration</li>
+                <li>✓ Audit de logs illimité</li>
+            </ul>
+            <a href="#" class="btn bg-white/10 text-center hover:bg-white/20">Contacter l'équipe</a>
+        </div>
+    </div>
+</div>
+{% endblock %}

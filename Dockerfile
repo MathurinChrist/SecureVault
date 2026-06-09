@@ -26,6 +26,7 @@ COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 COPY . .
 
 # Set environment
+ENV SERVER_NAME=:80
 ENV CADDY_GLOBAL_OPTIONS="local_certs"
 
 # Give permissions
