@@ -11,7 +11,8 @@ class SecuritySubscriber implements EventSubscriberInterface
 {
     public function __construct(
         private EntityManagerInterface $entityManager,
-        private \App\Service\AlertService $alertService
+        private \App\Service\AlertService $alertService,
+        private LoggerInterface $logger
     ) {}
 
     public static function getSubscribedEvents(): array
@@ -36,6 +37,7 @@ class SecuritySubscriber implements EventSubscriberInterface
     public function onLoginSuccess(LoginSuccessEvent $event): void
     {
         $user = $event->getUser();
+        $this->logger->info('Login SUCCESS for user: {email}', ['email' => $user->getUserIdentifier()]);
         $request = $event->getRequest();
 
         if (!$user instanceof \App\Entity\User) {
