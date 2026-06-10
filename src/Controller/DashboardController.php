@@ -70,6 +70,9 @@ class DashboardController extends AbstractController
             'passwordsCount' => $passwordsCount,
             'vaultsCount' => $vaultsCount,
             'recentPasswords' => $recentPasswords,
+            'password_form' => $this->createForm(\App\Form\VaultType::class)->createView(),
+            'edit_form' => $this->createForm(\App\Form\VaultType::class)->createView(),
+            'open_modal' => false,
         ]);
     }
 }
