@@ -65,13 +65,26 @@ class DashboardController extends AbstractController
 
         $recentPasswords = $passwordRepository->findRecentByUser($user, 5);
 
+        $recentPasswords = $passwordRepository->findRecentByUser($user, 5);
+
+        $vaults = $vaultRepository->findByUser($user);
+        
+        $passwordForm = $this->createForm(\App\Form\PasswordEntryType::class, new \App\Entity\PasswordEntry(), [
+            'vaults' => $vaults,
+        ]);
+        
+        $editForm = $this->createForm(\App\Form\PasswordEntryType::class, new \App\Entity\PasswordEntry(), [
+            'vaults' => $vaults,
+            'require_password' => false,
+        ]);
+
         return $this->render('dashboard/index.html.twig', [
             'unreadAlertsCount' => $unreadAlertsCount,
             'passwordsCount' => $passwordsCount,
             'vaultsCount' => $vaultsCount,
             'recentPasswords' => $recentPasswords,
-            'password_form' => $this->createForm(\App\Form\VaultType::class)->createView(),
-            'edit_form' => $this->createForm(\App\Form\VaultType::class)->createView(),
+            'password_form' => $passwordForm->createView(),
+            'edit_form' => $editForm->createView(),
             'open_modal' => false,
         ]);
     }
