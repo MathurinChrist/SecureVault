@@ -2,7 +2,17 @@
 
 namespace App\Controller;
 
+use App\Entity\PasswordEntry;
+use App\Entity\Vault;
+use App\Form\PasswordEntryType;
+use App\Form\VaultType;
+use App\Repository\VaultRepository;
+use App\Service\EncryptionService;
+use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\DependencyInjection\Attribute\Autowire;
+use Symfony\Component\Form\FormFactoryInterface;
+use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
@@ -94,5 +104,47 @@ class VaultController extends AbstractController
         
         $this->addFlash('success', 'Authentification à deux facteurs activée !');
         return $this->redirectToRoute('app_alerts');
+    }
+
+    #[Route('/password/{id}/edit', name: 'app_password_edit', methods: ['POST'])]
+    public function editPassword(
+        PasswordEntry $passwordEntry,
+        Request $request,
+        EntityManagerInterface $em,
+        VaultRepository $vaultRepository,
+        EncryptionService $encryptionService,
+        FormFactoryInterface $formFactory,
+    ): Response {
+        $vault = $passwordEntry->getVault();
+        if ($vault === null || $vault->getOwner()->getUserIdentifier() !== $this->getUser()->getUserIdentifier()) {
+            throw $this->createAccessDeniedException();
+        }
+
+        $vaults = $vaultRepository->findBy(['owner' => $this->getUser(), 'archived' => false]);
+
+        $form = $formFactory->createNamed('edit_password_entry', PasswordEntryType::class, $passwordEntry, [
+            'vaults'           => $vaults,
+            'require_password' => false,
+        ]);
+        $form->handleRequest($request);
+
+        if ($form->isSubmitted() && $form->isValid()) {
+            $plain = $form->get('plainPassword')->getData();
+            if ($plain !== null && $plain !== '') {
+                $key = hash('sha256', $this->encryptionKey, true);
+                $passwordEntry->setEncryptedPassword($encryptionService->encrypt($plain, $key));
+            }
+
+            $em->flush();
+            $this->addFlash('success', '"' . $passwordEntry->getTitle() . '" mis à jour avec succès.');
+        } else {
+            $errors = [];
+            foreach ($form->getErrors(true) as $error) {
+                $errors[] = $error->getMessage();
+            }
+            $this->addFlash('error', $errors ? implode(' ', $errors) : 'Formulaire invalide.');
+        }
+
+        return $this->redirectToRoute('app_dashboard');
     }
 }

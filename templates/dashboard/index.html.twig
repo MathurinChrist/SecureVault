@@ -9,7 +9,7 @@
             <h1 class="text-3xl font-bold">Mon Coffre-fort</h1>
             <p class="text-slate-400 mt-1">Gérez vos identifiants en toute sécurité.</p>
         </div>
-        <button class="btn btn-primary flex items-center space-x-2">
+        <button onclick="openAddModal()" class="btn btn-primary flex items-center space-x-2">
             <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
             </svg>
@@ -43,9 +43,7 @@
     <div class="glass-card rounded-2xl overflow-hidden">
         <div class="p-6 border-b border-white/5 flex items-center justify-between">
             <h2 class="font-bold">Services récents</h2>
-            <div class="flex space-x-2">
-                <input type="text" placeholder="Rechercher..." class="bg-slate-800 border border-white/10 rounded-lg px-3 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-indigo-500">
-            </div>
+            <input type="text" placeholder="Rechercher..." class="bg-slate-800 border border-white/10 rounded-lg px-3 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-indigo-500">
         </div>
         <div class="overflow-x-auto">
             <table class="w-full text-left">
@@ -53,7 +51,7 @@
                     <tr>
                         <th class="px-6 py-4">Service</th>
                         <th class="px-6 py-4">Utilisateur</th>
-                        <th class="px-6 py-4">Dernière modif.</th>
+                        <th class="px-6 py-4">Ajouté le</th>
                         <th class="px-6 py-4 text-right">Actions</th>
                     </tr>
                 </thead>
@@ -84,4 +82,177 @@
         </div>
     </div>
 </div>
+
+{# ============================= MODAL AJOUTER ============================= #}
+<div id="add-modal" class="{{ open_modal ? '' : 'hidden' }} fixed inset-0 z-50 flex items-center justify-center p-4" role="dialog" aria-modal="true">
+    <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" onclick="closeAddModal()"></div>
+    <div class="relative z-10 w-full max-w-lg glass-card rounded-2xl overflow-hidden shadow-2xl">
+
+        <div class="flex items-center justify-between px-6 py-5 border-b border-white/10">
+            <div class="flex items-center space-x-3">
+                <div class="h-9 w-9 rounded-xl bg-indigo-500/20 flex items-center justify-center">
+                    <svg class="h-5 w-5 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                    </svg>
+                </div>
+                <h2 class="text-lg font-bold">Ajouter un mot de passe</h2>
+            </div>
+            <button onclick="closeAddModal()" class="text-slate-400 hover:text-white transition rounded-lg p-1 hover:bg-white/5">
+                <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+            </button>
+        </div>
+
+        {{ form_start(password_form, {'action': path('app_dashboard'), 'method': 'POST', 'attr': {'novalidate': 'novalidate'}}) }}
+        <div class="px-6 py-5 space-y-4 max-h-[60vh] overflow-y-auto">
+            {% include 'dashboard/_form_fields.html.twig' with {'form': password_form, 'pwd_input_id': 'add-pwd'} %}
+        </div>
+        <div class="px-6 py-4 border-t border-white/10 flex justify-end space-x-3">
+            <button type="button" onclick="closeAddModal()" class="btn btn-ghost px-5">Annuler</button>
+            <button type="submit" class="btn btn-primary flex items-center space-x-2">
+                <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                <span>Enregistrer</span>
+            </button>
+        </div>
+        {{ form_end(password_form) }}
+    </div>
+</div>
+
+{# ============================= MODAL MODIFIER ============================= #}
+<div id="edit-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4" role="dialog" aria-modal="true">
+    <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" onclick="closeEditModal()"></div>
+    <div class="relative z-10 w-full max-w-lg glass-card rounded-2xl overflow-hidden shadow-2xl">
+
+        <div class="flex items-center justify-between px-6 py-5 border-b border-white/10">
+            <div class="flex items-center space-x-3">
+                <div class="h-9 w-9 rounded-xl bg-amber-500/20 flex items-center justify-center">
+                    <svg class="h-5 w-5 text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                    </svg>
+                </div>
+                <h2 class="text-lg font-bold">Modifier le mot de passe</h2>
+            </div>
+            <button onclick="closeEditModal()" class="text-slate-400 hover:text-white transition rounded-lg p-1 hover:bg-white/5">
+                <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+            </button>
+        </div>
+
+        {{ form_start(edit_form, {'attr': {'id': 'edit-form', 'novalidate': 'novalidate'}}) }}
+        <div class="px-6 py-5 space-y-4 max-h-[60vh] overflow-y-auto">
+            {% include 'dashboard/_form_fields.html.twig' with {'form': edit_form, 'pwd_input_id': 'edit-pwd'} %}
+        </div>
+        <div class="px-6 py-4 border-t border-white/10 flex justify-end space-x-3">
+            <button type="button" onclick="closeEditModal()" class="btn btn-ghost px-5">Annuler</button>
+            <button type="submit" class="btn btn-primary flex items-center space-x-2" style="background:linear-gradient(135deg,#d97706,#b45309)">
+                <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                <span>Mettre à jour</span>
+            </button>
+        </div>
+        {{ form_end(edit_form) }}
+    </div>
+</div>
+
+<script>
+// ---- Ajouter ----
+function openAddModal() {
+    document.getElementById('add-modal').classList.remove('hidden');
+}
+function closeAddModal() {
+    document.getElementById('add-modal').classList.add('hidden');
+}
+
+// ---- Modifier ----
+function openEditModal(btn) {
+    const modal = document.getElementById('edit-modal');
+    const form  = document.getElementById('edit-form');
+
+    // Définir l'action dynamiquement
+    form.action = `/password/${btn.dataset.id}/edit`;
+
+    // Pré-remplir les champs texte
+    setValue(form, '[name$="[title]"]',    btn.dataset.title);
+    setValue(form, '[name$="[username]"]', btn.dataset.username);
+    setValue(form, '[name$="[url]"]',      btn.dataset.url);
+    setValue(form, '[name$="[notes]"]',    btn.dataset.notes);
+
+    // Vider le champ mot de passe (optionnel en édition)
+    const pwdField = form.querySelector('[name$="[plainPassword]"]');
+    if (pwdField) pwdField.value = '';
+
+    // Coffre
+    const vaultSelect = form.querySelector('[name$="[vault]"]');
+    if (vaultSelect) vaultSelect.value = btn.dataset.vaultId;
+
+    // Favori
+    const favCheckbox = form.querySelector('[name$="[favorite]"]');
+    if (favCheckbox) favCheckbox.checked = btn.dataset.favorite === '1';
+
+    modal.classList.remove('hidden');
+}
+function closeEditModal() {
+    document.getElementById('edit-modal').classList.add('hidden');
+}
+
+function setValue(form, selector, value) {
+    const el = form.querySelector(selector);
+    if (el) el.value = value ?? '';
+}
+
+// ---- Générer un mot de passe sécurisé ----
+function generatePassword(inputId, iconId) {
+    const lower   = 'abcdefghijklmnopqrstuvwxyz';
+    const upper   = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+    const digits  = '0123456789';
+    const symbols = '!@#$%^&*-_=+';
+    const all     = lower + upper + digits + symbols;
+    const length  = 16;
+
+    const rand    = new Uint32Array(length);
+    const shuffle = new Uint32Array(length);
+    crypto.getRandomValues(rand);
+    crypto.getRandomValues(shuffle);
+
+    // Au moins 1 de chaque catégorie
+    const pwd = [
+        lower[rand[0]   % lower.length],
+        upper[rand[1]   % upper.length],
+        digits[rand[2]  % digits.length],
+        symbols[rand[3] % symbols.length],
+    ];
+    for (let i = 4; i < length; i++) pwd.push(all[rand[i] % all.length]);
+
+    // Fisher-Yates
+    for (let i = length - 1; i > 0; i--) {
+        const j = shuffle[i] % (i + 1);
+        [pwd[i], pwd[j]] = [pwd[j], pwd[i]];
+    }
+
+    const input = document.getElementById(inputId);
+    if (!input) return;
+    input.value = pwd.join('');
+    input.type  = 'text';
+
+    // Sync l'icône œil → état "visible"
+    const icon = document.getElementById(iconId);
+    if (icon) {
+        icon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"/>';
+    }
+}
+
+// ---- Toggle mot de passe ----
+function togglePwd(inputId, iconId) {
+    const input = document.getElementById(inputId);
+    const icon  = document.getElementById(iconId);
+    if (!input) return;
+    const isHidden = input.type === 'password';
+    input.type = isHidden ? 'text' : 'password';
+    icon.innerHTML = isHidden
+        ? '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"/>'
+        : '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>';
+}
+
+// ---- Fermeture ESC ----
+document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') { closeAddModal(); closeEditModal(); }
+});
+</script>
 {% endblock body_connected %}
