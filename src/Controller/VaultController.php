@@ -20,105 +20,90 @@ use Symfony\Component\Security\Http\Attribute\IsGranted;
 #[IsGranted('ROLE_USER')]
 class VaultController extends AbstractController
 {
-    public function __construct(
-        #[Autowire('%env(VAULT_ENCRYPTION_KEY)%')] private readonly string $encryptionKey
-    ) {}
-
-    #[Route('/vaults', name: 'app_vaults', methods: ['GET', 'POST'])]
-    public function index(
-        Request $request,
-        VaultRepository $vaultRepository,
-        EntityManagerInterface $em,
-    ): Response {
-        $user   = $this->getUser();
-        $vaults = $vaultRepository->findBy(['owner' => $user], ['archived' => 'ASC', 'createdAt' => 'DESC']);
-
-        $newVault   = new Vault();
-        $createForm = $this->createForm(VaultType::class, $newVault);
-        $createForm->handleRequest($request);
-
-        if ($createForm->isSubmitted() && $createForm->isValid()) {
-            $newVault->setOwner($user);
-            $em->persist($newVault);
-            $em->flush();
-            $this->addFlash('success', 'Coffre "' . $newVault->getName() . '" créé avec succès.');
-            return $this->redirectToRoute('app_vaults');
-        }
-
-        return $this->render('vault/index.html.twig', [
-            'vaults'      => $vaults,
-            'create_form' => $createForm,
-            'open_modal'  => $createForm->isSubmitted() && !$createForm->isValid(),
+    #[Route('/vaults', name: 'app_vaults')]
+    public function index(): Response
+    {
+        return $this->render('dashboard/placeholder.html.twig', [
+            'title' => 'Mes Coffres'
         ]);
-    }
-
-    #[Route('/vaults/{id}/edit', name: 'app_vault_edit', methods: ['POST'])]
-    public function edit(
-        Vault $vault,
-        Request $request,
-        EntityManagerInterface $em,
-    ): Response {
-        if ($vault->getOwner()->getUserIdentifier() !== $this->getUser()->getUserIdentifier()) {
-            throw $this->createAccessDeniedException();
-        }
-
-        if (!$this->isCsrfTokenValid('vault_edit_' . $vault->getId(), $request->request->get('_token'))) {
-            throw $this->createAccessDeniedException('Token CSRF invalide.');
-        }
-
-        $name = trim((string) $request->request->get('name', ''));
-        if ($name === '') {
-            $this->addFlash('error', 'Le nom du coffre est obligatoire.');
-            return $this->redirectToRoute('app_vaults');
-        }
-
-        $vault->setName($name);
-        $vault->setDescription($request->request->get('description') ?: null);
-        $em->flush();
-        $this->addFlash('success', '"' . $vault->getName() . '" mis à jour.');
-
-        return $this->redirectToRoute('app_vaults');
-    }
-
-    #[Route('/vaults/{id}/archive', name: 'app_vault_archive', methods: ['POST'])]
-    public function archive(
-        Vault $vault,
-        Request $request,
-        EntityManagerInterface $em,
-    ): Response {
-        if ($vault->getOwner()->getUserIdentifier() !== $this->getUser()->getUserIdentifier()) {
-            throw $this->createAccessDeniedException();
-        }
-
-        if (!$this->isCsrfTokenValid('vault_archive_' . $vault->getId(), $request->request->get('_token'))) {
-            throw $this->createAccessDeniedException('Token CSRF invalide.');
-        }
-
-        $vault->setArchived(!$vault->isArchived());
-        $em->flush();
-
-        $label = $vault->isArchived() ? 'archivé' : 'restauré';
-        $this->addFlash('success', 'Coffre "' . $vault->getName() . '" ' . $label . '.');
-
-        return $this->redirectToRoute('app_vaults');
     }
 
     #[Route('/passwords', name: 'app_passwords')]
     public function passwords(): Response
     {
-        return $this->render('dashboard/placeholder.html.twig', ['title' => 'Mots de passe']);
+        return $this->render('dashboard/placeholder.html.twig', [
+            'title' => 'Mots de passe'
+        ]);
     }
 
     #[Route('/shares', name: 'app_shares')]
     public function shares(): Response
     {
-        return $this->render('dashboard/placeholder.html.twig', ['title' => 'Partages']);
+        return $this->render('dashboard/placeholder.html.twig', [
+            'title' => 'Partages'
+        ]);
     }
 
     #[Route('/alerts', name: 'app_alerts')]
-    public function alerts(): Response
+    public function alerts(\Doctrine\ORM\EntityManagerInterface $entityManager): Response
     {
-        return $this->render('dashboard/placeholder.html.twig', ['title' => 'Alertes sécurité']);
+        $user = $this->getUser();
+        $alerts = $entityManager->getRepository(\App\Entity\Alert::class)->findBy(
+            ['user' => $user],
+            ['createdAt' => 'DESC']
+        );
+
+        return $this->render('alerts/index.html.twig', [
+            'alerts' => $alerts
+        ]);
+    }
+
+    #[Route('/alerts/mark-as-read/{id}', name: 'app_alerts_mark_read')]
+    public function markRead(int $id, \App\Repository\AlertRepository $alertRepository, \App\Service\AlertService $alertService): Response
+    {
+        $alert = $alertRepository->find($id);
+        if ($alert && $alert->getUser() === $this->getUser()) {
+            $alertService->markAsRead($alert);
+            $this->addFlash('success', 'Alerte marquée comme lue.');
+        }
+
+        return $this->redirectToRoute('app_alerts');
+    }
+
+    #[Route('/alerts/mark-all-read', name: 'app_alerts_mark_all_read')]
+    public function markAllRead(\App\Service\AlertService $alertService): Response
+    {
+        $user = $this->getUser();
+        $alertService->markAllAsRead($user);
+        $this->addFlash('success', 'Toutes les alertes ont été marquées comme lues.');
+
+        return $this->redirectToRoute('app_alerts');
+    }
+
+    #[Route('/alerts/dismiss/{id}', name: 'app_alerts_dismiss')]
+    public function dismiss(int $id, \App\Repository\AlertRepository $alertRepository, \Doctrine\ORM\EntityManagerInterface $entityManager): Response
+    {
+        $alert = $alertRepository->find($id);
+        if ($alert && $alert->getUser() === $this->getUser()) {
+            $entityManager->remove($alert);
+            $entityManager->flush();
+            $this->addFlash('success', 'Alerte supprimée.');
+        }
+
+        return $this->redirectToRoute('app_alerts');
+    }
+
+    #[Route('/security/2fa-setup', name: 'app_2fa_setup')]
+    public function setup2fa(\Doctrine\ORM\EntityManagerInterface $entityManager): Response
+    {
+        $user = $this->getUser();
+        
+        $user->setIs2faEnabled(true);
+        $user->setTwoFactorSecret('MOCKED_TOTP_SECRET');
+        $entityManager->flush();
+        
+        $this->addFlash('success', 'Authentification à deux facteurs activée !');
+        return $this->redirectToRoute('app_alerts');
     }
 
     #[Route('/password/{id}/edit', name: 'app_password_edit', methods: ['POST'])]

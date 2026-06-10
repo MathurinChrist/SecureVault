@@ -15,4 +15,9 @@ class VaultRepository extends ServiceEntityRepository
     {
         parent::__construct($registry, Vault::class);
     }
+
+    public function findByUser($user)
+    {
+        return $this->findBy(['user' => $user], ['name' => 'ASC']);
+    }
 }
