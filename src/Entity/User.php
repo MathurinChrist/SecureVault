@@ -3,6 +3,8 @@
 namespace App\Entity;
 
 use App\Repository\UserRepository;
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
 use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
@@ -49,9 +51,14 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Column(nullable: true)]
     private ?\DateTimeImmutable $updatedAt = null;
 
+    /** @var Collection<int, \App\Entity\Vault> */
+    #[ORM\OneToMany(mappedBy: 'owner', targetEntity: \App\Entity\Vault::class)]
+    private Collection $vaults;
+
     public function __construct()
     {
         $this->createdAt = new \DateTimeImmutable();
+        $this->vaults = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -172,5 +179,11 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     public function setUpdatedAtValue(): void
     {
         $this->updatedAt = new \DateTimeImmutable();
+    }
+
+    /** @return Collection<int, \App\Entity\Vault> */
+    public function getVaults(): Collection
+    {
+        return $this->vaults;
     }
 }

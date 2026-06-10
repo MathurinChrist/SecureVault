@@ -69,6 +69,24 @@ Le projet utilise **PostgreSQL 16**.
 - **Base de données :** `app`
 - **Hôte :** `database` (interne Docker) ou `localhost` (externe).
 
+## Variables d'environnement
+
+### `VAULT_ENCRYPTION_KEY`
+
+Cette clé est utilisée pour chiffrer/déchiffrer les mots de passe stockés en base de données (AES-256-GCM via `EncryptionService`).
+
+**Générer une clé sécurisée** (à faire une seule fois à l'installation) :
+
+```bash
+# Option 1 — OpenSSL (recommandée)
+openssl rand -base64 32
+
+# Option 2 — PHP
+php -r "echo base64_encode(random_bytes(32));"
+```
+
+**Ajouter la valeur dans `.env.local`** 
+
 ##  Structure du projet
 
 - `Dockerfile` : Basé sur **FrankenPHP** pour un serveur web performant tout-en-un.
