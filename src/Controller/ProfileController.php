@@ -22,7 +22,7 @@ class ProfileController extends AbstractController
         EntityManagerInterface $entityManager, 
         FileUploader $fileUploader,
         UserPasswordHasherInterface $userPasswordHasher,
-        \App\Service\AlertService $alertService
+        \Symfony\Component\EventDispatcher\EventDispatcherInterface $eventDispatcher
     ): Response
     {
         $user = $this->getUser();
@@ -59,13 +59,7 @@ class ProfileController extends AbstractController
             );
             $entityManager->flush();
 
-            $alertService->createAlert(
-                $user,
-                'Mot de passe modifié',
-                'Votre mot de passe a été mis à jour avec succès.',
-                'warning',
-                'security'
-            );
+            $eventDispatcher->dispatch(new \App\Event\PasswordUpdatedEvent($user), \App\Event\PasswordUpdatedEvent::NAME);
 
             $this->addFlash('success', 'Mot de passe modifié avec succès !');
             return $this->redirectToRoute('app_profile');
