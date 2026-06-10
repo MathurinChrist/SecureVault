@@ -21,10 +21,10 @@ class ProfileController extends AbstractController
         Request $request, 
         EntityManagerInterface $entityManager, 
         FileUploader $fileUploader,
-        UserPasswordHasherInterface $userPasswordHasher
+        UserPasswordHasherInterface $userPasswordHasher,
+        \App\Service\AlertService $alertService
     ): Response
     {
-        /** @var \App\Entity\User $user */
         $user = $this->getUser();
         
         $profileForm = $this->createForm(UserProfileType::class, $user);
@@ -58,13 +58,34 @@ class ProfileController extends AbstractController
                 )
             );
             $entityManager->flush();
+
+            $alertService->createAlert(
+                $user,
+                'Mot de passe modifié',
+                'Votre mot de passe a été mis à jour avec succès.',
+                'warning',
+                'security'
+            );
+
             $this->addFlash('success', 'Mot de passe modifié avec succès !');
             return $this->redirectToRoute('app_profile');
         }
 
+        if (!$user->getEncryptionKey()) {
+            $user->setEncryptionKey(bin2hex(random_bytes(16)));
+            $entityManager->flush();
+        }
+
+        $sessions = $entityManager->getRepository(\App\Entity\UserSession::class)->findBy(
+            ['user' => $user],
+            ['lastUsedAt' => 'DESC'],
+            10
+        );
+
         return $this->render('profile/index.html.twig', [
             'profileForm' => $profileForm->createView(),
             'passwordForm' => $passwordForm->createView(),
+            'sessions' => $sessions,
         ]);
     }
 }
