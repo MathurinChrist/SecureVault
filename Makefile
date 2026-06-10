@@ -57,3 +57,5 @@ fixtures: ## Charge les fixtures de données
 
 messenger-consume: ## Lance le worker Messenger pour traiter les messages (emails, etc.)
 	$(SYMFONY) messenger:consume async -vv
+log_tail:
+	docker compose exec app tail -f var/log/dev.log
