@@ -4,7 +4,7 @@ PHP = $(DOCKER_COMPOSE) exec app
 SYMFONY = $(PHP) bin/console
 
 # --- Cibles ---
-.PHONY: help build up down restart logs ps shell migrate db-shell composer-install make-migration make-entity make-command fixtures
+.PHONY: help build up down restart logs ps shell migrate db-shell composer-install make-migration make-entity make-command fixtures messenger-consume
 
 help: ## Affiche ce message d'aide
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}'
@@ -54,3 +54,6 @@ make-command: ## Crée une nouvelle commande Symfony
 
 fixtures: ## Charge les fixtures de données
 	$(SYMFONY) doctrine:fixtures:load --no-interaction
+
+messenger-consume: ## Lance le worker Messenger pour traiter les messages (emails, etc.)
+	$(SYMFONY) messenger:consume async -vv
