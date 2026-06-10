@@ -18,7 +18,19 @@ class SecuritySubscriber implements EventSubscriberInterface
     {
         return [
             LoginSuccessEvent::class => 'onLoginSuccess',
+            \App\Event\PasswordUpdatedEvent::NAME => 'onPasswordUpdated',
         ];
+    }
+
+    public function onPasswordUpdated(\App\Event\PasswordUpdatedEvent $event): void
+    {
+        $this->alertService->createAlert(
+            $event->getUser(),
+            'Mot de passe modifié',
+            'Votre mot de passe a été mis à jour avec succès.',
+            'warning',
+            'security'
+        );
     }
 
     public function onLoginSuccess(LoginSuccessEvent $event): void
