@@ -21,15 +21,17 @@
     <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
         <div class="glass-card p-6 rounded-2xl">
             <p class="text-slate-400 text-sm font-medium">Mots de passe</p>
-            <p class="text-3xl font-bold mt-2">12</p>
+            <p class="text-3xl font-bold mt-2">{{ passwordsCount }}</p>
         </div>
         <div class="glass-card p-6 rounded-2xl">
             <p class="text-slate-400 text-sm font-medium">Coffres</p>
-            <p class="text-3xl font-bold mt-2">2</p>
+            <p class="text-3xl font-bold mt-2">{{ vaultsCount }}</p>
         </div>
         <div class="glass-card p-6 rounded-2xl">
             <p class="text-slate-400 text-sm font-medium">Alertes de sécurité</p>
-            <p class="text-3xl font-bold mt-2 text-red-400">0</p>
+            <p class="text-3xl font-bold mt-2 {% if unreadAlertsCount > 0 %}text-red-400{% else %}text-green-400{% endif %}">
+                {{ unreadAlertsCount }}
+            </p>
         </div>
         <div class="glass-card p-6 rounded-2xl">
             <p class="text-slate-400 text-sm font-medium">Score de sécurité</p>
@@ -56,32 +58,27 @@
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-white/5">
+                    {% for password in recentPasswords %}
                     <tr>
                         <td class="px-6 py-4">
                             <div class="flex items-center space-x-3">
-                                <div class="h-8 w-8 rounded bg-indigo-500/20 flex items-center justify-center text-indigo-400">G</div>
-                                <span class="font-medium">Google</span>
+                                <div class="h-8 w-8 rounded bg-indigo-500/20 flex items-center justify-center text-indigo-400">
+                                    {{ password.serviceName|first|upper }}
+                                </div>
+                                <span class="font-medium">{{ password.serviceName }}</span>
                             </div>
                         </td>
-                        <td class="px-6 py-4 text-slate-300">john.doe@gmail.com</td>
-                        <td class="px-6 py-4 text-sm text-slate-500">Il y a 2 jours</td>
+                        <td class="px-6 py-4 text-slate-300">{{ password.username }}</td>
+                        <td class="px-6 py-4 text-sm text-slate-500">{{ password.createdAt|date('d/m/Y') }}</td>
                         <td class="px-6 py-4 text-right">
                              <button class="text-slate-400 hover:text-white transition">Modifier</button>
                         </td>
                     </tr>
+                    {% else %}
                     <tr>
-                        <td class="px-6 py-4">
-                            <div class="flex items-center space-x-3">
-                                <div class="h-8 w-8 rounded bg-purple-500/20 flex items-center justify-center text-purple-400">G</div>
-                                <span class="font-medium">GitHub</span>
-                            </div>
-                        </td>
-                        <td class="px-6 py-4 text-slate-300">jdoe_dev</td>
-                        <td class="px-6 py-4 text-sm text-slate-500">Il y a 1 semaine</td>
-                        <td class="px-6 py-4 text-right">
-                             <button class="text-slate-400 hover:text-white transition">Modifier</button>
-                        </td>
+                        <td colspan="4" class="px-6 py-8 text-center text-slate-500 italic">Aucun service enregistré.</td>
                     </tr>
+                    {% endfor %}
                 </tbody>
             </table>
         </div>

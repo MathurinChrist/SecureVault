@@ -2,6 +2,9 @@
 
 namespace App\Entity;
 
+use App\Entity\Alert;
+use App\Entity\Vault;
+use App\Entity\Password;
 use App\Repository\UserRepository;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
@@ -49,9 +52,30 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Column(nullable: true)]
     private ?\DateTimeImmutable $updatedAt = null;
 
+    #[ORM\Column(length: 255, nullable: true)]
+    private ?string $encryptionKey = null;
+
+    #[ORM\OneToMany(mappedBy: 'user', targetEntity: UserSession::class, orphanRemoval: true)]
+    private $sessions;
+
+    #[ORM\OneToMany(mappedBy: 'user', targetEntity: Alert::class, orphanRemoval: true)]
+    private $alerts;
+
+    #[ORM\OneToMany(mappedBy: 'user', targetEntity: Vault::class, orphanRemoval: true)]
+    private $vaults;
+
+    #[ORM\Column]
+    private bool $is2faEnabled = false;
+
+    #[ORM\Column(length: 255, nullable: true)]
+    private ?string $twoFactorSecret = null;
+
     public function __construct()
     {
         $this->createdAt = new \DateTimeImmutable();
+        $this->sessions = new \Doctrine\Common\Collections\ArrayCollection();
+        $this->alerts = new \Doctrine\Common\Collections\ArrayCollection();
+        $this->vaults = new \Doctrine\Common\Collections\ArrayCollection();
     }
 
     public function getId(): ?int
@@ -172,5 +196,38 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     public function setUpdatedAtValue(): void
     {
         $this->updatedAt = new \DateTimeImmutable();
+    }
+
+    public function getEncryptionKey(): ?string
+    {
+        return $this->encryptionKey;
+    }
+
+    public function setEncryptionKey(?string $encryptionKey): static
+    {
+        $this->encryptionKey = $encryptionKey;
+        return $this;
+    }
+
+    public function is2faEnabled(): bool
+    {
+        return $this->is2faEnabled;
+    }
+
+    public function setIs2faEnabled(bool $is2faEnabled): static
+    {
+        $this->is2faEnabled = $is2faEnabled;
+        return $this;
+    }
+
+    public function getTwoFactorSecret(): ?string
+    {
+        return $this->twoFactorSecret;
+    }
+
+    public function setTwoFactorSecret(?string $twoFactorSecret): static
+    {
+        $this->twoFactorSecret = $twoFactorSecret;
+        return $this;
     }
 }

@@ -1,0 +1,81 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Mots de Passe - SecureVault{% endblock %}
+
+{% block body_connected %}
+<div class="space-y-8">
+    <div class="flex items-center justify-between">
+        <div>
+            <h1 class="text-3xl font-bold">Mots de Passe</h1>
+            <p class="text-slate-400 mt-1">Gérez tous vos identifiants à partir d'un seul endroit.</p>
+        </div>
+        <button class="btn btn-primary flex items-center space-x-2">
+            <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+            </svg>
+            <span>Ajouter un mot de passe</span>
+        </button>
+    </div>
+
+    <!-- Filters & Search -->
+    <div class="flex flex-col md:flex-row space-y-4 md:space-y-0 md:space-x-4">
+        <div class="flex-1 relative">
+            <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-500">
+                <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+            </span>
+            <input type="text" placeholder="Rechercher par service, email ou URL..." class="block w-full pl-10 pr-3 py-3 bg-white/5 border border-white/10 rounded-xl text-sm placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 transition">
+        </div>
+        <select class="bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-slate-300 focus:outline-none focus:ring-1 focus:ring-indigo-500">
+            <option>Tous les coffres</option>
+            <option>Coffre Personnel</option>
+        </select>
+    </div>
+
+    <!-- Password List -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {% for password in passwords %}
+        <div class="glass-card p-6 rounded-3xl hover:bg-white/10 transition group">
+            <div class="flex items-center justify-between mb-4">
+                <div class="flex items-center space-x-3">
+                    <div class="h-10 w-10 rounded-xl bg-indigo-600/20 flex items-center justify-center text-indigo-400 font-bold">
+                        {{ password.serviceName|first|upper }}
+                    </div>
+                    <div>
+                        <h3 class="font-bold">{{ password.serviceName }}</h3>
+                        <p class="text-xs text-slate-500">{{ password.url|default('Pas d\'URL') }}</p>
+                    </div>
+                </div>
+                <div class="relative">
+                    <button class="p-2 hover:bg-white/10 rounded-lg text-slate-500">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z"/></svg>
+                    </button>
+                </div>
+            </div>
+            
+            <div class="space-y-3 mb-6">
+                <div class="flex items-center justify-between text-sm">
+                    <span class="text-slate-500">Utilisateur</span>
+                    <span class="text-slate-300">{{ password.username }}</span>
+                </div>
+                <div class="flex items-center justify-between text-sm">
+                    <span class="text-slate-500">Mot de passe</span>
+                    <div class="flex items-center space-x-2">
+                        <span class="text-indigo-400 font-mono">••••••••••••</span>
+                        <button class="text-slate-500 hover:text-white"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2"/></svg></button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex space-x-2">
+                <button class="flex-1 btn btn-ghost text-xs border border-white/5 bg-white/5">Détails</button>
+                <button class="px-4 btn btn-primary text-xs">Accéder</button>
+            </div>
+        </div>
+        {% else %}
+        <div class="col-span-full py-20 glass-card rounded-3xl text-center">
+            <p class="text-slate-500 italic">Aucun mot de passe enregistré.</p>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock body_connected %}
