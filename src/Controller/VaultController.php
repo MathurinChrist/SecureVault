@@ -3,6 +3,8 @@
 namespace App\Controller;
 
 use App\Entity\PasswordEntry;
+
+
 use App\Entity\Vault;
 use App\Form\PasswordEntryType;
 use App\Form\VaultType;
@@ -382,11 +384,4 @@ class VaultController extends AbstractController
         return $this->redirectToRoute('app_profile');
     }
 
-    // ============================= SHARES =============================
-
-    #[Route('/shares', name: 'app_shares')]
-    public function shares(): Response
-    {
-        return $this->render('shares/index.html.twig');
-    }
 }

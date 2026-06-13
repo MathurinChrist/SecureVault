@@ -45,4 +45,16 @@ class SharedVaultRepository extends ServiceEntityRepository
     {
         return $this->findOneBy(['vault' => $vault, 'recipient' => $user]);
     }
+
+    /** @return SharedVault[] */
+    public function findSentByUser(User $user): array
+    {
+        return $this->createQueryBuilder('sv')
+            ->join('sv.vault', 'v')
+            ->where('v.user = :user')
+            ->setParameter('user', $user)
+            ->orderBy('sv.sharedAt', 'DESC')
+            ->getQuery()
+            ->getResult();
+    }
 }

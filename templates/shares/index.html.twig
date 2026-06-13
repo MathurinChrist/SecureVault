@@ -4,26 +4,155 @@
 
 {% block body_connected %}
 <div class="space-y-8">
-    <div class="flex items-center justify-between">
-        <div>
-            <h1 class="text-3xl font-bold">Partages</h1>
-            <p class="text-slate-400 mt-1">Gérez les accès partagés avec d'autres utilisateurs ou équipes.</p>
-        </div>
-        <button class="btn btn-primary flex items-center space-x-2">
-            <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-            </svg>
-            <span>Nouveau partage</span>
-        </button>
+
+    {# ---- Header ---- #}
+    <div>
+        <h1 class="text-3xl font-bold">Partages</h1>
+        <p class="text-slate-400 mt-1">Gérez vos invitations et vos accès partagés.</p>
     </div>
 
-    <div class="glass-card rounded-3xl p-12 text-center">
-        <div class="h-24 w-24 rounded-full bg-indigo-600/10 flex items-center justify-center text-indigo-400 mx-auto mb-6">
-            <svg class="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"/></svg>
-        </div>
-        <h2 class="text-2xl font-bold mb-2">Collaboration Sécurisée</h2>
-        <p class="text-slate-400 max-w-md mx-auto mb-8">Partagez des mots de passe ou des coffres entiers avec vos collègues en toute sécurité. Les accès peuvent être révoqués à tout moment.</p>
-        <button class="btn btn-primary px-8">Commencer à partager</button>
+    {# ---- Invitations en attente ---- #}
+    <div class="space-y-3">
+        <h2 class="text-base font-semibold text-slate-300 flex items-center space-x-2">
+            <svg class="h-4 w-4 text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
+            </svg>
+            <span>Invitations reçues ({{ pending|length }})</span>
+        </h2>
+
+        {% if pending is empty %}
+            <div class="glass-card rounded-2xl px-6 py-8 text-center text-slate-500 text-sm italic">
+                Aucune invitation en attente.
+            </div>
+        {% else %}
+            <div class="space-y-3">
+                {% for share in pending %}
+                    <div class="glass-card rounded-2xl px-6 py-4 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                        <div class="flex items-center space-x-4">
+                            <div class="h-10 w-10 rounded-xl bg-amber-500/20 flex items-center justify-center shrink-0">
+                                <svg class="h-5 w-5 text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+                                </svg>
+                            </div>
+                            <div>
+                                <p class="font-medium">{{ share.vault.name }}</p>
+                                <p class="text-sm text-slate-400">
+                                    Partagé par <span class="text-slate-200">{{ share.sender.email }}</span>
+                                    · {{ share.sharedAt|date('d/m/Y') }}
+                                    · <span class="text-indigo-400">{{ share.permission.name }}</span>
+                                </p>
+                            </div>
+                        </div>
+                        <div class="flex items-center space-x-2 shrink-0">
+                            <form method="post" action="{{ path('app_share_accept', {id: share.id}) }}" class="inline">
+                                <input type="hidden" name="_token" value="{{ csrf_token('share_accept_' ~ share.id) }}">
+                                <button type="submit" class="btn btn-primary text-sm px-4 py-2">Accepter</button>
+                            </form>
+                            <form method="post" action="{{ path('app_share_decline', {id: share.id}) }}" class="inline">
+                                <input type="hidden" name="_token" value="{{ csrf_token('share_decline_' ~ share.id) }}">
+                                <button type="submit"
+                                    class="btn btn-ghost text-sm px-4 py-2"
+                                    onclick="return confirm('Refuser l\'invitation ?')"
+                                >Refuser</button>
+                            </form>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
     </div>
+
+    {# ---- Coffres partagés avec moi ---- #}
+    <div class="space-y-3">
+        <h2 class="text-base font-semibold text-slate-300 flex items-center space-x-2">
+            <svg class="h-4 w-4 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            </svg>
+            <span>Coffres partagés avec moi ({{ accepted|length }})</span>
+        </h2>
+
+        {% if accepted is empty %}
+            <div class="glass-card rounded-2xl px-6 py-8 text-center text-slate-500 text-sm italic">
+                Aucun coffre partagé avec vous.
+            </div>
+        {% else %}
+            <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+                {% for share in accepted %}
+                    <a href="{{ path('app_vault_show', {id: share.vault.id}) }}" class="glass-card rounded-2xl p-5 flex items-start space-x-4 hover:border-indigo-500/40 transition group">
+                        <div class="h-10 w-10 rounded-xl bg-indigo-500/20 flex items-center justify-center shrink-0">
+                            <svg class="h-5 w-5 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+                            </svg>
+                        </div>
+                        <div class="min-w-0 flex-1">
+                            <p class="font-bold truncate group-hover:text-indigo-300 transition">{{ share.vault.name }}</p>
+                            <p class="text-xs text-slate-500 mt-0.5">{{ share.sender.email }}</p>
+                            <span class="mt-2 inline-block px-2 py-0.5 text-xs rounded-full bg-indigo-500/20 text-indigo-400 font-medium">{{ share.permission.name }}</span>
+                        </div>
+                    </a>
+                {% endfor %}
+            </div>
+        {% endif %}
+    </div>
+
+    {# ---- Partages que j'ai envoyés ---- #}
+    <div class="space-y-3">
+        <h2 class="text-base font-semibold text-slate-300 flex items-center space-x-2">
+            <svg class="h-4 w-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"/>
+            </svg>
+            <span>Partages envoyés ({{ sent|length }})</span>
+        </h2>
+
+        {% if sent is empty %}
+            <div class="glass-card rounded-2xl px-6 py-8 text-center text-slate-500 text-sm italic">
+                Vous n'avez partagé aucun coffre.
+            </div>
+        {% else %}
+            <div class="glass-card rounded-2xl overflow-hidden">
+                <table class="w-full text-left">
+                    <thead class="bg-white/5 text-slate-400 text-xs uppercase tracking-wider">
+                        <tr>
+                            <th class="px-6 py-3">Coffre</th>
+                            <th class="px-6 py-3">Destinataire</th>
+                            <th class="px-6 py-3">Accès</th>
+                            <th class="px-6 py-3">Statut</th>
+                            <th class="px-6 py-3">Envoyé le</th>
+                            <th class="px-6 py-3 text-right">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-white/5">
+                        {% for share in sent %}
+                            <tr class="hover:bg-white/3 transition">
+                                <td class="px-6 py-4 font-medium">{{ share.vault.name }}</td>
+                                <td class="px-6 py-4 text-slate-300 text-sm">{{ share.recipient.email }}</td>
+                                <td class="px-6 py-4">
+                                    <span class="px-2 py-0.5 text-xs rounded-full bg-indigo-500/20 text-indigo-400 font-medium">{{ share.permission.name }}</span>
+                                </td>
+                                <td class="px-6 py-4">
+                                    {% if share.accepted %}
+                                        <span class="px-2 py-0.5 text-xs rounded-full bg-green-500/20 text-green-400 font-medium">Accepté</span>
+                                    {% else %}
+                                        <span class="px-2 py-0.5 text-xs rounded-full bg-amber-500/20 text-amber-400 font-medium">En attente</span>
+                                    {% endif %}
+                                </td>
+                                <td class="px-6 py-4 text-sm text-slate-500">{{ share.sharedAt|date('d/m/Y') }}</td>
+                                <td class="px-6 py-4 text-right">
+                                    <form method="post" action="{{ path('app_share_revoke', {id: share.id}) }}" class="inline">
+                                        <input type="hidden" name="_token" value="{{ csrf_token('share_revoke_' ~ share.id) }}">
+                                        <button type="submit"
+                                            class="text-xs text-slate-500 hover:text-red-400 transition"
+                                            onclick="return confirm('Révoquer cet accès ?')"
+                                        >Révoquer</button>
+                                    </form>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% endif %}
+    </div>
+
 </div>
 {% endblock body_connected %}

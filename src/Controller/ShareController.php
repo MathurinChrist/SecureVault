@@ -1,0 +1,193 @@
+<?php
+
+namespace App\Controller;
+
+use App\Entity\SharedVault;
+use App\Entity\Vault;
+use App\Repository\SharedVaultRepository;
+use App\Repository\UserRepository;
+use App\Repository\VaultPermissionRepository;
+use App\Repository\VaultRepository;
+use Doctrine\ORM\EntityManagerInterface;
+use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\Routing\Annotation\Route;
+use Symfony\Component\Security\Http\Attribute\IsGranted;
+
+#[IsGranted('ROLE_USER')]
+class ShareController extends AbstractController
+{
+    #[Route('/shares', name: 'app_shares', methods: ['GET'])]
+    public function index(SharedVaultRepository $sharedVaultRepository): Response
+    {
+        /** @var \App\Entity\User $user */
+        $user = $this->getUser();
+
+        return $this->render('shares/index.html.twig', [
+            'pending'  => $sharedVaultRepository->findPendingForUser($user),
+            'accepted' => $sharedVaultRepository->findAcceptedForUser($user),
+            'sent'     => $sharedVaultRepository->findSentByUser($user),
+        ]);
+    }
+
+    #[Route('/vaults/{id}/shares', name: 'app_vault_shares', methods: ['GET'], requirements: ['id' => '\d+'])]
+    public function vaultShares(
+        Vault $vault,
+        VaultPermissionRepository $permissionRepository,
+    ): Response {
+        $this->denyAccessUnlessGranted('SHARE', $vault);
+
+        return $this->render('vault/shares.html.twig', [
+            'vault'       => $vault,
+            'shares'      => $vault->getSharedVaults(),
+            'permissions' => $permissionRepository->findAll(),
+        ]);
+    }
+
+    #[Route('/vaults/{id}/share', name: 'app_vault_share_new', methods: ['POST'], requirements: ['id' => '\d+'])]
+    public function share(
+        Vault $vault,
+        Request $request,
+        EntityManagerInterface $em,
+        UserRepository $userRepository,
+        VaultPermissionRepository $permissionRepository,
+        SharedVaultRepository $sharedVaultRepository,
+    ): Response {
+        $this->denyAccessUnlessGranted('SHARE', $vault);
+
+        if (!$this->isCsrfTokenValid('vault_share_' . $vault->getId(), $request->request->get('_token'))) {
+            $this->addFlash('error', 'Token CSRF invalide.');
+            return $this->redirectToRoute('app_vault_shares', ['id' => $vault->getId()]);
+        }
+
+        /** @var \App\Entity\User $sender */
+        $sender = $this->getUser();
+        $email  = trim((string) $request->request->get('email', ''));
+        $code   = $request->request->get('permission', 'READ');
+
+        if ($email === '') {
+            $this->addFlash('error', 'L\'adresse email est obligatoire.');
+            return $this->redirectToRoute('app_vault_shares', ['id' => $vault->getId()]);
+        }
+
+        $recipient = $userRepository->findByEmail($email);
+        if ($recipient === null) {
+            $this->addFlash('error', 'Aucun utilisateur trouvé avec cet email.');
+            return $this->redirectToRoute('app_vault_shares', ['id' => $vault->getId()]);
+        }
+
+        if ($recipient === $vault->getUser()) {
+            $this->addFlash('error', 'Vous ne pouvez pas partager un coffre avec son propriétaire.');
+            return $this->redirectToRoute('app_vault_shares', ['id' => $vault->getId()]);
+        }
+
+        if ($recipient === $sender) {
+            $this->addFlash('error', 'Vous ne pouvez pas vous inviter vous-même.');
+            return $this->redirectToRoute('app_vault_shares', ['id' => $vault->getId()]);
+        }
+
+        $permission = $permissionRepository->findByCode($code);
+        if ($permission === null) {
+            $this->addFlash('error', 'Niveau d\'accès invalide.');
+            return $this->redirectToRoute('app_vault_shares', ['id' => $vault->getId()]);
+        }
+
+        $existing = $sharedVaultRepository->findByVaultAndRecipient($vault, $recipient);
+        if ($existing !== null) {
+            $existing->setPermission($permission);
+            $em->flush();
+            $this->addFlash('success', 'Niveau d\'accès mis à jour pour ' . $email . '.');
+            return $this->redirectToRoute('app_vault_shares', ['id' => $vault->getId()]);
+        }
+
+        $share = new SharedVault();
+        $share->setVault($vault);
+        $share->setSender($sender);
+        $share->setRecipient($recipient);
+        $share->setPermission($permission);
+        $em->persist($share);
+        $em->flush();
+
+        $this->addFlash('success', 'Invitation envoyée à ' . $email . '.');
+
+        return $this->redirectToRoute('app_vault_shares', ['id' => $vault->getId()]);
+    }
+
+    #[Route('/shares/{id}/accept', name: 'app_share_accept', methods: ['POST'])]
+    public function accept(
+        SharedVault $share,
+        Request $request,
+        EntityManagerInterface $em,
+    ): Response {
+        /** @var \App\Entity\User $user */
+        $user = $this->getUser();
+
+        if ($share->getRecipient() !== $user) {
+            throw $this->createAccessDeniedException();
+        }
+
+        if (!$this->isCsrfTokenValid('share_accept_' . $share->getId(), $request->request->get('_token'))) {
+            $this->addFlash('error', 'Token CSRF invalide.');
+            return $this->redirectToRoute('app_shares');
+        }
+
+        $share->accept();
+        $em->flush();
+        $this->addFlash('success', 'Accès au coffre "' . $share->getVault()->getName() . '" accepté.');
+
+        return $this->redirectToRoute('app_shares');
+    }
+
+    #[Route('/shares/{id}/decline', name: 'app_share_decline', methods: ['POST'])]
+    public function decline(
+        SharedVault $share,
+        Request $request,
+        EntityManagerInterface $em,
+    ): Response {
+        /** @var \App\Entity\User $user */
+        $user = $this->getUser();
+
+        if ($share->getRecipient() !== $user) {
+            throw $this->createAccessDeniedException();
+        }
+
+        if (!$this->isCsrfTokenValid('share_decline_' . $share->getId(), $request->request->get('_token'))) {
+            $this->addFlash('error', 'Token CSRF invalide.');
+            return $this->redirectToRoute('app_shares');
+        }
+
+        $em->remove($share);
+        $em->flush();
+        $this->addFlash('success', 'Invitation refusée.');
+
+        return $this->redirectToRoute('app_shares');
+    }
+
+    #[Route('/shares/{id}/revoke', name: 'app_share_revoke', methods: ['POST'])]
+    public function revoke(
+        SharedVault $share,
+        Request $request,
+        EntityManagerInterface $em,
+    ): Response {
+        /** @var \App\Entity\User $user */
+        $user       = $this->getUser();
+        $vaultOwner = $share->getVault()->getUser();
+
+        if ($share->getSender() !== $user && $vaultOwner !== $user) {
+            throw $this->createAccessDeniedException();
+        }
+
+        if (!$this->isCsrfTokenValid('share_revoke_' . $share->getId(), $request->request->get('_token'))) {
+            $this->addFlash('error', 'Token CSRF invalide.');
+            return $this->redirectToRoute('app_vault_shares', ['id' => $share->getVault()->getId()]);
+        }
+
+        $recipientEmail = $share->getRecipient()->getEmail();
+        $em->remove($share);
+        $em->flush();
+        $this->addFlash('success', 'Accès révoqué pour ' . $recipientEmail . '.');
+
+        return $this->redirectToRoute('app_vault_shares', ['id' => $share->getVault()->getId()]);
+    }
+}
