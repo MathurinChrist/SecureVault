@@ -28,4 +28,15 @@ class ActivityLogRepository extends ServiceEntityRepository
             ->getQuery()
             ->getResult();
     }
+
+    public function countSince(\DateTimeImmutable $since): int
+    {
+        return (int) $this->createQueryBuilder('a')
+            ->select('COUNT(a.id)')
+            ->where('a.createdAt >= :since')
+            ->setParameter('since', $since)
+            ->getQuery()
+            ->getSingleScalarResult();
+    }
+
 }
