@@ -3,6 +3,8 @@
 namespace App\Entity;
 
 use App\Repository\PasswordEntryRepository;
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity(repositoryClass: PasswordEntryRepository::class)]
@@ -47,20 +49,28 @@ class PasswordEntry
     #[ORM\JoinColumn(nullable: false)]
     private ?User $user = null;
 
+    #[ORM\ManyToMany(targetEntity: Category::class, inversedBy: 'passwordEntries')]
+    #[ORM\JoinTable(name: 'password_entry_category')]
+    private Collection $categories;
+
+    #[ORM\ManyToMany(targetEntity: Tag::class, inversedBy: 'passwordEntries')]
+    #[ORM\JoinTable(name: 'password_entry_tag')]
+    private Collection $tags;
+
+    #[ORM\OneToMany(mappedBy: 'passwordEntry', targetEntity: PasswordHistory::class, orphanRemoval: true)]
+    private Collection $passwordHistory;
+
     public function __construct()
     {
-        $this->createdAt = new \DateTimeImmutable();
+        $this->createdAt       = new \DateTimeImmutable();
+        $this->categories      = new ArrayCollection();
+        $this->tags            = new ArrayCollection();
+        $this->passwordHistory = new ArrayCollection();
     }
 
-    public function getId(): ?int
-    {
-        return $this->id;
-    }
+    public function getId(): ?int { return $this->id; }
 
-    public function getTitle(): ?string
-    {
-        return $this->title;
-    }
+    public function getTitle(): ?string { return $this->title; }
 
     public function setTitle(string $title): static
     {
@@ -68,10 +78,7 @@ class PasswordEntry
         return $this;
     }
 
-    public function getUsername(): ?string
-    {
-        return $this->username;
-    }
+    public function getUsername(): ?string { return $this->username; }
 
     public function setUsername(?string $username): static
     {
@@ -79,10 +86,7 @@ class PasswordEntry
         return $this;
     }
 
-    public function getEncryptedPassword(): ?string
-    {
-        return $this->encryptedPassword;
-    }
+    public function getEncryptedPassword(): ?string { return $this->encryptedPassword; }
 
     public function setEncryptedPassword(string $encryptedPassword): static
     {
@@ -90,10 +94,7 @@ class PasswordEntry
         return $this;
     }
 
-    public function getUrl(): ?string
-    {
-        return $this->url;
-    }
+    public function getUrl(): ?string { return $this->url; }
 
     public function setUrl(?string $url): static
     {
@@ -101,10 +102,7 @@ class PasswordEntry
         return $this;
     }
 
-    public function getNotes(): ?string
-    {
-        return $this->notes;
-    }
+    public function getNotes(): ?string { return $this->notes; }
 
     public function setNotes(?string $notes): static
     {
@@ -112,10 +110,7 @@ class PasswordEntry
         return $this;
     }
 
-    public function isFavorite(): bool
-    {
-        return $this->favorite;
-    }
+    public function isFavorite(): bool { return $this->favorite; }
 
     public function setFavorite(bool $favorite): static
     {
@@ -123,15 +118,9 @@ class PasswordEntry
         return $this;
     }
 
-    public function getCreatedAt(): ?\DateTimeImmutable
-    {
-        return $this->createdAt;
-    }
+    public function getCreatedAt(): ?\DateTimeImmutable { return $this->createdAt; }
 
-    public function getUpdatedAt(): ?\DateTimeImmutable
-    {
-        return $this->updatedAt;
-    }
+    public function getUpdatedAt(): ?\DateTimeImmutable { return $this->updatedAt; }
 
     #[ORM\PreUpdate]
     public function setUpdatedAtValue(): void
@@ -139,10 +128,7 @@ class PasswordEntry
         $this->updatedAt = new \DateTimeImmutable();
     }
 
-    public function getVault(): ?Vault
-    {
-        return $this->vault;
-    }
+    public function getVault(): ?Vault { return $this->vault; }
 
     public function setVault(?Vault $vault): static
     {
@@ -150,14 +136,45 @@ class PasswordEntry
         return $this;
     }
 
-    public function getUser(): ?User
-    {
-        return $this->user;
-    }
+    public function getUser(): ?User { return $this->user; }
 
     public function setUser(?User $user): static
     {
         $this->user = $user;
         return $this;
     }
+
+    public function getCategories(): Collection { return $this->categories; }
+
+    public function addCategory(Category $category): static
+    {
+        if (!$this->categories->contains($category)) {
+            $this->categories->add($category);
+        }
+        return $this;
+    }
+
+    public function removeCategory(Category $category): static
+    {
+        $this->categories->removeElement($category);
+        return $this;
+    }
+
+    public function getTags(): Collection { return $this->tags; }
+
+    public function addTag(Tag $tag): static
+    {
+        if (!$this->tags->contains($tag)) {
+            $this->tags->add($tag);
+        }
+        return $this;
+    }
+
+    public function removeTag(Tag $tag): static
+    {
+        $this->tags->removeElement($tag);
+        return $this;
+    }
+
+    public function getPasswordHistory(): Collection { return $this->passwordHistory; }
 }
