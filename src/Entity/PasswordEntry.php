@@ -8,7 +8,6 @@ use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity(repositoryClass: PasswordEntryRepository::class)]
-#[ORM\Table(name: 'password')]
 #[ORM\HasLifecycleCallbacks]
 class PasswordEntry
 {
@@ -50,11 +49,9 @@ class PasswordEntry
     private ?User $user = null;
 
     #[ORM\ManyToMany(targetEntity: Category::class, inversedBy: 'passwordEntries')]
-    #[ORM\JoinTable(name: 'password_entry_category')]
     private Collection $categories;
 
     #[ORM\ManyToMany(targetEntity: Tag::class, inversedBy: 'passwordEntries')]
-    #[ORM\JoinTable(name: 'password_entry_tag')]
     private Collection $tags;
 
     #[ORM\OneToMany(mappedBy: 'passwordEntry', targetEntity: PasswordHistory::class, orphanRemoval: true)]

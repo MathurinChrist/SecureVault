@@ -70,7 +70,6 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     private Collection $vaults;
 
     #[ORM\ManyToMany(targetEntity: Role::class, inversedBy: 'users')]
-    #[ORM\JoinTable(name: 'user_role')]
     private Collection $roleEntities;
 
     #[ORM\OneToMany(mappedBy: 'user', targetEntity: Notification::class, orphanRemoval: true)]

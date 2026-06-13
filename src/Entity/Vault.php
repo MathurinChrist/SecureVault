@@ -36,7 +36,6 @@ class Vault
     private Collection $sharedVaults;
 
     #[ORM\ManyToMany(targetEntity: Tag::class, inversedBy: 'vaults')]
-    #[ORM\JoinTable(name: 'vault_tag')]
     private Collection $tags;
 
     #[ORM\Column]
