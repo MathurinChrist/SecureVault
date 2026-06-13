@@ -374,6 +374,7 @@
 // ---- Add password modal ----
 function openAddModal()  { document.getElementById('add-modal').classList.remove('hidden'); }
 function closeAddModal() { document.getElementById('add-modal').classList.add('hidden'); }
+{% if open_add_modal %}document.addEventListener('DOMContentLoaded', openAddModal);{% endif %}
 
 // ---- Edit password modal ----
 function openEditModal(btn) {

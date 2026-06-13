@@ -84,7 +84,7 @@ class VaultController extends AbstractController
     }
 
     #[Route('/vaults/{id}', name: 'app_vault_show', methods: ['GET'], requirements: ['id' => '\d+'])]
-    public function show(Vault $vault, FormFactoryInterface $formFactory, VaultRepository $vaultRepository): Response
+    public function show(Vault $vault, Request $request, FormFactoryInterface $formFactory, VaultRepository $vaultRepository): Response
     {
         $this->denyAccessUnlessGranted('VIEW', $vault);
 
@@ -92,7 +92,10 @@ class VaultController extends AbstractController
         $user   = $this->getUser();
         $vaults = $vaultRepository->findByUser($user);
 
-        $addForm = $formFactory->createNamed('add_password_entry', PasswordEntryType::class, new PasswordEntry(), [
+        $newEntry = new PasswordEntry();
+        $newEntry->setVault($vault);
+
+        $addForm = $formFactory->createNamed('add_password_entry', PasswordEntryType::class, $newEntry, [
             'vaults'           => $vaults,
             'require_password' => true,
         ]);
@@ -103,9 +106,10 @@ class VaultController extends AbstractController
         ]);
 
         return $this->render('vault/show.html.twig', [
-            'vault'        => $vault,
+            'vault'         => $vault,
             'password_form' => $addForm->createView(),
             'edit_form'     => $editForm->createView(),
+            'open_add_modal' => $request->query->get('modal') === 'add',
         ]);
     }
 
@@ -180,14 +184,33 @@ class VaultController extends AbstractController
     // ============================= PASSWORDS =============================
 
     #[Route('/passwords', name: 'app_passwords', methods: ['GET'])]
-    public function passwords(PasswordEntryRepository $passwordEntryRepository): Response
-    {
+    public function passwords(
+        PasswordEntryRepository $passwordEntryRepository,
+        VaultRepository $vaultRepository,
+        FormFactoryInterface $formFactory,
+        Request $request,
+    ): Response {
         /** @var \App\Entity\User $user */
         $user      = $this->getUser();
         $passwords = $passwordEntryRepository->findByUser($user);
+        $vaults    = $vaultRepository->findByUser($user);
+
+        $addForm = $formFactory->createNamed('add_password_entry', PasswordEntryType::class, new PasswordEntry(), [
+            'vaults'           => $vaults,
+            'require_password' => true,
+        ]);
+
+        $editForm = $formFactory->createNamed('edit_password_entry', PasswordEntryType::class, new PasswordEntry(), [
+            'vaults'           => $vaults,
+            'require_password' => false,
+        ]);
 
         return $this->render('passwords/index.html.twig', [
-            'passwords' => $passwords,
+            'passwords'      => $passwords,
+            'vaults'         => $vaults,
+            'password_form'  => $addForm->createView(),
+            'edit_form'      => $editForm->createView(),
+            'open_add_modal' => $request->query->get('modal') === 'add',
         ]);
     }
 
@@ -225,11 +248,24 @@ class VaultController extends AbstractController
                 $errors[] = $error->getMessage();
             }
             $this->addFlash('error', $errors ? implode(' ', $errors) : 'Formulaire invalide.');
+
+            $referer = $request->headers->get('referer', '');
+            if (preg_match('#/vaults/(\d+)#', $referer, $m)) {
+                return $this->redirectToRoute('app_vault_show', ['id' => $m[1], 'modal' => 'add']);
+            }
+            if (str_contains($referer, '/passwords')) {
+                return $this->redirectToRoute('app_passwords', ['modal' => 'add']);
+            }
+
+            return $this->redirectToRoute('app_dashboard');
         }
 
         $referer = $request->headers->get('referer', '');
         if (preg_match('#/vaults/(\d+)#', $referer, $m)) {
             return $this->redirectToRoute('app_vault_show', ['id' => $m[1]]);
+        }
+        if (str_contains($referer, '/passwords')) {
+            return $this->redirectToRoute('app_passwords');
         }
 
         return $this->redirectToRoute('app_dashboard');
@@ -280,6 +316,9 @@ class VaultController extends AbstractController
         if (preg_match('#/vaults/(\d+)#', $referer, $m)) {
             return $this->redirectToRoute('app_vault_show', ['id' => $m[1]]);
         }
+        if (str_contains($referer, '/passwords')) {
+            return $this->redirectToRoute('app_passwords');
+        }
 
         return $this->redirectToRoute('app_dashboard');
     }
@@ -312,6 +351,9 @@ class VaultController extends AbstractController
         $referer = $request->headers->get('referer', '');
         if (preg_match('#/vaults/(\d+)#', $referer, $m)) {
             return $this->redirectToRoute('app_vault_show', ['id' => $m[1]]);
+        }
+        if (str_contains($referer, '/passwords')) {
+            return $this->redirectToRoute('app_passwords');
         }
 
         return $this->redirectToRoute('app_dashboard');

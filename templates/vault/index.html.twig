@@ -68,7 +68,8 @@
             {% for vault in active_vaults %}
                 {% set color       = palette[loop.index0 % palette|length] %}
                 {% set entry_count = vault.passwordEntries|length %}
-                <div class="glass-card rounded-2xl p-6 flex flex-col space-y-4 hover:border-white/20 transition group">
+                <div class="glass-card rounded-2xl p-6 flex flex-col space-y-4 hover:border-white/20 transition group cursor-pointer"
+                     onclick="window.location.href='{{ path('app_vault_show', {id: vault.id}) }}'">
 
                     {# Card header #}
                     <div class="flex items-start justify-between">
@@ -90,7 +91,7 @@
                         <div class="flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition">
                             <button
                                 type="button"
-                                onclick="openEditModal(this)"
+                                onclick="event.stopPropagation(); openEditModal(this)"
                                 data-id="{{ vault.id }}"
                                 data-name="{{ vault.name|e('html_attr') }}"
                                 data-description="{{ vault.description|default('')|e('html_attr') }}"
@@ -102,7 +103,7 @@
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
                                 </svg>
                             </button>
-                            <form method="post" action="{{ path('app_vault_archive', {id: vault.id}) }}" class="inline">
+                            <form method="post" action="{{ path('app_vault_archive', {id: vault.id}) }}" class="inline" onclick="event.stopPropagation()">
                                 <input type="hidden" name="_token" value="{{ csrf_token('vault_archive_' ~ vault.id) }}">
                                 <button type="submit"
                                     class="p-1.5 rounded-lg text-slate-400 hover:text-amber-400 hover:bg-white/5 transition"
