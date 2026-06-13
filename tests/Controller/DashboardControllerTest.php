@@ -22,6 +22,7 @@ class DashboardControllerTest extends WebTestCase
     private function createAndLoginUser(): \Symfony\Bundle\FrameworkBundle\KernelBrowser
     {
         $client  = static::createClient();
+        $this->skipIfDatabaseUnavailable();
         $em      = static::getContainer()->get(EntityManagerInterface::class);
         $hasher  = static::getContainer()->get(UserPasswordHasherInterface::class);
 
@@ -49,7 +50,6 @@ class DashboardControllerTest extends WebTestCase
 
     public function testDashboardLoadsForAuthenticatedUser(): void
     {
-        $this->skipIfDatabaseUnavailable();
         $client = $this->createAndLoginUser();
         $client->request('GET', '/dashboard');
 
@@ -58,7 +58,6 @@ class DashboardControllerTest extends WebTestCase
 
     public function testDashboardAutoCreatesVaultOnFirstLogin(): void
     {
-        $this->skipIfDatabaseUnavailable();
         $client = $this->createAndLoginUser();
 
         // First visit triggers vault + demo password creation
@@ -72,7 +71,6 @@ class DashboardControllerTest extends WebTestCase
 
     public function testDashboardContainsPasswordCount(): void
     {
-        $this->skipIfDatabaseUnavailable();
         $client = $this->createAndLoginUser();
         $client->request('GET', '/dashboard');
 

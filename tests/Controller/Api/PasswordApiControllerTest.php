@@ -23,13 +23,17 @@ class PasswordApiControllerTest extends WebTestCase
     private function createSetup(): array
     {
         $client = static::createClient();
+        $this->skipIfDatabaseUnavailable();
         $em     = static::getContainer()->get(EntityManagerInterface::class);
         $hasher = static::getContainer()->get(UserPasswordHasherInterface::class);
 
+        $plainPassword = 'Pass123!';
+        $email = 'api_pw_' . uniqid() . '@example.com';
+
         $user = new User();
-        $user->setEmail('api_pw_' . uniqid() . '@example.com')
+        $user->setEmail($email)
              ->setFirstName('API')->setLastName('User')
-             ->setPassword($hasher->hashPassword($user, 'Pass123!'));
+             ->setPassword($hasher->hashPassword($user, $plainPassword));
 
         $vault = new Vault();
         $vault->setName('API Test Vault')->setUser($user);
@@ -38,14 +42,16 @@ class PasswordApiControllerTest extends WebTestCase
         $em->persist($vault);
         $em->flush();
 
-        $client->loginUser($user);
+        // Obtain JWT so all requests to the stateless API firewall stay authenticated
+        $client->request('POST', '/api/v1/auth/login', [], [], ['CONTENT_TYPE' => 'application/json'], json_encode(['email' => $email, 'password' => $plainPassword]));
+        $jwt = json_decode($client->getResponse()->getContent(), true)['token'];
+        $client->setServerParameter('HTTP_AUTHORIZATION', 'Bearer ' . $jwt);
 
         return [$client, $user, $vault];
     }
 
     public function testPasswordListReturnsEmptyArray(): void
     {
-        $this->skipIfDatabaseUnavailable();
         [$client, , $vault] = $this->createSetup();
 
         $client->request('GET', '/api/v1/vaults/' . $vault->getId() . '/passwords');
@@ -58,7 +64,6 @@ class PasswordApiControllerTest extends WebTestCase
 
     public function testCreatePasswordReturns201(): void
     {
-        $this->skipIfDatabaseUnavailable();
         [$client, , $vault] = $this->createSetup();
 
         $client->request(
@@ -85,7 +90,6 @@ class PasswordApiControllerTest extends WebTestCase
 
     public function testCreatePasswordWithoutTitleReturns422(): void
     {
-        $this->skipIfDatabaseUnavailable();
         [$client, , $vault] = $this->createSetup();
 
         $client->request(
@@ -102,7 +106,6 @@ class PasswordApiControllerTest extends WebTestCase
 
     public function testShowPasswordReturnsDecryptedValue(): void
     {
-        $this->skipIfDatabaseUnavailable();
         [$client, , $vault] = $this->createSetup();
 
         $client->request(
@@ -126,7 +129,6 @@ class PasswordApiControllerTest extends WebTestCase
 
     public function testDeletePasswordReturns204(): void
     {
-        $this->skipIfDatabaseUnavailable();
         [$client, , $vault] = $this->createSetup();
 
         $client->request(
@@ -149,23 +151,25 @@ class PasswordApiControllerTest extends WebTestCase
 
     public function testCannotAccessAnotherUsersVaultPasswords(): void
     {
-        $this->skipIfDatabaseUnavailable();
         [$client, , $vault] = $this->createSetup();
 
         $em     = static::getContainer()->get(EntityManagerInterface::class);
         $hasher = static::getContainer()->get(UserPasswordHasherInterface::class);
 
+        $plainPassword = 'Pass123!';
         $other = new User();
         $other->setEmail('other_pw_' . uniqid() . '@example.com')
               ->setFirstName('Other')->setLastName('User')
-              ->setPassword($hasher->hashPassword($other, 'Pass123!'));
+              ->setPassword($hasher->hashPassword($other, $plainPassword));
         $em->persist($other);
         $em->flush();
 
-        $otherClient = static::createClient();
-        $otherClient->loginUser($other);
+        // Switch to the other user's JWT
+        $client->request('POST', '/api/v1/auth/login', [], [], ['CONTENT_TYPE' => 'application/json'], json_encode(['email' => $other->getEmail(), 'password' => $plainPassword]));
+        $otherJwt = json_decode($client->getResponse()->getContent(), true)['token'];
+        $client->setServerParameter('HTTP_AUTHORIZATION', 'Bearer ' . $otherJwt);
 
-        $otherClient->request('GET', '/api/v1/vaults/' . $vault->getId() . '/passwords');
+        $client->request('GET', '/api/v1/vaults/' . $vault->getId() . '/passwords');
         $this->assertResponseStatusCodeSame(403);
     }
 

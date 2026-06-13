@@ -35,9 +35,8 @@ class SecurityControllerTest extends WebTestCase
 
     public function testInvalidLoginShowsError(): void
     {
-        $this->skipIfDatabaseUnavailable();
-
         $client = static::createClient();
+        $this->skipIfDatabaseUnavailable();
         $client->request('GET', '/login');
         $client->submitForm('Se connecter', [
             'email'    => 'nobody@example.com',
@@ -51,9 +50,8 @@ class SecurityControllerTest extends WebTestCase
 
     public function testApiLoginWithoutCredentialsReturns401(): void
     {
-        $this->skipIfDatabaseUnavailable();
-
         $client = static::createClient();
+        $this->skipIfDatabaseUnavailable();
         $client->request(
             'POST',
             '/api/v1/auth/login',

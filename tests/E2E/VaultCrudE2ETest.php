@@ -60,7 +60,7 @@ class VaultCrudE2ETest extends PantherTestCase
         $client->request('GET', '/vaults');
         $client->waitFor('body');
 
-        $this->assertResponseIsSuccessful();
+        $this->assertStringNotContainsString('/login', $client->getCurrentURL());
     }
 
     public function testCreateVaultFormExists(): void
@@ -70,7 +70,7 @@ class VaultCrudE2ETest extends PantherTestCase
         $user   = $this->createTestUser();
         $client = $this->loginAs($user->getEmail());
 
-        $client->request('GET', '/vaults/new');
+        $client->request('GET', '/vaults');
         $client->waitFor('body');
 
         $this->assertSelectorExists('form');
@@ -85,10 +85,10 @@ class VaultCrudE2ETest extends PantherTestCase
         $client  = $this->loginAs($user->getEmail());
         $vaultName = 'E2E Vault ' . uniqid();
 
-        $crawler = $client->request('GET', '/vaults/new');
-        $client->waitFor('form');
+        $crawler = $client->request('GET', '/vaults');
+        $client->waitFor('#create-modal form, form');
 
-        $form = $crawler->selectButton('Créer le coffre')->form([
+        $form = $crawler->selectButton('Créer')->form([
             'vault[name]'        => $vaultName,
             'vault[description]' => 'Created by E2E test',
         ]);

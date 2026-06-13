@@ -28,9 +28,8 @@ class RegistrationControllerTest extends WebTestCase
 
     public function testSuccessfulRegistrationRedirectsToLogin(): void
     {
-        $this->skipIfDatabaseUnavailable();
-
         $client = static::createClient();
+        $this->skipIfDatabaseUnavailable();
         $client->request('GET', '/register');
 
         $email = 'newuser_' . uniqid() . '@example.com';
@@ -48,8 +47,8 @@ class RegistrationControllerTest extends WebTestCase
 
     public function testRegistrationWithTooShortPasswordShowsError(): void
     {
-        $this->skipIfDatabaseUnavailable();
         $client = static::createClient();
+        $this->skipIfDatabaseUnavailable();
         $client->request('GET', '/register');
 
         $client->submitForm('S\'inscrire', [

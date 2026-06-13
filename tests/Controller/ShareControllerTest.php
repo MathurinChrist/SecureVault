@@ -24,6 +24,7 @@ class ShareControllerTest extends WebTestCase
     private function createSetup(): array
     {
         $client = static::createClient();
+        $this->skipIfDatabaseUnavailable();
         $em     = static::getContainer()->get(EntityManagerInterface::class);
         $hasher = static::getContainer()->get(UserPasswordHasherInterface::class);
 
@@ -54,7 +55,6 @@ class ShareControllerTest extends WebTestCase
 
     public function testSharesPageLoadsForAuthenticatedUser(): void
     {
-        $this->skipIfDatabaseUnavailable();
         [$client] = $this->createSetup();
         $client->request('GET', '/shares');
 
@@ -63,7 +63,6 @@ class ShareControllerTest extends WebTestCase
 
     public function testVaultSharesPageLoads(): void
     {
-        $this->skipIfDatabaseUnavailable();
         [$client, , $vault] = $this->createSetup();
         $client->request('GET', '/vaults/' . $vault->getId() . '/shares');
 
@@ -72,7 +71,6 @@ class ShareControllerTest extends WebTestCase
 
     public function testVaultSharesPageForbiddenForNonOwner(): void
     {
-        $this->skipIfDatabaseUnavailable();
         [$client, , $vault, $em, $hasher] = $this->createSetup();
 
         $other = new User();
@@ -82,20 +80,18 @@ class ShareControllerTest extends WebTestCase
         $em->persist($other);
         $em->flush();
 
-        $otherClient = static::createClient();
-        $otherClient->loginUser($other);
-        $otherClient->request('GET', '/vaults/' . $vault->getId() . '/shares');
+        $client->loginUser($other);
+        $client->request('GET', '/vaults/' . $vault->getId() . '/shares');
 
         $this->assertResponseStatusCodeSame(403);
     }
 
     public function testShareInviteWithUnknownEmailShowsError(): void
     {
-        $this->skipIfDatabaseUnavailable();
         [$client, , $vault] = $this->createSetup();
         $client->request('GET', '/vaults/' . $vault->getId() . '/shares');
 
-        $client->submitForm('Inviter', [
+        $client->submitForm('Envoyer l\'invitation', [
             'email'      => 'nobody_unknown_' . uniqid() . '@nowhere.invalid',
             'permission' => 'READ',
         ]);
@@ -107,7 +103,6 @@ class ShareControllerTest extends WebTestCase
 
     public function testShareInviteWithKnownUser(): void
     {
-        $this->skipIfDatabaseUnavailable();
         [$client, , $vault, $em, $hasher] = $this->createSetup();
 
         $recipient = new User();
@@ -115,18 +110,20 @@ class ShareControllerTest extends WebTestCase
                   ->setFirstName('Rec')->setLastName('User')
                   ->setPassword($hasher->hashPassword($recipient, 'Pass123!'));
 
-        $perm = (new VaultPermission())->setCode('READ')->setName('Lecture');
+        $perm = $em->getRepository(VaultPermission::class)->findOneBy(['code' => 'READ']);
+        if (!$perm) {
+            $perm = (new VaultPermission())->setCode('READ')->setName('Lecture');
+            $em->persist($perm);
+        }
         $em->persist($recipient);
-        $em->persist($perm);
         $em->flush();
 
-        $csrf = static::getContainer()->get('security.csrf.token_manager')
-                      ->getToken('vault_share_' . $vault->getId())->getValue();
+        $client->request('GET', '/vaults/' . $vault->getId() . '/shares');
+        $this->assertResponseIsSuccessful();
 
-        $client->request('POST', '/vaults/' . $vault->getId() . '/share', [
+        $client->submitForm('Envoyer l\'invitation', [
             'email'      => $recipient->getEmail(),
             'permission' => 'READ',
-            '_token'     => $csrf,
         ]);
 
         $this->assertResponseRedirects();

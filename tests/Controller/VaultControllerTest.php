@@ -30,24 +30,31 @@ class VaultControllerTest extends WebTestCase
     private function createAuthenticatedClient(): \Symfony\Bundle\FrameworkBundle\KernelBrowser
     {
         $client = static::createClient();
+        $this->skipIfDatabaseUnavailable();
 
         /** @var EntityManagerInterface $em */
         $em     = static::getContainer()->get(EntityManagerInterface::class);
         /** @var UserPasswordHasherInterface $hasher */
         $hasher = static::getContainer()->get(UserPasswordHasherInterface::class);
 
+        $plainPassword = 'TestPass123!';
         $email = 'vaulttest_' . uniqid() . '@example.com';
 
         $user = new User();
         $user->setEmail($email)
              ->setFirstName('Test')
              ->setLastName('User')
-             ->setPassword($hasher->hashPassword($user, 'TestPass123!'));
+             ->setPassword($hasher->hashPassword($user, $plainPassword));
 
         $em->persist($user);
         $em->flush();
 
         $client->loginUser($user);
+
+        // Obtain JWT so multi-request API tests stay authenticated across kernel reboots
+        $client->request('POST', '/api/v1/auth/login', [], [], ['CONTENT_TYPE' => 'application/json'], json_encode(['email' => $email, 'password' => $plainPassword]));
+        $jwt = json_decode($client->getResponse()->getContent(), true)['token'];
+        $client->setServerParameter('HTTP_AUTHORIZATION', 'Bearer ' . $jwt);
 
         return $client;
     }
@@ -62,7 +69,6 @@ class VaultControllerTest extends WebTestCase
 
     public function testVaultsIndexLoadsWhenAuthenticated(): void
     {
-        $this->skipIfDatabaseUnavailable();
         $client = $this->createAuthenticatedClient();
         $client->request('GET', '/vaults');
 
@@ -71,16 +77,16 @@ class VaultControllerTest extends WebTestCase
 
     public function testCreateVaultSucceeds(): void
     {
-        $this->skipIfDatabaseUnavailable();
         $client = $this->createAuthenticatedClient();
 
-        $client->request('GET', '/vaults/new');
+        $crawler = $client->request('GET', '/vaults');
         $this->assertResponseIsSuccessful();
 
-        $client->submitForm('Créer le coffre', [
+        $form = $crawler->filter('form[action="/vaults/new"]')->form([
             'vault[name]'        => 'Test Vault',
             'vault[description]' => 'A test vault',
         ]);
+        $client->submit($form);
 
         $this->assertResponseRedirects();
         $client->followRedirect();
@@ -89,7 +95,6 @@ class VaultControllerTest extends WebTestCase
 
     public function testVaultShowRequiresOwnership(): void
     {
-        $this->skipIfDatabaseUnavailable();
         $client = $this->createAuthenticatedClient();
 
         /** @var EntityManagerInterface $em */
@@ -115,7 +120,6 @@ class VaultControllerTest extends WebTestCase
 
     public function testApiVaultListReturnsJson(): void
     {
-        $this->skipIfDatabaseUnavailable();
         $client = $this->createAuthenticatedClient();
         $client->request(
             'GET',
@@ -133,7 +137,6 @@ class VaultControllerTest extends WebTestCase
 
     public function testApiCreateVaultReturns201(): void
     {
-        $this->skipIfDatabaseUnavailable();
         $client = $this->createAuthenticatedClient();
         $client->request(
             'POST',
@@ -152,7 +155,6 @@ class VaultControllerTest extends WebTestCase
 
     public function testApiCreateVaultWithoutNameReturns422(): void
     {
-        $this->skipIfDatabaseUnavailable();
         $client = $this->createAuthenticatedClient();
         $client->request(
             'POST',
@@ -168,7 +170,6 @@ class VaultControllerTest extends WebTestCase
 
     public function testApiDeleteVault(): void
     {
-        $this->skipIfDatabaseUnavailable();
         $client = $this->createAuthenticatedClient();
 
         $client->request(

@@ -22,6 +22,7 @@ class ProfileControllerTest extends WebTestCase
     private function createAndLoginUser(string $suffix = ''): array
     {
         $client = static::createClient();
+        $this->skipIfDatabaseUnavailable();
         $em     = static::getContainer()->get(EntityManagerInterface::class);
         $hasher = static::getContainer()->get(UserPasswordHasherInterface::class);
 
@@ -49,7 +50,6 @@ class ProfileControllerTest extends WebTestCase
 
     public function testProfileLoadsForAuthenticatedUser(): void
     {
-        $this->skipIfDatabaseUnavailable();
         [$client] = $this->createAndLoginUser();
         $client->request('GET', '/profile');
 
@@ -58,7 +58,6 @@ class ProfileControllerTest extends WebTestCase
 
     public function testProfileContainsProfileForm(): void
     {
-        $this->skipIfDatabaseUnavailable();
         [$client] = $this->createAndLoginUser();
         $client->request('GET', '/profile');
 
@@ -68,7 +67,6 @@ class ProfileControllerTest extends WebTestCase
 
     public function testProfileContainsPasswordForm(): void
     {
-        $this->skipIfDatabaseUnavailable();
         [$client] = $this->createAndLoginUser();
         $client->request('GET', '/profile');
 
@@ -78,14 +76,12 @@ class ProfileControllerTest extends WebTestCase
 
     public function testProfileUpdateRedirectsBack(): void
     {
-        $this->skipIfDatabaseUnavailable();
         [$client, $user] = $this->createAndLoginUser('upd');
         $client->request('GET', '/profile');
 
-        $client->submitForm('Mettre à jour le profil', [
+        $client->submitForm('Sauvegarder les modifications', [
             'user_profile[firstName]' => 'UpdatedFirst',
             'user_profile[lastName]'  => 'UpdatedLast',
-            'user_profile[email]'     => $user->getEmail(),
         ]);
 
         $this->assertResponseRedirects('/profile');
