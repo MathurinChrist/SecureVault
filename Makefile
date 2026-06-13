@@ -1,15 +1,21 @@
-# --- Variables ---
-DOCKER_COMPOSE = docker compose
-PHP = $(DOCKER_COMPOSE) exec app
-SYMFONY = $(PHP) bin/console
+# ── Variables ─────────────────────────────────────────────────────────────────
+DOCKER_COMPOSE  = docker compose
+PHP             = $(DOCKER_COMPOSE) exec app
+SYMFONY         = $(PHP) bin/console
+PHPUNIT         = $(PHP) php vendor/bin/phpunit --configuration phpunit.dist.xml
 
-# --- Cibles ---
-.PHONY: help build up down restart logs ps shell migrate db-shell composer-install make-migration make-entity make-command fixtures messenger-consume
+# ── Cibles principales ────────────────────────────────────────────────────────
+.PHONY: help build up down restart logs ps shell \
+        migrate db-shell composer-install cc \
+        make-migration make-entity make-command fixtures messenger-consume \
+        test test-unit test-functional test-e2e \
+        test-db-setup jwt-keys log_tail
 
 help: ## Affiche ce message d'aide
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}'
 
-build: ## Construit les images Docker
+# ── Docker ────────────────────────────────────────────────────────────────────
+build: ## Construit les images Docker (sans cache)
 	$(DOCKER_COMPOSE) build --pull --no-cache
 
 up: ## Démarre les conteneurs en arrière-plan
@@ -31,31 +37,61 @@ ps: ## Liste les conteneurs en cours d'exécution
 shell: ## Ouvre un shell dans le conteneur app
 	$(DOCKER_COMPOSE) exec app sh
 
-migrate: ## Exécute les migrations Doctrine
+# ── Application ───────────────────────────────────────────────────────────────
+migrate: ## Exécute les migrations Doctrine (env dev)
 	$(SYMFONY) doctrine:migrations:migrate --no-interaction
 
-db-shell: ## Accède au shell de la base de données PostgreSQL
+db-shell: ## Accède au shell PostgreSQL
 	$(DOCKER_COMPOSE) exec database psql -U app -d app
 
-composer-install: ## Installe les dépendances composer
+composer-install: ## Installe les dépendances Composer
 	$(DOCKER_COMPOSE) exec app composer install
 
 cc: ## Vide le cache Symfony
 	$(SYMFONY) cache:clear
 
-make-migration: ## Crée une nouvelle migration
+make-migration: ## Génère une nouvelle migration
 	$(SYMFONY) make:migration
 
-make-entity: ## Crée une nouvelle entité
+make-entity: ## Génère une nouvelle entité
 	$(SYMFONY) make:entity
 
-make-command: ## Crée une nouvelle commande Symfony
+make-command: ## Génère une nouvelle commande
 	$(SYMFONY) make:command
 
-fixtures: ## Charge les fixtures de données
+fixtures: ## Charge les fixtures
 	$(SYMFONY) doctrine:fixtures:load --no-interaction
 
-messenger-consume: ## Lance le worker Messenger pour traiter les messages (emails, etc.)
+messenger-consume: ## Lance le worker Messenger
 	$(SYMFONY) messenger:consume async -vv
-log_tail:
-	docker compose exec app tail -f var/log/dev.log
+
+log_tail: ## Suit les logs Symfony en temps réel
+	$(DOCKER_COMPOSE) exec app tail -f var/log/dev.log
+
+jwt-keys: ## Génère les clés JWT RSA dans le conteneur app
+	$(PHP) sh -c ' \
+		mkdir -p config/jwt && \
+		openssl genpkey -algorithm RSA -out config/jwt/private.pem -pkeyopt rsa_keygen_bits:4096 -pass pass:$${JWT_PASSPHRASE:-securevault} && \
+		openssl rsa -pubout -in config/jwt/private.pem -out config/jwt/public.pem -passin pass:$${JWT_PASSPHRASE:-securevault} && \
+		echo "JWT keys generated." \
+	'
+
+# ── Tests ─────────────────────────────────────────────────────────────────────
+test-db-setup: ## Crée et migre la base de données de test
+	$(PHP) php bin/console doctrine:database:drop --force --if-exists --env=test
+	$(PHP) php bin/console doctrine:database:create --env=test
+	$(PHP) php bin/console doctrine:migrations:migrate --no-interaction --env=test
+
+test-unit: ## Lance les tests unitaires (Service + Security)
+	$(PHPUNIT) tests/Service/ tests/Security/
+
+test-functional: test-db-setup ## Lance les tests fonctionnels (Controllers)
+	$(PHPUNIT) tests/Controller/
+
+test-e2e: test-db-setup ## Lance les tests E2E Panther (nécessite Chrome dans le conteneur)
+	$(PHPUNIT) tests/E2E/
+
+test: test-db-setup ## Lance tous les tests (unit + functional + e2e)
+	$(PHPUNIT) tests/Service/ tests/Security/
+	$(PHPUNIT) tests/Controller/
+	$(PHPUNIT) tests/E2E/

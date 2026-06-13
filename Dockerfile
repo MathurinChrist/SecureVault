@@ -1,37 +1,41 @@
-FROM dunglas/frankenphp:latest-php8.2-alpine
+FROM dunglas/frankenphp:1-php8.4-alpine
 
-# Set working directory
 WORKDIR /app
 
-# Install system dependencies
+# ── System packages ───────────────────────────────────────────────────────────
 RUN apk add --no-cache \
     git \
     unzip \
+    openssl \
     libpq-dev \
     libzip-dev \
     icu-dev \
-    zlib-dev
+    zlib-dev \
+    chromium \
+    chromium-chromedriver
 
-# Install PHP extensions
+# ── PHP extensions ────────────────────────────────────────────────────────────
 RUN docker-php-ext-install \
     pdo_pgsql \
     zip \
     intl \
-    opcache
+    opcache \
+    pcntl
 
-# Get latest Composer
-COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
+COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
-# Copy project files
 COPY . .
 
-# Set environment
-ENV SERVER_NAME=:80
-ENV CADDY_GLOBAL_OPTIONS="local_certs"
-
-# Give permissions
-RUN chown -R www-data:www-data var && \
+# ── Runtime directories ───────────────────────────────────────────────────────
+RUN mkdir -p var/cache var/log var/share config/jwt && \
     chmod -R 777 var
 
-# Install dependencies
-RUN composer install --no-interaction --optimize-autoloader
+# ── FrankenPHP server config ──────────────────────────────────────────────────
+ENV SERVER_NAME=:80
+
+# ── Entrypoint ────────────────────────────────────────────────────────────────
+COPY docker/entrypoint.sh /usr/local/bin/docker-entrypoint
+RUN chmod +x /usr/local/bin/docker-entrypoint
+
+ENTRYPOINT ["docker-entrypoint"]
+CMD ["frankenphp", "run", "--config", "/etc/caddy/Caddyfile", "--adapter", "caddyfile"]

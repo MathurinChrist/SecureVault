@@ -1,0 +1,25 @@
+.git
+.github
+.claude
+.phpunit.cache
+var/
+vendor/
+drivers/
+node_modules/
+public/bundles/
+public/uploads/
+
+# Secrets — never bake into image
+.env.local
+.env.*.local
+config/jwt/*.pem
+
+# Test artefacts
+.phpunit.result.cache
+coverage/
+
+# IDE / OS
+.idea/
+.vscode/
+*.DS_Store
+Thumbs.db
