@@ -6,6 +6,7 @@ use App\Repository\PasswordEntryRepository;
 use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity(repositoryClass: PasswordEntryRepository::class)]
+#[ORM\Table(name: 'password')]
 #[ORM\HasLifecycleCallbacks]
 class PasswordEntry
 {
@@ -41,6 +42,10 @@ class PasswordEntry
     #[ORM\ManyToOne(inversedBy: 'passwordEntries')]
     #[ORM\JoinColumn(nullable: false)]
     private ?Vault $vault = null;
+
+    #[ORM\ManyToOne]
+    #[ORM\JoinColumn(nullable: false)]
+    private ?User $user = null;
 
     public function __construct()
     {
@@ -142,6 +147,17 @@ class PasswordEntry
     public function setVault(?Vault $vault): static
     {
         $this->vault = $vault;
+        return $this;
+    }
+
+    public function getUser(): ?User
+    {
+        return $this->user;
+    }
+
+    public function setUser(?User $user): static
+    {
+        $this->user = $user;
         return $this;
     }
 }

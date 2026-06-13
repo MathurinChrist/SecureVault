@@ -22,7 +22,7 @@ security:
                 login_path: app_login
                 check_path: app_login
                 enable_csrf: true
-                default_target_path: app_home
+                default_target_path: app_dashboard
                 username_parameter: email
                 password_parameter: password
             logout:
@@ -32,8 +32,15 @@ security:
 
     # Note: Only the *first* matching rule is applied
     access_control:
-        # - { path: ^/admin, roles: ROLE_ADMIN }
-        # - { path: ^/vault, roles: ROLE_USER }
+        - { path: ^/admin, roles: ROLE_ADMIN }
+        - { path: ^/dashboard, roles: ROLE_USER }
+        - { path: ^/vaults, roles: ROLE_USER }
+        - { path: ^/passwords, roles: ROLE_USER }
+        - { path: ^/alerts, roles: ROLE_USER }
+        - { path: ^/profile, roles: ROLE_USER }
+        - { path: ^/shares, roles: ROLE_USER }
+        - { path: ^/security, roles: ROLE_USER }
+        - { path: ^/password, roles: ROLE_USER }
 
 when@test:
     security:

@@ -17,13 +17,32 @@ class PasswordEntryRepository extends ServiceEntityRepository
         parent::__construct($registry, PasswordEntry::class);
     }
 
+    public function findRecentByUser(User $user, int $limit = 5): array
+    {
+        return $this->createQueryBuilder('p')
+            ->where('p.user = :user')
+            ->setParameter('user', $user)
+            ->orderBy('p.createdAt', 'DESC')
+            ->setMaxResults($limit)
+            ->getQuery()
+            ->getResult();
+    }
+
+    public function countByUser(User $user): int
+    {
+        return (int) $this->createQueryBuilder('p')
+            ->select('COUNT(p.id)')
+            ->where('p.user = :user')
+            ->setParameter('user', $user)
+            ->getQuery()
+            ->getSingleScalarResult();
+    }
+
     /** @return PasswordEntry[] */
     public function findByUser(User $user): array
     {
         return $this->createQueryBuilder('p')
-            ->addSelect('v')
-            ->join('p.vault', 'v')
-            ->where('v.owner = :user')
+            ->where('p.user = :user')
             ->setParameter('user', $user)
             ->orderBy('p.createdAt', 'DESC')
             ->getQuery()

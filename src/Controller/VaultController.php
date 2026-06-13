@@ -3,10 +3,11 @@
 namespace App\Controller;
 
 use App\Entity\PasswordEntry;
-use App\Entity\Vault;
 use App\Form\PasswordEntryType;
-use App\Form\VaultType;
+use App\Repository\AlertRepository;
+use App\Repository\PasswordEntryRepository;
 use App\Repository\VaultRepository;
+use App\Service\AlertService;
 use App\Service\EncryptionService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -20,11 +21,16 @@ use Symfony\Component\Security\Http\Attribute\IsGranted;
 #[IsGranted('ROLE_USER')]
 class VaultController extends AbstractController
 {
+    public function __construct(
+        #[Autowire(env: 'VAULT_ENCRYPTION_KEY')]
+        private readonly string $encryptionKey,
+    ) {}
+
     #[Route('/vaults', name: 'app_vaults')]
     public function index(): Response
     {
         return $this->render('dashboard/placeholder.html.twig', [
-            'title' => 'Mes Coffres'
+            'title' => 'Mes Coffres',
         ]);
     }
 
@@ -32,7 +38,7 @@ class VaultController extends AbstractController
     public function passwords(): Response
     {
         return $this->render('dashboard/placeholder.html.twig', [
-            'title' => 'Mots de passe'
+            'title' => 'Mots de passe',
         ]);
     }
 
@@ -40,12 +46,12 @@ class VaultController extends AbstractController
     public function shares(): Response
     {
         return $this->render('dashboard/placeholder.html.twig', [
-            'title' => 'Partages'
+            'title' => 'Partages',
         ]);
     }
 
     #[Route('/alerts', name: 'app_alerts')]
-    public function alerts(\Doctrine\ORM\EntityManagerInterface $entityManager): Response
+    public function alerts(EntityManagerInterface $entityManager): Response
     {
         $user = $this->getUser();
         $alerts = $entityManager->getRepository(\App\Entity\Alert::class)->findBy(
@@ -54,12 +60,12 @@ class VaultController extends AbstractController
         );
 
         return $this->render('alerts/index.html.twig', [
-            'alerts' => $alerts
+            'alerts' => $alerts,
         ]);
     }
 
     #[Route('/alerts/mark-as-read/{id}', name: 'app_alerts_mark_read')]
-    public function markRead(int $id, \App\Repository\AlertRepository $alertRepository, \App\Service\AlertService $alertService): Response
+    public function markRead(int $id, AlertRepository $alertRepository, AlertService $alertService): Response
     {
         $alert = $alertRepository->find($id);
         if ($alert && $alert->getUser() === $this->getUser()) {
@@ -71,8 +77,9 @@ class VaultController extends AbstractController
     }
 
     #[Route('/alerts/mark-all-read', name: 'app_alerts_mark_all_read')]
-    public function markAllRead(\App\Service\AlertService $alertService): Response
+    public function markAllRead(AlertService $alertService): Response
     {
+        /** @var \App\Entity\User $user */
         $user = $this->getUser();
         $alertService->markAllAsRead($user);
         $this->addFlash('success', 'Toutes les alertes ont été marquées comme lues.');
@@ -81,7 +88,7 @@ class VaultController extends AbstractController
     }
 
     #[Route('/alerts/dismiss/{id}', name: 'app_alerts_dismiss')]
-    public function dismiss(int $id, \App\Repository\AlertRepository $alertRepository, \Doctrine\ORM\EntityManagerInterface $entityManager): Response
+    public function dismiss(int $id, AlertRepository $alertRepository, EntityManagerInterface $entityManager): Response
     {
         $alert = $alertRepository->find($id);
         if ($alert && $alert->getUser() === $this->getUser()) {
@@ -94,16 +101,10 @@ class VaultController extends AbstractController
     }
 
     #[Route('/security/2fa-setup', name: 'app_2fa_setup')]
-    public function setup2fa(\Doctrine\ORM\EntityManagerInterface $entityManager): Response
+    public function setup2fa(): Response
     {
-        $user = $this->getUser();
-        
-        $user->setIs2faEnabled(true);
-        $user->setTwoFactorSecret('MOCKED_TOTP_SECRET');
-        $entityManager->flush();
-        
-        $this->addFlash('success', 'Authentification à deux facteurs activée !');
-        return $this->redirectToRoute('app_alerts');
+        $this->addFlash('info', 'La configuration 2FA n\'est pas encore disponible.');
+        return $this->redirectToRoute('app_profile');
     }
 
     #[Route('/password/{id}/edit', name: 'app_password_edit', methods: ['POST'])]
@@ -115,12 +116,15 @@ class VaultController extends AbstractController
         EncryptionService $encryptionService,
         FormFactoryInterface $formFactory,
     ): Response {
+        /** @var \App\Entity\User $user */
+        $user = $this->getUser();
         $vault = $passwordEntry->getVault();
-        if ($vault === null || $vault->getOwner()->getUserIdentifier() !== $this->getUser()->getUserIdentifier()) {
+
+        if ($vault === null || $vault->getUser()->getUserIdentifier() !== $user->getUserIdentifier()) {
             throw $this->createAccessDeniedException();
         }
 
-        $vaults = $vaultRepository->findBy(['owner' => $this->getUser(), 'archived' => false]);
+        $vaults = $vaultRepository->findByUser($user);
 
         $form = $formFactory->createNamed('edit_password_entry', PasswordEntryType::class, $passwordEntry, [
             'vaults'           => $vaults,

@@ -4,7 +4,6 @@ namespace App\Entity;
 
 use App\Entity\Alert;
 use App\Entity\Vault;
-use App\Entity\Password;
 use App\Repository\UserRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
@@ -231,5 +230,20 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     {
         $this->twoFactorSecret = $twoFactorSecret;
         return $this;
+    }
+
+    public function getAlerts(): Collection
+    {
+        return $this->alerts;
+    }
+
+    public function getVaults(): Collection
+    {
+        return $this->vaults;
+    }
+
+    public function getSessions(): Collection
+    {
+        return $this->sessions;
     }
 }

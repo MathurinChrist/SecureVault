@@ -66,7 +66,7 @@ class ProfileController extends AbstractController
         }
 
         if (!$user->getEncryptionKey()) {
-            $user->setEncryptionKey(bin2hex(random_bytes(16)));
+            $user->setEncryptionKey(bin2hex(random_bytes(32)));
             $entityManager->flush();
         }
 
