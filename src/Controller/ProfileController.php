@@ -4,6 +4,7 @@ namespace App\Controller;
 
 use App\Form\ChangePasswordType;
 use App\Form\UserProfileType;
+use App\Repository\ActivityLogRepository;
 use App\Service\FileUploader;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -18,11 +19,12 @@ class ProfileController extends AbstractController
 {
     #[Route('/profile', name: 'app_profile')]
     public function index(
-        Request $request, 
-        EntityManagerInterface $entityManager, 
+        Request $request,
+        EntityManagerInterface $entityManager,
         FileUploader $fileUploader,
         UserPasswordHasherInterface $userPasswordHasher,
-        \Symfony\Component\EventDispatcher\EventDispatcherInterface $eventDispatcher
+        \Symfony\Component\EventDispatcher\EventDispatcherInterface $eventDispatcher,
+        ActivityLogRepository $activityLogRepository,
     ): Response
     {
         $user = $this->getUser();
@@ -76,10 +78,14 @@ class ProfileController extends AbstractController
             10
         );
 
+        /** @var \App\Entity\User $user */
+        $recentActivity = $activityLogRepository->findRecentByUser($user, 30);
+
         return $this->render('profile/index.html.twig', [
-            'profileForm' => $profileForm->createView(),
-            'passwordForm' => $passwordForm->createView(),
-            'sessions' => $sessions,
+            'profileForm'    => $profileForm->createView(),
+            'passwordForm'   => $passwordForm->createView(),
+            'sessions'       => $sessions,
+            'recentActivity' => $recentActivity,
         ]);
     }
 }

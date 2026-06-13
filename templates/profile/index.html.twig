@@ -24,6 +24,9 @@
             <button onclick="showTab('encryption')" id="btn-encryption" class="w-full text-left px-4 py-3 rounded-xl transition-all font-medium text-slate-400 hover:bg-white/5">
                 Clé de chiffrement
             </button>
+            <button onclick="showTab('activity')" id="btn-activity" class="w-full text-left px-4 py-3 rounded-xl transition-all font-medium text-slate-400 hover:bg-white/5">
+                Activité récente
+            </button>
         </div>
 
         <!-- Content -->
@@ -155,6 +158,38 @@
                 <button class="btn btn-ghost w-full border border-white/10">Régénérer la clé (Action Dangereuse)</button>
             </div>
 
+            <!-- Activity Tab -->
+            <div id="tab-activity" class="glass-card p-8 rounded-3xl space-y-4 hidden">
+                <div class="flex items-center justify-between mb-2">
+                    <h2 class="text-xl font-bold">Activité récente</h2>
+                    <span class="bg-indigo-600/10 text-indigo-400 text-xs px-2 py-1 rounded-lg border border-indigo-600/20">{{ recentActivity|length }} événement(s)</span>
+                </div>
+                <p class="text-slate-400 text-sm">Historique des dernières actions effectuées sur votre compte.</p>
+
+                {% if recentActivity is empty %}
+                    <p class="text-center py-8 text-slate-500 italic">Aucune activité enregistrée.</p>
+                {% else %}
+                    <div class="space-y-2 mt-4">
+                        {% for log in recentActivity %}
+                            <div class="flex items-start space-x-4 p-3 rounded-xl bg-white/5 hover:bg-white/8 transition">
+                                <div class="h-8 w-8 rounded-lg bg-indigo-500/10 flex items-center justify-center shrink-0 mt-0.5">
+                                    <svg class="h-4 w-4 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+                                    </svg>
+                                </div>
+                                <div class="flex-1 min-w-0">
+                                    <p class="text-sm text-slate-200">{{ log.action }}</p>
+                                    <p class="text-xs text-slate-500 mt-0.5">
+                                        {{ log.createdAt|date('d/m/Y à H:i') }}
+                                        {% if log.ipAddress %}· {{ log.ipAddress }}{% endif %}
+                                    </p>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            </div>
+
         </div>
     </div>
 </div>
@@ -162,13 +197,12 @@
 <script>
 function showTab(tab) {
     // Hide all tabs
-    document.getElementById('tab-info').classList.add('hidden');
-    document.getElementById('tab-security').classList.add('hidden');
-    document.getElementById('tab-sessions').classList.add('hidden');
-    document.getElementById('tab-encryption').classList.add('hidden');
-    
+    ['info', 'security', 'sessions', 'encryption', 'activity'].forEach(id => {
+        document.getElementById('tab-' + id).classList.add('hidden');
+    });
+
     // Reset buttons
-    const btns = ['btn-info', 'btn-security', 'btn-sessions', 'btn-encryption'];
+    const btns = ['btn-info', 'btn-security', 'btn-sessions', 'btn-encryption', 'btn-activity'];
     btns.forEach(id => {
         const btn = document.getElementById(id);
         if (btn) {

@@ -11,6 +11,7 @@ use App\Form\VaultType;
 use App\Repository\AlertRepository;
 use App\Repository\PasswordEntryRepository;
 use App\Repository\VaultRepository;
+use App\Service\ActivityLogService;
 use App\Service\AlertService;
 use App\Service\EncryptionService;
 use Doctrine\ORM\EntityManagerInterface;
@@ -29,6 +30,7 @@ class VaultController extends AbstractController
     public function __construct(
         #[Autowire(env: 'VAULT_ENCRYPTION_KEY')]
         private readonly string $encryptionKey,
+        private readonly ActivityLogService $activityLogService,
     ) {}
 
     // ============================= VAULTS =============================
@@ -66,6 +68,7 @@ class VaultController extends AbstractController
         if ($form->isSubmitted() && $form->isValid()) {
             $vault->setUser($user);
             $em->persist($vault);
+            $this->activityLogService->log($user, 'Coffre créé : ' . $vault->getName());
             $em->flush();
             $this->addFlash('success', 'Coffre "' . $vault->getName() . '" créé.');
             return $this->redirectToRoute('app_vaults');
@@ -163,8 +166,11 @@ class VaultController extends AbstractController
             return $this->redirectToRoute('app_vaults');
         }
 
+        /** @var \App\Entity\User $user */
+        $user = $this->getUser();
         $name = $vault->getName();
         $em->remove($vault);
+        $this->activityLogService->log($user, 'Coffre supprimé : ' . $name);
         $em->flush();
         $this->addFlash('success', 'Coffre "' . $name . '" supprimé.');
 
@@ -210,6 +216,7 @@ class VaultController extends AbstractController
             $entry->setEncryptedPassword($encryptionService->encrypt($plain, $key));
             $entry->setUser($user);
             $em->persist($entry);
+            $this->activityLogService->log($user, 'Mot de passe ajouté : ' . $entry->getTitle());
             $em->flush();
             $this->addFlash('success', '"' . $entry->getTitle() . '" ajouté.');
         } else {
@@ -258,6 +265,7 @@ class VaultController extends AbstractController
                 $key = hash('sha256', $this->encryptionKey, true);
                 $passwordEntry->setEncryptedPassword($encryptionService->encrypt($plain, $key));
             }
+            $this->activityLogService->log($user, 'Mot de passe modifié : ' . $passwordEntry->getTitle());
             $em->flush();
             $this->addFlash('success', '"' . $passwordEntry->getTitle() . '" mis à jour.');
         } else {
@@ -295,9 +303,9 @@ class VaultController extends AbstractController
             return $this->redirectToRoute('app_dashboard');
         }
 
-        $title   = $passwordEntry->getTitle();
-        $vaultId = $vault->getId();
+        $title = $passwordEntry->getTitle();
         $em->remove($passwordEntry);
+        $this->activityLogService->log($user, 'Mot de passe supprimé : ' . $title);
         $em->flush();
         $this->addFlash('success', '"' . $title . '" supprimé.');
 
@@ -324,6 +332,8 @@ class VaultController extends AbstractController
 
         $key   = hash('sha256', $this->encryptionKey, true);
         $plain = $encryptionService->decrypt($passwordEntry->getEncryptedPassword(), $key);
+
+        $this->activityLogService->log($user, 'Mot de passe consulté : ' . $passwordEntry->getTitle());
 
         return $this->json(['password' => $plain]);
     }

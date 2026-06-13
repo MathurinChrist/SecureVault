@@ -8,6 +8,7 @@ use App\Repository\SharedVaultRepository;
 use App\Repository\UserRepository;
 use App\Repository\VaultPermissionRepository;
 use App\Repository\VaultRepository;
+use App\Service\ActivityLogService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
@@ -18,6 +19,9 @@ use Symfony\Component\Security\Http\Attribute\IsGranted;
 #[IsGranted('ROLE_USER')]
 class ShareController extends AbstractController
 {
+    public function __construct(
+        private readonly ActivityLogService $activityLogService,
+    ) {}
     #[Route('/shares', name: 'app_shares', methods: ['GET'])]
     public function index(SharedVaultRepository $sharedVaultRepository): Response
     {
@@ -96,6 +100,7 @@ class ShareController extends AbstractController
         $existing = $sharedVaultRepository->findByVaultAndRecipient($vault, $recipient);
         if ($existing !== null) {
             $existing->setPermission($permission);
+            $this->activityLogService->log($sender, 'Accès mis à jour pour ' . $email . ' sur "' . $vault->getName() . '"');
             $em->flush();
             $this->addFlash('success', 'Niveau d\'accès mis à jour pour ' . $email . '.');
             return $this->redirectToRoute('app_vault_shares', ['id' => $vault->getId()]);
@@ -107,6 +112,7 @@ class ShareController extends AbstractController
         $share->setRecipient($recipient);
         $share->setPermission($permission);
         $em->persist($share);
+        $this->activityLogService->log($sender, 'Coffre partagé avec ' . $email . ' : "' . $vault->getName() . '"');
         $em->flush();
 
         $this->addFlash('success', 'Invitation envoyée à ' . $email . '.');
@@ -133,6 +139,7 @@ class ShareController extends AbstractController
         }
 
         $share->accept();
+        $this->activityLogService->log($user, 'Accès accepté : coffre "' . $share->getVault()->getName() . '"');
         $em->flush();
         $this->addFlash('success', 'Accès au coffre "' . $share->getVault()->getName() . '" accepté.');
 
@@ -157,7 +164,9 @@ class ShareController extends AbstractController
             return $this->redirectToRoute('app_shares');
         }
 
+        $vaultName = $share->getVault()->getName();
         $em->remove($share);
+        $this->activityLogService->log($user, 'Invitation refusée : coffre "' . $vaultName . '"');
         $em->flush();
         $this->addFlash('success', 'Invitation refusée.');
 
@@ -184,7 +193,9 @@ class ShareController extends AbstractController
         }
 
         $recipientEmail = $share->getRecipient()->getEmail();
+        $vaultName      = $share->getVault()->getName();
         $em->remove($share);
+        $this->activityLogService->log($user, 'Accès révoqué pour ' . $recipientEmail . ' sur "' . $vaultName . '"');
         $em->flush();
         $this->addFlash('success', 'Accès révoqué pour ' . $recipientEmail . '.');
 
