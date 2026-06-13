@@ -8,6 +8,12 @@ use Doctrine\ORM\Mapping as ORM;
 #[ORM\Entity(repositoryClass: NotificationRepository::class)]
 class Notification
 {
+    public const TYPE_INFO     = 'info';
+    public const TYPE_SUCCESS  = 'success';
+    public const TYPE_WARNING  = 'warning';
+    public const TYPE_SHARE    = 'share';
+    public const TYPE_SECURITY = 'security';
+
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]

@@ -8,7 +8,9 @@ use App\Repository\SharedVaultRepository;
 use App\Repository\UserRepository;
 use App\Repository\VaultPermissionRepository;
 use App\Repository\VaultRepository;
+use App\Entity\Notification;
 use App\Service\ActivityLogService;
+use App\Service\NotificationService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
@@ -20,7 +22,8 @@ use Symfony\Component\Security\Http\Attribute\IsGranted;
 class ShareController extends AbstractController
 {
     public function __construct(
-        private readonly ActivityLogService $activityLogService,
+        private readonly ActivityLogService  $activityLogService,
+        private readonly NotificationService $notificationService,
     ) {}
     #[Route('/shares', name: 'app_shares', methods: ['GET'])]
     public function index(SharedVaultRepository $sharedVaultRepository): Response
@@ -115,6 +118,15 @@ class ShareController extends AbstractController
         $this->activityLogService->log($sender, 'Coffre partagé avec ' . $email . ' : "' . $vault->getName() . '"');
         $em->flush();
 
+        $this->notificationService->create(
+            $recipient,
+            'Invitation à un coffre',
+            sprintf('%s %s vous a invité à accéder au coffre « %s » avec le niveau %s.',
+                $sender->getFirstName(), $sender->getLastName(),
+                $vault->getName(), $permission->getName()),
+            Notification::TYPE_SHARE,
+        );
+
         $this->addFlash('success', 'Invitation envoyée à ' . $email . '.');
 
         return $this->redirectToRoute('app_vault_shares', ['id' => $vault->getId()]);
@@ -138,10 +150,20 @@ class ShareController extends AbstractController
             return $this->redirectToRoute('app_shares');
         }
 
+        $vaultName = $share->getVault()->getName();
         $share->accept();
-        $this->activityLogService->log($user, 'Accès accepté : coffre "' . $share->getVault()->getName() . '"');
+        $this->activityLogService->log($user, 'Accès accepté : coffre "' . $vaultName . '"');
         $em->flush();
-        $this->addFlash('success', 'Accès au coffre "' . $share->getVault()->getName() . '" accepté.');
+
+        $this->notificationService->create(
+            $share->getSender(),
+            'Invitation acceptée',
+            sprintf('%s %s a accepté votre invitation et peut maintenant accéder au coffre « %s ».',
+                $user->getFirstName(), $user->getLastName(), $vaultName),
+            Notification::TYPE_SUCCESS,
+        );
+
+        $this->addFlash('success', 'Accès au coffre "' . $vaultName . '" accepté.');
 
         return $this->redirectToRoute('app_shares');
     }
@@ -165,9 +187,19 @@ class ShareController extends AbstractController
         }
 
         $vaultName = $share->getVault()->getName();
+        $sender    = $share->getSender();
         $em->remove($share);
         $this->activityLogService->log($user, 'Invitation refusée : coffre "' . $vaultName . '"');
         $em->flush();
+
+        $this->notificationService->create(
+            $sender,
+            'Invitation refusée',
+            sprintf('%s %s a refusé votre invitation pour le coffre « %s ».',
+                $user->getFirstName(), $user->getLastName(), $vaultName),
+            Notification::TYPE_WARNING,
+        );
+
         $this->addFlash('success', 'Invitation refusée.');
 
         return $this->redirectToRoute('app_shares');
@@ -192,11 +224,20 @@ class ShareController extends AbstractController
             return $this->redirectToRoute('app_vault_shares', ['id' => $share->getVault()->getId()]);
         }
 
-        $recipientEmail = $share->getRecipient()->getEmail();
+        $recipient      = $share->getRecipient();
+        $recipientEmail = $recipient->getEmail();
         $vaultName      = $share->getVault()->getName();
         $em->remove($share);
         $this->activityLogService->log($user, 'Accès révoqué pour ' . $recipientEmail . ' sur "' . $vaultName . '"');
         $em->flush();
+
+        $this->notificationService->create(
+            $recipient,
+            'Accès révoqué',
+            sprintf('Votre accès au coffre « %s » a été révoqué.', $vaultName),
+            Notification::TYPE_WARNING,
+        );
+
         $this->addFlash('success', 'Accès révoqué pour ' . $recipientEmail . '.');
 
         return $this->redirectToRoute('app_vault_shares', ['id' => $share->getVault()->getId()]);

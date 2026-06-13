@@ -284,8 +284,9 @@ class VaultController extends AbstractController
         $user  = $this->getUser();
         $vault = $passwordEntry->getVault();
 
-        if ($vault === null || $vault->getUser()->getUserIdentifier() !== $user->getUserIdentifier()) {
-            throw $this->createAccessDeniedException();
+        if ($vault === null || !$this->isGranted('EDIT', $vault)) {
+            $this->addFlash('error', 'Vous n\'avez pas la permission de modifier les mots de passe de ce coffre.');
+            return $this->redirectToRoute('app_vault_show', ['id' => $vault?->getId()]);
         }
 
         $vaults = $vaultRepository->findByUser($user);
@@ -333,8 +334,9 @@ class VaultController extends AbstractController
         $user  = $this->getUser();
         $vault = $passwordEntry->getVault();
 
-        if ($vault === null || $vault->getUser()->getUserIdentifier() !== $user->getUserIdentifier()) {
-            throw $this->createAccessDeniedException();
+        if ($vault === null || !$this->isGranted('EDIT', $vault)) {
+            $this->addFlash('error', 'Vous n\'avez pas la permission de supprimer les mots de passe de ce coffre.');
+            return $this->redirectToRoute('app_vault_show', ['id' => $vault?->getId()]);
         }
 
         if (!$this->isCsrfTokenValid('delete_password_' . $passwordEntry->getId(), $request->request->get('_token'))) {
@@ -368,8 +370,8 @@ class VaultController extends AbstractController
         $user  = $this->getUser();
         $vault = $passwordEntry->getVault();
 
-        if ($vault === null || $vault->getUser()->getUserIdentifier() !== $user->getUserIdentifier()) {
-            throw $this->createAccessDeniedException();
+        if ($vault === null || !$this->isGranted('VIEW', $vault)) {
+            return $this->json(['error' => 'Accès refusé.'], 403);
         }
 
         $key   = hash('sha256', $this->encryptionKey, true);
