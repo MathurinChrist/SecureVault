@@ -51,7 +51,6 @@ security:
         - { path: ^/alerts, roles: ROLE_USER }
         - { path: ^/profile, roles: ROLE_USER }
         - { path: ^/shares, roles: ROLE_USER }
-        - { path: ^/security, roles: ROLE_USER }
         - { path: ^/password, roles: ROLE_USER }
 
 when@test:
