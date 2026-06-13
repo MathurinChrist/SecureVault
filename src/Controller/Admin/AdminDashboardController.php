@@ -2,11 +2,6 @@
 
 namespace App\Controller\Admin;
 
-use App\Entity\ActivityLog;
-use App\Entity\Alert;
-use App\Entity\LoginAttempt;
-use App\Entity\User;
-use App\Entity\Vault;
 use App\Repository\ActivityLogRepository;
 use App\Repository\AlertRepository;
 use App\Repository\LoginAttemptRepository;
@@ -60,13 +55,14 @@ class AdminDashboardController extends AbstractDashboardController
     {
         yield MenuItem::linkToDashboard('Tableau de bord', 'fa fa-home');
         yield MenuItem::section('Utilisateurs');
-        yield MenuItem::linkToCrud('Utilisateurs', 'fa fa-users', User::class);
+        yield MenuItem::linkTo(UserCrudController::class, 'Utilisateurs', 'fa fa-users');
+        yield MenuItem::linkTo(RoleCrudController::class, 'Rôles', 'fa fa-tag');
         yield MenuItem::section('Coffres');
-        yield MenuItem::linkToCrud('Coffres', 'fa fa-lock', Vault::class);
+        yield MenuItem::linkTo(VaultCrudController::class, 'Coffres', 'fa fa-lock');
         yield MenuItem::section('Sécurité');
-        yield MenuItem::linkToCrud('Alertes', 'fa fa-bell', Alert::class);
-        yield MenuItem::linkToCrud('Tentatives de connexion', 'fa fa-shield', LoginAttempt::class);
-        yield MenuItem::linkToCrud('Journaux d\'activité', 'fa fa-list', ActivityLog::class);
+        yield MenuItem::linkTo(AlertCrudController::class, 'Alertes', 'fa fa-bell');
+        yield MenuItem::linkTo(LoginAttemptCrudController::class, 'Tentatives de connexion', 'fa fa-shield');
+        yield MenuItem::linkTo(ActivityLogCrudController::class, 'Journaux d\'activité', 'fa fa-list');
         yield MenuItem::section('');
         yield MenuItem::linkToUrl('← Application', 'fa fa-arrow-left', '/dashboard');
     }

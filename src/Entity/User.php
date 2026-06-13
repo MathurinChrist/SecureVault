@@ -54,6 +54,8 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Column(length: 255, nullable: true)]
     private ?string $encryptionKey = null;
 
+    private ?string $plainPassword = null;
+
     #[ORM\Column]
     private bool $is2faEnabled = false;
 
@@ -126,7 +128,18 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         return $this;
     }
 
-    public function eraseCredentials(): void {}
+    public function getPlainPassword(): ?string { return $this->plainPassword; }
+
+    public function setPlainPassword(?string $plainPassword): static
+    {
+        $this->plainPassword = $plainPassword;
+        return $this;
+    }
+
+    public function eraseCredentials(): void
+    {
+        $this->plainPassword = null;
+    }
 
     public function getFirstName(): ?string { return $this->firstName; }
 

@@ -2,20 +2,8 @@
 
 namespace App\Tests\E2E;
 
-use Symfony\Component\Panther\PantherTestCase;
-
-class RegistrationE2ETest extends PantherTestCase
+class RegistrationE2ETest extends AbstractE2ETest
 {
-    private function skipIfUnavailable(): void
-    {
-        try {
-            $conn = static::getContainer()->get('doctrine.dbal.default_connection');
-            $conn->executeQuery('SELECT 1');
-        } catch (\Exception) {
-            $this->markTestSkipped('Database not available for E2E.');
-        }
-    }
-
     public function testRegistrationPageLoads(): void
     {
         $this->skipIfUnavailable();
@@ -32,27 +20,19 @@ class RegistrationE2ETest extends PantherTestCase
     {
         $this->skipIfUnavailable();
 
-        $client  = static::createPantherClient();
-        $crawler = $client->request('GET', '/register');
-        $client->waitFor('form');
+        $client = static::createPantherClient();
+        $this->logoutUser($client);
 
-        $email = 'e2e_reg_' . uniqid() . '@example.com';
-
-        $form = $crawler->selectButton('S\'inscrire')->form([
-            'registration_form[email]'         => $email,
-            'registration_form[firstName]'     => 'E2E',
-            'registration_form[lastName]'      => 'Register',
-            'registration_form[plainPassword]' => 'StrongPass123!',
-            'registration_form[agreeTerms]'    => true,
-        ]);
-        $client->submit($form);
-        $client->waitFor('body');
+        $email = static::generateEmail();
+        $this->registerUser($client, $email);
 
         $this->assertStringContainsString('/login', $client->getCurrentURL());
     }
 
     public function testRegistrationWithWeakPasswordShowsError(): void
     {
+        $this->skipIfUnavailable();
+
         $client  = static::createPantherClient();
         $crawler = $client->request('GET', '/register');
         $client->waitFor('form');
@@ -67,7 +47,23 @@ class RegistrationE2ETest extends PantherTestCase
         $client->submit($form);
         $client->waitFor('body');
 
-        // Should stay on /register with validation error
+        $this->assertStringContainsString('/register', $client->getCurrentURL());
+    }
+
+    public function testDuplicateEmailShowsError(): void
+    {
+        $this->skipIfUnavailable();
+
+        $client = static::createPantherClient();
+        $email  = static::generateEmail();
+
+        $this->logoutUser($client);
+        $this->registerUser($client, $email);
+
+        // Register again with the same email
+        $this->registerUser($client, $email);
+
+        // Should stay on /register with a validation error
         $this->assertStringContainsString('/register', $client->getCurrentURL());
     }
 }

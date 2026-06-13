@@ -6,8 +6,10 @@ PHPUNIT         = $(PHP) php vendor/bin/phpunit --configuration phpunit.dist.xml
 
 # ── Cibles principales ────────────────────────────────────────────────────────
 .PHONY: help build up down restart logs ps shell \
-        migrate db-shell composer-install cc \
-        make-migration make-entity make-command fixtures messenger-consume \
+        db-setup migrate db-shell composer-install cc \
+        make-migration make-entity make-command \
+        fixtures fixtures-append fixtures-test \
+        messenger-consume \
         test test-unit test-functional test-e2e \
         test-db-setup jwt-keys log_tail
 
@@ -38,6 +40,12 @@ shell: ## Ouvre un shell dans le conteneur app
 	$(DOCKER_COMPOSE) exec app sh
 
 # ── Application ───────────────────────────────────────────────────────────────
+db-setup: ## Crée, migre et charge les fixtures (env dev)
+	$(PHP) php bin/console doctrine:database:drop --force --if-exists
+	$(PHP) php bin/console doctrine:database:create
+	$(PHP) php bin/console doctrine:migrations:migrate --no-interaction
+	$(PHP) php bin/console doctrine:fixtures:load --no-interaction
+
 migrate: ## Exécute les migrations Doctrine (env dev)
 	$(SYMFONY) doctrine:migrations:migrate --no-interaction
 
@@ -59,8 +67,14 @@ make-entity: ## Génère une nouvelle entité
 make-command: ## Génère une nouvelle commande
 	$(SYMFONY) make:command
 
-fixtures: ## Charge les fixtures
+fixtures: ## Charge les fixtures (⚠ purge la BDD dev)
 	$(SYMFONY) doctrine:fixtures:load --no-interaction
+
+fixtures-append: ## Charge les fixtures sans purger la BDD dev
+	$(SYMFONY) doctrine:fixtures:load --no-interaction --append
+
+fixtures-test: ## Charge les fixtures dans la BDD de test
+	$(PHP) php bin/console doctrine:fixtures:load --no-interaction --append --env=test
 
 messenger-consume: ## Lance le worker Messenger
 	$(SYMFONY) messenger:consume async -vv
@@ -77,10 +91,11 @@ jwt-keys: ## Génère les clés JWT RSA dans le conteneur app
 	'
 
 # ── Tests ─────────────────────────────────────────────────────────────────────
-test-db-setup: ## Crée et migre la base de données de test
+test-db-setup: ## Crée, migre et charge les fixtures dans la BDD de test
 	$(PHP) php bin/console doctrine:database:drop --force --if-exists --env=test
 	$(PHP) php bin/console doctrine:database:create --env=test
 	$(PHP) php bin/console doctrine:migrations:migrate --no-interaction --env=test
+	$(PHP) php bin/console doctrine:fixtures:load --no-interaction --append --env=test
 
 test-unit: ## Lance les tests unitaires (Service + Security)
 	$(PHPUNIT) tests/Service/ tests/Security/
