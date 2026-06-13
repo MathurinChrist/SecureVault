@@ -3,7 +3,9 @@
 namespace App\Controller;
 
 use App\Entity\PasswordEntry;
+use App\Entity\Vault;
 use App\Form\PasswordEntryType;
+use App\Form\VaultType;
 use App\Repository\AlertRepository;
 use App\Repository\PasswordEntryRepository;
 use App\Repository\VaultRepository;
@@ -13,6 +15,7 @@ use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\Form\FormFactoryInterface;
+use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
@@ -26,34 +29,309 @@ class VaultController extends AbstractController
         private readonly string $encryptionKey,
     ) {}
 
-    #[Route('/vaults', name: 'app_vaults')]
-    public function index(): Response
+    // ============================= VAULTS =============================
+
+    #[Route('/vaults', name: 'app_vaults', methods: ['GET'])]
+    public function index(VaultRepository $vaultRepository): Response
     {
-        return $this->render('dashboard/placeholder.html.twig', [
-            'title' => 'Mes Coffres',
+        /** @var \App\Entity\User $user */
+        $user   = $this->getUser();
+        $vaults = $vaultRepository->findByUser($user);
+
+        $createForm = $this->createForm(VaultType::class, new Vault(), [
+            'action' => $this->generateUrl('app_vault_new'),
+            'method' => 'POST',
+        ]);
+
+        return $this->render('vault/index.html.twig', [
+            'vaults'      => $vaults,
+            'create_form' => $createForm->createView(),
+            'open_modal'  => false,
         ]);
     }
 
-    #[Route('/passwords', name: 'app_passwords')]
-    public function passwords(): Response
+    #[Route('/vaults/new', name: 'app_vault_new', methods: ['POST'])]
+    public function newVault(Request $request, EntityManagerInterface $em, VaultRepository $vaultRepository): Response
     {
-        return $this->render('dashboard/placeholder.html.twig', [
-            'title' => 'Mots de passe',
+        /** @var \App\Entity\User $user */
+        $user  = $this->getUser();
+        $vault = new Vault();
+        $form  = $this->createForm(VaultType::class, $vault, [
+            'action' => $this->generateUrl('app_vault_new'),
+        ]);
+        $form->handleRequest($request);
+
+        if ($form->isSubmitted() && $form->isValid()) {
+            $vault->setUser($user);
+            $em->persist($vault);
+            $em->flush();
+            $this->addFlash('success', 'Coffre "' . $vault->getName() . '" créé.');
+            return $this->redirectToRoute('app_vaults');
+        }
+
+        $errors = [];
+        foreach ($form->getErrors(true) as $error) {
+            $errors[] = $error->getMessage();
+        }
+        $this->addFlash('error', $errors ? implode(' ', $errors) : 'Formulaire invalide.');
+
+        return $this->redirectToRoute('app_vaults');
+    }
+
+    #[Route('/vaults/{id}', name: 'app_vault_show', methods: ['GET'], requirements: ['id' => '\d+'])]
+    public function show(Vault $vault, FormFactoryInterface $formFactory, VaultRepository $vaultRepository): Response
+    {
+        $this->denyAccessUnlessGranted('VIEW', $vault);
+
+        /** @var \App\Entity\User $user */
+        $user   = $this->getUser();
+        $vaults = $vaultRepository->findByUser($user);
+
+        $addForm = $formFactory->createNamed('add_password_entry', PasswordEntryType::class, new PasswordEntry(), [
+            'vaults'           => $vaults,
+            'require_password' => true,
+        ]);
+
+        $editForm = $formFactory->createNamed('edit_password_entry', PasswordEntryType::class, new PasswordEntry(), [
+            'vaults'           => $vaults,
+            'require_password' => false,
+        ]);
+
+        return $this->render('vault/show.html.twig', [
+            'vault'        => $vault,
+            'password_form' => $addForm->createView(),
+            'edit_form'     => $editForm->createView(),
         ]);
     }
 
-    #[Route('/shares', name: 'app_shares')]
-    public function shares(): Response
+    #[Route('/vaults/{id}/edit', name: 'app_vault_edit', methods: ['POST'], requirements: ['id' => '\d+'])]
+    public function editVault(Vault $vault, Request $request, EntityManagerInterface $em): Response
     {
-        return $this->render('dashboard/placeholder.html.twig', [
-            'title' => 'Partages',
+        $this->denyAccessUnlessGranted('EDIT', $vault);
+
+        if (!$this->isCsrfTokenValid('vault_edit_' . $vault->getId(), $request->request->get('_token'))) {
+            $this->addFlash('error', 'Token CSRF invalide.');
+            return $this->redirectToRoute('app_vaults');
+        }
+
+        $name = trim((string) $request->request->get('name', ''));
+        if ($name === '') {
+            $this->addFlash('error', 'Le nom du coffre est obligatoire.');
+            return $this->redirectToRoute('app_vaults');
+        }
+
+        $vault->setName($name);
+        $vault->setDescription($request->request->get('description') ?: null);
+        $em->flush();
+        $this->addFlash('success', 'Coffre mis à jour.');
+
+        return $this->redirectToRoute('app_vaults');
+    }
+
+    #[Route('/vaults/{id}/archive', name: 'app_vault_archive', methods: ['POST'], requirements: ['id' => '\d+'])]
+    public function archiveVault(Vault $vault, Request $request, EntityManagerInterface $em): Response
+    {
+        $this->denyAccessUnlessGranted('EDIT', $vault);
+
+        if (!$this->isCsrfTokenValid('vault_archive_' . $vault->getId(), $request->request->get('_token'))) {
+            $this->addFlash('error', 'Token CSRF invalide.');
+            return $this->redirectToRoute('app_vaults');
+        }
+
+        $vault->setArchived(!$vault->isArchived());
+        $em->flush();
+
+        $this->addFlash('success', $vault->isArchived() ? 'Coffre archivé.' : 'Coffre restauré.');
+
+        $referer = $request->headers->get('referer', '');
+        if (str_contains($referer, '/vaults/' . $vault->getId())) {
+            return $this->redirectToRoute('app_vault_show', ['id' => $vault->getId()]);
+        }
+
+        return $this->redirectToRoute('app_vaults');
+    }
+
+    #[Route('/vaults/{id}/delete', name: 'app_vault_delete', methods: ['POST'], requirements: ['id' => '\d+'])]
+    public function deleteVault(Vault $vault, Request $request, EntityManagerInterface $em): Response
+    {
+        $this->denyAccessUnlessGranted('DELETE', $vault);
+
+        if (!$this->isCsrfTokenValid('delete_vault_' . $vault->getId(), $request->request->get('_token'))) {
+            $this->addFlash('error', 'Token CSRF invalide.');
+            return $this->redirectToRoute('app_vaults');
+        }
+
+        $name = $vault->getName();
+        $em->remove($vault);
+        $em->flush();
+        $this->addFlash('success', 'Coffre "' . $name . '" supprimé.');
+
+        return $this->redirectToRoute('app_vaults');
+    }
+
+    // ============================= PASSWORDS =============================
+
+    #[Route('/passwords', name: 'app_passwords', methods: ['GET'])]
+    public function passwords(PasswordEntryRepository $passwordEntryRepository): Response
+    {
+        /** @var \App\Entity\User $user */
+        $user      = $this->getUser();
+        $passwords = $passwordEntryRepository->findByUser($user);
+
+        return $this->render('passwords/index.html.twig', [
+            'passwords' => $passwords,
         ]);
     }
+
+    #[Route('/passwords/new', name: 'app_password_new', methods: ['POST'])]
+    public function newPassword(
+        Request $request,
+        EntityManagerInterface $em,
+        VaultRepository $vaultRepository,
+        EncryptionService $encryptionService,
+        FormFactoryInterface $formFactory,
+    ): Response {
+        /** @var \App\Entity\User $user */
+        $user   = $this->getUser();
+        $vaults = $vaultRepository->findByUser($user);
+        $entry  = new PasswordEntry();
+
+        $form = $formFactory->createNamed('add_password_entry', PasswordEntryType::class, $entry, [
+            'vaults'           => $vaults,
+            'require_password' => true,
+        ]);
+        $form->handleRequest($request);
+
+        if ($form->isSubmitted() && $form->isValid()) {
+            $plain = $form->get('plainPassword')->getData();
+            $key   = hash('sha256', $this->encryptionKey, true);
+            $entry->setEncryptedPassword($encryptionService->encrypt($plain, $key));
+            $entry->setUser($user);
+            $em->persist($entry);
+            $em->flush();
+            $this->addFlash('success', '"' . $entry->getTitle() . '" ajouté.');
+        } else {
+            $errors = [];
+            foreach ($form->getErrors(true) as $error) {
+                $errors[] = $error->getMessage();
+            }
+            $this->addFlash('error', $errors ? implode(' ', $errors) : 'Formulaire invalide.');
+        }
+
+        $referer = $request->headers->get('referer', '');
+        if (preg_match('#/vaults/(\d+)#', $referer, $m)) {
+            return $this->redirectToRoute('app_vault_show', ['id' => $m[1]]);
+        }
+
+        return $this->redirectToRoute('app_dashboard');
+    }
+
+    #[Route('/password/{id}/edit', name: 'app_password_edit', methods: ['POST'])]
+    public function editPassword(
+        PasswordEntry $passwordEntry,
+        Request $request,
+        EntityManagerInterface $em,
+        VaultRepository $vaultRepository,
+        EncryptionService $encryptionService,
+        FormFactoryInterface $formFactory,
+    ): Response {
+        /** @var \App\Entity\User $user */
+        $user  = $this->getUser();
+        $vault = $passwordEntry->getVault();
+
+        if ($vault === null || $vault->getUser()->getUserIdentifier() !== $user->getUserIdentifier()) {
+            throw $this->createAccessDeniedException();
+        }
+
+        $vaults = $vaultRepository->findByUser($user);
+        $form   = $formFactory->createNamed('edit_password_entry', PasswordEntryType::class, $passwordEntry, [
+            'vaults'           => $vaults,
+            'require_password' => false,
+        ]);
+        $form->handleRequest($request);
+
+        if ($form->isSubmitted() && $form->isValid()) {
+            $plain = $form->get('plainPassword')->getData();
+            if ($plain !== null && $plain !== '') {
+                $key = hash('sha256', $this->encryptionKey, true);
+                $passwordEntry->setEncryptedPassword($encryptionService->encrypt($plain, $key));
+            }
+            $em->flush();
+            $this->addFlash('success', '"' . $passwordEntry->getTitle() . '" mis à jour.');
+        } else {
+            $errors = [];
+            foreach ($form->getErrors(true) as $error) {
+                $errors[] = $error->getMessage();
+            }
+            $this->addFlash('error', $errors ? implode(' ', $errors) : 'Formulaire invalide.');
+        }
+
+        $referer = $request->headers->get('referer', '');
+        if (preg_match('#/vaults/(\d+)#', $referer, $m)) {
+            return $this->redirectToRoute('app_vault_show', ['id' => $m[1]]);
+        }
+
+        return $this->redirectToRoute('app_dashboard');
+    }
+
+    #[Route('/passwords/{id}/delete', name: 'app_password_delete', methods: ['POST'])]
+    public function deletePassword(
+        PasswordEntry $passwordEntry,
+        Request $request,
+        EntityManagerInterface $em,
+    ): Response {
+        /** @var \App\Entity\User $user */
+        $user  = $this->getUser();
+        $vault = $passwordEntry->getVault();
+
+        if ($vault === null || $vault->getUser()->getUserIdentifier() !== $user->getUserIdentifier()) {
+            throw $this->createAccessDeniedException();
+        }
+
+        if (!$this->isCsrfTokenValid('delete_password_' . $passwordEntry->getId(), $request->request->get('_token'))) {
+            $this->addFlash('error', 'Token CSRF invalide.');
+            return $this->redirectToRoute('app_dashboard');
+        }
+
+        $title   = $passwordEntry->getTitle();
+        $vaultId = $vault->getId();
+        $em->remove($passwordEntry);
+        $em->flush();
+        $this->addFlash('success', '"' . $title . '" supprimé.');
+
+        $referer = $request->headers->get('referer', '');
+        if (preg_match('#/vaults/(\d+)#', $referer, $m)) {
+            return $this->redirectToRoute('app_vault_show', ['id' => $m[1]]);
+        }
+
+        return $this->redirectToRoute('app_dashboard');
+    }
+
+    #[Route('/passwords/{id}/decrypt', name: 'app_password_decrypt', methods: ['GET'])]
+    public function decryptPassword(
+        PasswordEntry $passwordEntry,
+        EncryptionService $encryptionService,
+    ): JsonResponse {
+        /** @var \App\Entity\User $user */
+        $user  = $this->getUser();
+        $vault = $passwordEntry->getVault();
+
+        if ($vault === null || $vault->getUser()->getUserIdentifier() !== $user->getUserIdentifier()) {
+            throw $this->createAccessDeniedException();
+        }
+
+        $key   = hash('sha256', $this->encryptionKey, true);
+        $plain = $encryptionService->decrypt($passwordEntry->getEncryptedPassword(), $key);
+
+        return $this->json(['password' => $plain]);
+    }
+
+    // ============================= ALERTS =============================
 
     #[Route('/alerts', name: 'app_alerts')]
     public function alerts(EntityManagerInterface $entityManager): Response
     {
-        $user = $this->getUser();
+        $user   = $this->getUser();
         $alerts = $entityManager->getRepository(\App\Entity\Alert::class)->findBy(
             ['user' => $user],
             ['createdAt' => 'DESC']
@@ -72,7 +350,6 @@ class VaultController extends AbstractController
             $alertService->markAsRead($alert);
             $this->addFlash('success', 'Alerte marquée comme lue.');
         }
-
         return $this->redirectToRoute('app_alerts');
     }
 
@@ -83,7 +360,6 @@ class VaultController extends AbstractController
         $user = $this->getUser();
         $alertService->markAllAsRead($user);
         $this->addFlash('success', 'Toutes les alertes ont été marquées comme lues.');
-
         return $this->redirectToRoute('app_alerts');
     }
 
@@ -96,7 +372,6 @@ class VaultController extends AbstractController
             $entityManager->flush();
             $this->addFlash('success', 'Alerte supprimée.');
         }
-
         return $this->redirectToRoute('app_alerts');
     }
 
@@ -107,48 +382,11 @@ class VaultController extends AbstractController
         return $this->redirectToRoute('app_profile');
     }
 
-    #[Route('/password/{id}/edit', name: 'app_password_edit', methods: ['POST'])]
-    public function editPassword(
-        PasswordEntry $passwordEntry,
-        Request $request,
-        EntityManagerInterface $em,
-        VaultRepository $vaultRepository,
-        EncryptionService $encryptionService,
-        FormFactoryInterface $formFactory,
-    ): Response {
-        /** @var \App\Entity\User $user */
-        $user = $this->getUser();
-        $vault = $passwordEntry->getVault();
+    // ============================= SHARES =============================
 
-        if ($vault === null || $vault->getUser()->getUserIdentifier() !== $user->getUserIdentifier()) {
-            throw $this->createAccessDeniedException();
-        }
-
-        $vaults = $vaultRepository->findByUser($user);
-
-        $form = $formFactory->createNamed('edit_password_entry', PasswordEntryType::class, $passwordEntry, [
-            'vaults'           => $vaults,
-            'require_password' => false,
-        ]);
-        $form->handleRequest($request);
-
-        if ($form->isSubmitted() && $form->isValid()) {
-            $plain = $form->get('plainPassword')->getData();
-            if ($plain !== null && $plain !== '') {
-                $key = hash('sha256', $this->encryptionKey, true);
-                $passwordEntry->setEncryptedPassword($encryptionService->encrypt($plain, $key));
-            }
-
-            $em->flush();
-            $this->addFlash('success', '"' . $passwordEntry->getTitle() . '" mis à jour avec succès.');
-        } else {
-            $errors = [];
-            foreach ($form->getErrors(true) as $error) {
-                $errors[] = $error->getMessage();
-            }
-            $this->addFlash('error', $errors ? implode(' ', $errors) : 'Formulaire invalide.');
-        }
-
-        return $this->redirectToRoute('app_dashboard');
+    #[Route('/shares', name: 'app_shares')]
+    public function shares(): Response
+    {
+        return $this->render('shares/index.html.twig');
     }
 }

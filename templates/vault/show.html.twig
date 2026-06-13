@@ -1,0 +1,483 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{{ vault.name }} - SecureVault{% endblock %}
+
+{% block body_connected %}
+<div class="space-y-8">
+
+    {# ---- Header ---- #}
+    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        <div class="flex items-center space-x-4">
+            <a href="{{ path('app_vaults') }}" class="p-2 rounded-xl text-slate-400 hover:text-white hover:bg-white/5 transition" title="Retour aux coffres">
+                <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+                </svg>
+            </a>
+            <div>
+                <div class="flex items-center space-x-3">
+                    <h1 class="text-2xl font-bold">{{ vault.name }}</h1>
+                    {% if vault.archived %}
+                        <span class="px-2 py-0.5 text-xs rounded-full bg-amber-500/20 text-amber-400 font-medium">Archivé</span>
+                    {% else %}
+                        <span class="px-2 py-0.5 text-xs rounded-full bg-green-500/10 text-green-400 font-medium">Actif</span>
+                    {% endif %}
+                </div>
+                <p class="text-slate-400 text-sm mt-0.5">{{ vault.description|default('Aucune description.') }}</p>
+            </div>
+        </div>
+
+        <div class="flex items-center space-x-2 shrink-0">
+            {# Archive / Restore #}
+            <form method="post" action="{{ path('app_vault_archive', {id: vault.id}) }}" class="inline">
+                <input type="hidden" name="_token" value="{{ csrf_token('vault_archive_' ~ vault.id) }}">
+                <button type="submit"
+                    class="p-2 rounded-xl text-slate-400 hover:text-amber-400 hover:bg-white/5 transition"
+                    title="{{ vault.archived ? 'Restaurer' : 'Archiver' }}"
+                    onclick="return confirm('{{ vault.archived ? 'Restaurer ce coffre ?' : 'Archiver ce coffre ?' }}')"
+                >
+                    <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"/>
+                    </svg>
+                </button>
+            </form>
+
+            {# Edit vault #}
+            <button
+                type="button"
+                onclick="openEditVaultModal(this)"
+                data-id="{{ vault.id }}"
+                data-name="{{ vault.name|e('html_attr') }}"
+                data-description="{{ vault.description|default('')|e('html_attr') }}"
+                data-csrf="{{ csrf_token('vault_edit_' ~ vault.id) }}"
+                class="p-2 rounded-xl text-slate-400 hover:text-white hover:bg-white/5 transition"
+                title="Modifier le coffre"
+            >
+                <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                </svg>
+            </button>
+
+            {# Delete vault #}
+            <form method="post" action="{{ path('app_vault_delete', {id: vault.id}) }}" class="inline">
+                <input type="hidden" name="_token" value="{{ csrf_token('delete_vault_' ~ vault.id) }}">
+                <button type="submit"
+                    class="p-2 rounded-xl text-slate-400 hover:text-red-400 hover:bg-white/5 transition"
+                    title="Supprimer le coffre"
+                    onclick="return confirm('Supprimer définitivement ce coffre et tous ses mots de passe ?')"
+                >
+                    <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                    </svg>
+                </button>
+            </form>
+
+            {# Add password #}
+            <button onclick="openAddModal()" class="btn btn-primary flex items-center space-x-2 ml-2">
+                <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                </svg>
+                <span>Ajouter</span>
+            </button>
+        </div>
+    </div>
+
+    {# ---- Stats ---- #}
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div class="glass-card p-4 rounded-2xl">
+            <p class="text-slate-400 text-xs font-medium uppercase tracking-wider">Entrées</p>
+            <p class="text-2xl font-bold mt-1">{{ vault.passwordEntries|length }}</p>
+        </div>
+        <div class="glass-card p-4 rounded-2xl">
+            <p class="text-slate-400 text-xs font-medium uppercase tracking-wider">Favoris</p>
+            <p class="text-2xl font-bold mt-1 text-indigo-400">{{ vault.passwordEntries|filter(e => e.favorite)|length }}</p>
+        </div>
+        <div class="glass-card p-4 rounded-2xl">
+            <p class="text-slate-400 text-xs font-medium uppercase tracking-wider">Créé le</p>
+            <p class="text-sm font-bold mt-1">{{ vault.createdAt|date('d/m/Y') }}</p>
+        </div>
+        <div class="glass-card p-4 rounded-2xl">
+            <p class="text-slate-400 text-xs font-medium uppercase tracking-wider">Modifié le</p>
+            <p class="text-sm font-bold mt-1">{{ vault.updatedAt ? vault.updatedAt|date('d/m/Y') : '—' }}</p>
+        </div>
+    </div>
+
+    {# ---- Entries table ---- #}
+    {% if vault.passwordEntries is empty %}
+        <div class="glass-card rounded-2xl p-16 text-center">
+            <div class="h-16 w-16 mx-auto bg-indigo-500/10 rounded-2xl flex items-center justify-center mb-4">
+                <svg class="h-8 w-8 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"/>
+                </svg>
+            </div>
+            <h2 class="text-lg font-bold mb-2">Aucun mot de passe</h2>
+            <p class="text-slate-400 mb-6 text-sm">Ce coffre est vide. Ajoutez votre premier mot de passe.</p>
+            <button onclick="openAddModal()" class="btn btn-primary">+ Ajouter un mot de passe</button>
+        </div>
+    {% else %}
+        <div class="glass-card rounded-2xl overflow-hidden">
+            <div class="p-5 border-b border-white/5 flex items-center justify-between">
+                <h2 class="font-bold">Mots de passe ({{ vault.passwordEntries|length }})</h2>
+                <input
+                    type="text"
+                    placeholder="Filtrer..."
+                    oninput="filterEntries(this.value)"
+                    class="bg-slate-800 border border-white/10 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-indigo-500 w-48"
+                >
+            </div>
+            <div class="overflow-x-auto">
+                <table class="w-full text-left" id="entries-table">
+                    <thead class="bg-white/5 text-slate-400 text-xs uppercase tracking-wider">
+                        <tr>
+                            <th class="px-6 py-3">Service</th>
+                            <th class="px-6 py-3">Identifiant</th>
+                            <th class="px-6 py-3">URL</th>
+                            <th class="px-6 py-3">Mot de passe</th>
+                            <th class="px-6 py-3 text-right">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-white/5">
+                        {% for entry in vault.passwordEntries %}
+                        <tr class="entry-row hover:bg-white/3 transition" data-search="{{ (entry.title ~ ' ' ~ entry.username|default('') ~ ' ' ~ entry.url|default(''))|lower }}">
+                            <td class="px-6 py-4">
+                                <div class="flex items-center space-x-3">
+                                    {% if entry.favorite %}
+                                        <span class="text-amber-400" title="Favori">★</span>
+                                    {% endif %}
+                                    <div class="h-8 w-8 rounded bg-indigo-500/20 flex items-center justify-center text-indigo-400 font-bold text-sm shrink-0">
+                                        {{ entry.title|first|upper }}
+                                    </div>
+                                    <span class="font-medium">{{ entry.title }}</span>
+                                </div>
+                            </td>
+                            <td class="px-6 py-4 text-slate-300 text-sm">{{ entry.username|default('—') }}</td>
+                            <td class="px-6 py-4 text-sm">
+                                {% if entry.url %}
+                                    <a href="{{ entry.url }}" target="_blank" rel="noopener noreferrer" class="text-indigo-400 hover:text-indigo-300 truncate max-w-xs inline-block">{{ entry.url }}</a>
+                                {% else %}
+                                    <span class="text-slate-600">—</span>
+                                {% endif %}
+                            </td>
+                            <td class="px-6 py-4">
+                                <div class="flex items-center space-x-2">
+                                    <span id="pwd-{{ entry.id }}" class="text-slate-500 font-mono text-sm">••••••••</span>
+                                    <button
+                                        type="button"
+                                        onclick="toggleDecrypt({{ entry.id }}, this)"
+                                        class="p-1 rounded text-slate-500 hover:text-indigo-400 transition"
+                                        title="Afficher / masquer"
+                                    >
+                                        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                                        </svg>
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onclick="copyPassword({{ entry.id }})"
+                                        class="p-1 rounded text-slate-500 hover:text-green-400 transition"
+                                        title="Copier"
+                                    >
+                                        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"/>
+                                        </svg>
+                                    </button>
+                                </div>
+                            </td>
+                            <td class="px-6 py-4 text-right">
+                                <div class="flex items-center justify-end space-x-1">
+                                    <button
+                                        type="button"
+                                        onclick="openEditModal(this)"
+                                        data-id="{{ entry.id }}"
+                                        data-title="{{ entry.title|e('html_attr') }}"
+                                        data-username="{{ entry.username|default('')|e('html_attr') }}"
+                                        data-url="{{ entry.url|default('')|e('html_attr') }}"
+                                        data-notes="{{ entry.notes|default('')|e('html_attr') }}"
+                                        data-favorite="{{ entry.favorite ? '1' : '0' }}"
+                                        data-vault-id="{{ vault.id }}"
+                                        class="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-white/5 transition"
+                                        title="Modifier"
+                                    >
+                                        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                                        </svg>
+                                    </button>
+                                    <form method="post" action="{{ path('app_password_delete', {id: entry.id}) }}" class="inline">
+                                        <input type="hidden" name="_token" value="{{ csrf_token('delete_password_' ~ entry.id) }}">
+                                        <button type="submit"
+                                            class="p-1.5 rounded-lg text-slate-400 hover:text-red-400 hover:bg-white/5 transition"
+                                            title="Supprimer"
+                                            onclick="return confirm('Supprimer « {{ entry.title|e('js') }} » ?')"
+                                        >
+                                            <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                                            </svg>
+                                        </button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    {% endif %}
+
+</div>
+
+{# ============================= MODAL AJOUTER ============================= #}
+<div id="add-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4" role="dialog" aria-modal="true">
+    <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" onclick="closeAddModal()"></div>
+    <div class="relative z-10 w-full max-w-lg glass-card rounded-2xl overflow-hidden shadow-2xl">
+
+        <div class="flex items-center justify-between px-6 py-5 border-b border-white/10">
+            <div class="flex items-center space-x-3">
+                <div class="h-9 w-9 rounded-xl bg-indigo-500/20 flex items-center justify-center">
+                    <svg class="h-5 w-5 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                    </svg>
+                </div>
+                <h2 class="text-lg font-bold">Ajouter un mot de passe</h2>
+            </div>
+            <button onclick="closeAddModal()" class="text-slate-400 hover:text-white transition rounded-lg p-1 hover:bg-white/5">
+                <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                </svg>
+            </button>
+        </div>
+
+        {{ form_start(password_form, {'action': path('app_password_new'), 'attr': {'novalidate': 'novalidate'}}) }}
+        <div class="px-6 py-5 space-y-4 max-h-[60vh] overflow-y-auto">
+            {% include 'dashboard/_form_fields.html.twig' with {'form': password_form, 'pwd_input_id': 'add-pwd'} %}
+        </div>
+        <div class="px-6 py-4 border-t border-white/10 flex justify-end space-x-3">
+            <button type="button" onclick="closeAddModal()" class="btn btn-ghost px-5">Annuler</button>
+            <button type="submit" class="btn btn-primary flex items-center space-x-2">
+                <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                </svg>
+                <span>Enregistrer</span>
+            </button>
+        </div>
+        {{ form_end(password_form) }}
+    </div>
+</div>
+
+{# ============================= MODAL MODIFIER MOT DE PASSE ============================= #}
+<div id="edit-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4" role="dialog" aria-modal="true">
+    <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" onclick="closeEditModal()"></div>
+    <div class="relative z-10 w-full max-w-lg glass-card rounded-2xl overflow-hidden shadow-2xl">
+
+        <div class="flex items-center justify-between px-6 py-5 border-b border-white/10">
+            <div class="flex items-center space-x-3">
+                <div class="h-9 w-9 rounded-xl bg-amber-500/20 flex items-center justify-center">
+                    <svg class="h-5 w-5 text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                    </svg>
+                </div>
+                <h2 class="text-lg font-bold">Modifier le mot de passe</h2>
+            </div>
+            <button onclick="closeEditModal()" class="text-slate-400 hover:text-white transition rounded-lg p-1 hover:bg-white/5">
+                <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                </svg>
+            </button>
+        </div>
+
+        {{ form_start(edit_form, {'attr': {'id': 'edit-form', 'novalidate': 'novalidate'}}) }}
+        <div class="px-6 py-5 space-y-4 max-h-[60vh] overflow-y-auto">
+            {% include 'dashboard/_form_fields.html.twig' with {'form': edit_form, 'pwd_input_id': 'edit-pwd'} %}
+        </div>
+        <div class="px-6 py-4 border-t border-white/10 flex justify-end space-x-3">
+            <button type="button" onclick="closeEditModal()" class="btn btn-ghost px-5">Annuler</button>
+            <button type="submit" class="btn btn-primary flex items-center space-x-2" style="background:linear-gradient(135deg,#d97706,#b45309)">
+                <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                </svg>
+                <span>Mettre à jour</span>
+            </button>
+        </div>
+        {{ form_end(edit_form) }}
+    </div>
+</div>
+
+{# ============================= MODAL MODIFIER COFFRE ============================= #}
+<div id="edit-vault-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4" role="dialog" aria-modal="true">
+    <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" onclick="closeEditVaultModal()"></div>
+    <div class="relative z-10 w-full max-w-md glass-card rounded-2xl overflow-hidden shadow-2xl">
+
+        <div class="flex items-center justify-between px-6 py-5 border-b border-white/10">
+            <div class="flex items-center space-x-3">
+                <div class="h-9 w-9 rounded-xl bg-amber-500/20 flex items-center justify-center">
+                    <svg class="h-5 w-5 text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                    </svg>
+                </div>
+                <h2 class="text-lg font-bold">Modifier le coffre</h2>
+            </div>
+            <button onclick="closeEditVaultModal()" class="text-slate-400 hover:text-white transition rounded-lg p-1 hover:bg-white/5">
+                <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                </svg>
+            </button>
+        </div>
+
+        <form id="edit-vault-form" method="post" novalidate>
+            <input type="hidden" id="edit-vault-csrf" name="_token" value="">
+            <div class="px-6 py-5 space-y-4">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1.5">
+                        Nom <span class="text-red-400">*</span>
+                    </label>
+                    <input
+                        type="text" id="edit-vault-name" name="name" required
+                        class="w-full bg-slate-800/50 border border-white/10 rounded-xl px-4 py-3 text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 transition text-sm"
+                        placeholder="Nom du coffre..."
+                    >
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1.5">
+                        Description
+                    </label>
+                    <textarea
+                        id="edit-vault-description" name="description" rows="3"
+                        class="w-full bg-slate-800/50 border border-white/10 rounded-xl px-4 py-3 text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 transition text-sm"
+                        placeholder="Description optionnelle..."
+                    ></textarea>
+                </div>
+            </div>
+            <div class="px-6 py-4 border-t border-white/10 flex justify-end space-x-3">
+                <button type="button" onclick="closeEditVaultModal()" class="btn btn-ghost px-5">Annuler</button>
+                <button type="submit" class="btn btn-primary flex items-center space-x-2" style="background:linear-gradient(135deg,#d97706,#b45309)">
+                    <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                    </svg>
+                    <span>Mettre à jour</span>
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+// ---- Add password modal ----
+function openAddModal()  { document.getElementById('add-modal').classList.remove('hidden'); }
+function closeAddModal() { document.getElementById('add-modal').classList.add('hidden'); }
+
+// ---- Edit password modal ----
+function openEditModal(btn) {
+    const form = document.getElementById('edit-form');
+    form.action = `/password/${btn.dataset.id}/edit`;
+    setValue(form, '[name$="[title]"]',    btn.dataset.title);
+    setValue(form, '[name$="[username]"]', btn.dataset.username);
+    setValue(form, '[name$="[url]"]',      btn.dataset.url);
+    setValue(form, '[name$="[notes]"]',    btn.dataset.notes);
+    const pwdField = form.querySelector('[name$="[plainPassword]"]');
+    if (pwdField) pwdField.value = '';
+    const vaultSelect = form.querySelector('[name$="[vault]"]');
+    if (vaultSelect) vaultSelect.value = btn.dataset.vaultId;
+    const fav = form.querySelector('[name$="[favorite]"]');
+    if (fav) fav.checked = btn.dataset.favorite === '1';
+    document.getElementById('edit-modal').classList.remove('hidden');
+}
+function closeEditModal() { document.getElementById('edit-modal').classList.add('hidden'); }
+
+// ---- Edit vault modal ----
+function openEditVaultModal(btn) {
+    document.getElementById('edit-vault-form').action = `/vaults/${btn.dataset.id}/edit`;
+    document.getElementById('edit-vault-name').value        = btn.dataset.name ?? '';
+    document.getElementById('edit-vault-description').value = btn.dataset.description ?? '';
+    document.getElementById('edit-vault-csrf').value         = btn.dataset.csrf ?? '';
+    document.getElementById('edit-vault-modal').classList.remove('hidden');
+    document.getElementById('edit-vault-name').focus();
+}
+function closeEditVaultModal() { document.getElementById('edit-vault-modal').classList.add('hidden'); }
+
+function setValue(form, selector, value) {
+    const el = form.querySelector(selector);
+    if (el) el.value = value ?? '';
+}
+
+// ---- Decrypt password ----
+const decryptedCache = {};
+
+async function toggleDecrypt(id, btn) {
+    const span = document.getElementById('pwd-' + id);
+    if (!span) return;
+
+    if (span.dataset.visible === '1') {
+        span.textContent = '••••••••';
+        span.dataset.visible = '0';
+        return;
+    }
+
+    if (decryptedCache[id]) {
+        span.textContent     = decryptedCache[id];
+        span.dataset.visible = '1';
+        return;
+    }
+
+    btn.disabled = true;
+    try {
+        const res  = await fetch(`/passwords/${id}/decrypt`);
+        const data = await res.json();
+        decryptedCache[id]   = data.password;
+        span.textContent     = data.password;
+        span.dataset.visible = '1';
+    } catch {
+        span.textContent = 'Erreur';
+    } finally {
+        btn.disabled = false;
+    }
+}
+
+async function copyPassword(id) {
+    let pwd = decryptedCache[id];
+    if (!pwd) {
+        try {
+            const res = await fetch(`/passwords/${id}/decrypt`);
+            const data = await res.json();
+            pwd = data.password;
+            decryptedCache[id] = pwd;
+        } catch {
+            return;
+        }
+    }
+    await navigator.clipboard.writeText(pwd);
+}
+
+// ---- Filter entries ----
+function filterEntries(query) {
+    const q = query.toLowerCase();
+    document.querySelectorAll('#entries-table .entry-row').forEach(row => {
+        row.style.display = row.dataset.search.includes(q) ? '' : 'none';
+    });
+}
+
+// ---- Password generation & toggle (reused from dashboard) ----
+function generatePassword(inputId) {
+    const lower = 'abcdefghijklmnopqrstuvwxyz', upper = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+    const digits = '0123456789', symbols = '!@#$%^&*-_=+';
+    const all = lower + upper + digits + symbols, length = 16;
+    const rand = new Uint32Array(length), shuffle = new Uint32Array(length);
+    crypto.getRandomValues(rand);
+    crypto.getRandomValues(shuffle);
+    const pwd = [lower[rand[0]%lower.length], upper[rand[1]%upper.length], digits[rand[2]%digits.length], symbols[rand[3]%symbols.length]];
+    for (let i = 4; i < length; i++) pwd.push(all[rand[i] % all.length]);
+    for (let i = length - 1; i > 0; i--) { const j = shuffle[i] % (i + 1); [pwd[i], pwd[j]] = [pwd[j], pwd[i]]; }
+    const input = document.getElementById(inputId);
+    if (input) { input.value = pwd.join(''); input.type = 'text'; }
+}
+
+function togglePwd(inputId) {
+    const input = document.getElementById(inputId);
+    if (input) input.type = input.type === 'password' ? 'text' : 'password';
+}
+
+// ---- ESC closes modals ----
+document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') { closeAddModal(); closeEditModal(); closeEditVaultModal(); }
+});
+</script>
+{% endblock body_connected %}

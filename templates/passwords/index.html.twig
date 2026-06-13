@@ -38,10 +38,10 @@
             <div class="flex items-center justify-between mb-4">
                 <div class="flex items-center space-x-3">
                     <div class="h-10 w-10 rounded-xl bg-indigo-600/20 flex items-center justify-center text-indigo-400 font-bold">
-                        {{ password.serviceName|first|upper }}
+                        {{ password.title|first|upper }}
                     </div>
                     <div>
-                        <h3 class="font-bold">{{ password.serviceName }}</h3>
+                        <h3 class="font-bold">{{ password.title }}</h3>
                         <p class="text-xs text-slate-500">{{ password.url|default('Pas d\'URL') }}</p>
                     </div>
                 </div>

@@ -12,6 +12,7 @@ use App\Service\EncryptionService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
+use Symfony\Component\Form\FormFactoryInterface;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
@@ -31,6 +32,7 @@ class DashboardController extends AbstractController
         VaultRepository $vaultRepository,
         EntityManagerInterface $entityManager,
         EncryptionService $encryptionService,
+        FormFactoryInterface $formFactory,
     ): Response {
         /** @var \App\Entity\User $user */
         $user = $this->getUser();
@@ -71,11 +73,13 @@ class DashboardController extends AbstractController
         $recentPasswords = $passwordEntryRepository->findRecentByUser($user, 5);
         $vaults          = $vaultRepository->findByUser($user);
 
-        $passwordForm = $this->createForm(PasswordEntryType::class, new PasswordEntry(), [
-            'vaults' => $vaults,
+        $passwordForm = $formFactory->createNamed('add_password_entry', PasswordEntryType::class, new PasswordEntry(), [
+            'vaults'           => $vaults,
+            'action'           => $this->generateUrl('app_password_new'),
+            'method'           => 'POST',
         ]);
 
-        $editForm = $this->createForm(PasswordEntryType::class, new PasswordEntry(), [
+        $editForm = $formFactory->createNamed('edit_password_entry', PasswordEntryType::class, new PasswordEntry(), [
             'vaults'           => $vaults,
             'require_password' => false,
         ]);
