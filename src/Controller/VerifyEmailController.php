@@ -39,8 +39,8 @@ class VerifyEmailController extends AbstractController
         }
 
         try {
-            $verifyEmailHelper->validateEmailConfirmation(
-                $request->getUri(),
+            $verifyEmailHelper->validateEmailConfirmationFromRequest(
+                $request,
                 (string) $user->getId(),
                 $user->getEmail(),
             );

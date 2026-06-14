@@ -21,7 +21,7 @@ class EmailVerificationService
             'app_verify_email',
             (string) $user->getId(),
             $user->getEmail(),
-            new \DateTimeImmutable('+1 hour'),
+            ['id' => $user->getId()],
         );
 
         $email = (new TemplatedEmail())

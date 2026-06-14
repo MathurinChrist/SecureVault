@@ -26,7 +26,7 @@ class RegistrationControllerTest extends WebTestCase
         $this->assertSelectorExists('input[name*="plainPassword"]');
     }
 
-    public function testSuccessfulRegistrationRedirectsToLogin(): void
+    public function testSuccessfulRegistrationShowsCheckEmailPage(): void
     {
         $client = static::createClient();
         $this->skipIfDatabaseUnavailable();
@@ -42,7 +42,10 @@ class RegistrationControllerTest extends WebTestCase
             'registration_form[agreeTerms]'    => true,
         ]);
 
-        $this->assertResponseRedirects('/login');
+        // Registration now renders check_email.html.twig (not a redirect)
+        $this->assertResponseIsSuccessful();
+        $this->assertSelectorTextContains('h1', 'Vérifiez');
+        $this->assertSelectorTextContains('body', $email);
     }
 
     public function testRegistrationWithTooShortPasswordShowsError(): void

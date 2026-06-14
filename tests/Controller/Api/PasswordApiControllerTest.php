@@ -33,7 +33,8 @@ class PasswordApiControllerTest extends WebTestCase
         $user = new User();
         $user->setEmail($email)
              ->setFirstName('API')->setLastName('User')
-             ->setPassword($hasher->hashPassword($user, $plainPassword));
+             ->setPassword($hasher->hashPassword($user, $plainPassword))
+             ->setEmailVerified(true);
 
         $vault = new Vault();
         $vault->setName('API Test Vault')->setUser($user);
@@ -160,7 +161,8 @@ class PasswordApiControllerTest extends WebTestCase
         $other = new User();
         $other->setEmail('other_pw_' . uniqid() . '@example.com')
               ->setFirstName('Other')->setLastName('User')
-              ->setPassword($hasher->hashPassword($other, $plainPassword));
+              ->setPassword($hasher->hashPassword($other, $plainPassword))
+              ->setEmailVerified(true);
         $em->persist($other);
         $em->flush();
 

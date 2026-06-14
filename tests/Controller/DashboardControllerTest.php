@@ -30,7 +30,8 @@ class DashboardControllerTest extends WebTestCase
         $user->setEmail('dash_' . uniqid() . '@example.com')
              ->setFirstName('Dash')
              ->setLastName('User')
-             ->setPassword($hasher->hashPassword($user, 'Pass123!'));
+             ->setPassword($hasher->hashPassword($user, 'Pass123!'))
+             ->setEmailVerified(true);
 
         $em->persist($user);
         $em->flush();

@@ -31,7 +31,8 @@ class ShareControllerTest extends WebTestCase
         $owner = new User();
         $owner->setEmail('share_owner_' . uniqid() . '@example.com')
               ->setFirstName('Owner')->setLastName('User')
-              ->setPassword($hasher->hashPassword($owner, 'Pass123!'));
+              ->setPassword($hasher->hashPassword($owner, 'Pass123!'))
+              ->setEmailVerified(true);
 
         $vault = new Vault();
         $vault->setName('Test Vault')->setUser($owner);
@@ -76,7 +77,8 @@ class ShareControllerTest extends WebTestCase
         $other = new User();
         $other->setEmail('other_' . uniqid() . '@example.com')
               ->setFirstName('Other')->setLastName('User')
-              ->setPassword($hasher->hashPassword($other, 'Pass123!'));
+              ->setPassword($hasher->hashPassword($other, 'Pass123!'))
+              ->setEmailVerified(true);
         $em->persist($other);
         $em->flush();
 
@@ -108,7 +110,8 @@ class ShareControllerTest extends WebTestCase
         $recipient = new User();
         $recipient->setEmail('recipient_' . uniqid() . '@example.com')
                   ->setFirstName('Rec')->setLastName('User')
-                  ->setPassword($hasher->hashPassword($recipient, 'Pass123!'));
+                  ->setPassword($hasher->hashPassword($recipient, 'Pass123!'))
+                  ->setEmailVerified(true);
 
         $perm = $em->getRepository(VaultPermission::class)->findOneBy(['code' => 'READ']);
         if (!$perm) {

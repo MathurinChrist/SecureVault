@@ -44,7 +44,8 @@ class VaultControllerTest extends WebTestCase
         $user->setEmail($email)
              ->setFirstName('Test')
              ->setLastName('User')
-             ->setPassword($hasher->hashPassword($user, $plainPassword));
+             ->setPassword($hasher->hashPassword($user, $plainPassword))
+             ->setEmailVerified(true);
 
         $em->persist($user);
         $em->flush();
@@ -104,7 +105,8 @@ class VaultControllerTest extends WebTestCase
         $otherUser->setEmail('other_' . uniqid() . '@example.com')
                   ->setFirstName('Other')
                   ->setLastName('User')
-                  ->setPassword('hashed');
+                  ->setPassword('hashed')
+                  ->setEmailVerified(true);
 
         $vault = new Vault();
         $vault->setName('Private Vault')->setUser($otherUser);

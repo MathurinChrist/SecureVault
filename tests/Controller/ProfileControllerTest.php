@@ -30,7 +30,8 @@ class ProfileControllerTest extends WebTestCase
         $user->setEmail('profile_' . $suffix . uniqid() . '@example.com')
              ->setFirstName('John')
              ->setLastName('Doe')
-             ->setPassword($hasher->hashPassword($user, 'Pass123!'));
+             ->setPassword($hasher->hashPassword($user, 'Pass123!'))
+             ->setEmailVerified(true);
 
         $em->persist($user);
         $em->flush();

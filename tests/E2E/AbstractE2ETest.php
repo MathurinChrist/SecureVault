@@ -67,7 +67,17 @@ abstract class AbstractE2ETest extends PantherTestCase
     }
 
     /**
-     * Register a fresh user via UI and immediately log in. Returns [client, email].
+     * Bypass email verification via the test-helper endpoint.
+     * Works because the Panther server runs in the 'panther' env (non-prod).
+     */
+    protected function verifyEmailForE2E(Client $client, string $email): void
+    {
+        $client->request('GET', '/test/verify-email?email=' . urlencode($email));
+        $client->waitFor('body');
+    }
+
+    /**
+     * Register a fresh user via UI, verify their email, and log in. Returns [client, email].
      */
     protected function registerAndLogin(string $password = self::DEFAULT_PASSWORD): array
     {
@@ -76,6 +86,7 @@ abstract class AbstractE2ETest extends PantherTestCase
 
         $this->logoutUser($client);
         $this->registerUser($client, $email, $password);
+        $this->verifyEmailForE2E($client, $email);
         $this->loginUser($client, $email, $password);
 
         return [$client, $email];
