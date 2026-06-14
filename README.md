@@ -21,67 +21,128 @@ Avant de commencer, assurez-vous d'avoir les éléments suivants installés sur 
 - [Docker Compose](https://docs.docker.com/compose/install/)
 - [Make](https://www.gnu.org/software/make/)
 
-## ⚡ Démarrage Rapide (Installation)
+## ⚡ Lancer l'application en local (Docker)
 
-Si vous venez de cloner le projet, exécutez ces commandes dans l'ordre pour tout mettre en place :
+### 1. Démarrer les conteneurs
 
-1.  **Démarrer l'infrastructure :**
-    ```bash
-    make up
-    ```
+```bash
+make up
+```
 
-2.  **Installer les dépendances PHP :**
-    ```bash
-    make composer-install
-    ```
+Cela démarre trois services :
 
-3.  **Préparer la base de données (Migrations) :**
-    ```bash
-    make migrate
-    ```
+| Service | Rôle | Accès |
+| :--- | :--- | :--- |
+| `app` | Application Symfony (FrankenPHP) | http://localhost:8080 |
+| `database` | PostgreSQL 16 | `localhost:5432` |
+| `mailer` | Mailpit — capture les e-mails sortants | http://localhost:8025 |
 
-4.  **Générer les clés JWT :**
-    ```bash
-    make shell
-    php bin/console lexik:jwt:generate-keypair
-    ```
-    Les clés sont créées dans `config/jwt/` (gitignorées — à faire une seule fois par environnement).
+### 2. Installer les dépendances PHP
 
-5.  **Configurer les variables d'environnement :**
-    Créez `.env.local` à la racine et remplissez les valeurs requises (voir section [Variables d'environnement](#variables-denvironnement)).
+```bash
+make composer-install
+```
 
-Une fois ces étapes terminées, le serveur est accessible sur [http://localhost](http://localhost).
+### 3. Préparer la base de données
 
-##  Mise en route
+```bash
+make migrate
+```
 
-Le serveur web tourne sous **FrankenPHP**. Il démarre automatiquement dès que vous lancez `make up`.
+Pour repartir d'une base vierge avec les données de démonstration :
 
-- **Serveur Web :** Accessible sur le port `80` (HTTP) et `443` (HTTPS).
-- **Accès local :** [http://localhost](http://localhost).
+```bash
+make db-setup
+```
+
+### 4. Générer les clés JWT
+
+```bash
+make jwt-keys
+```
+
+Les clés RSA sont créées dans `config/jwt/` et persistées dans un volume Docker (`jwt_keys`). Elles sont générées une seule fois — à relancer uniquement si vous supprimez le volume.
+
+> `config/jwt/*.pem` est gitignorée. Ne jamais commiter ces fichiers.
+
+### 5. Configurer les variables d'environnement
+
+Créez `.env.local` à la racine pour surcharger les valeurs par défaut :
+
+```dotenv
+# Clé AES-256 pour le chiffrement des mots de passe
+VAULT_ENCRYPTION_KEY=<générer avec : openssl rand -base64 32>
+
+# JWT (déjà configuré via le volume Docker, modifier si nécessaire)
+JWT_PASSPHRASE=votre-passphrase
+
+# SMTP — par défaut Mailpit (dev). Remplacer par votre SMTP en production.
+# MAILER_DSN=smtp://user:pass@smtp.example.com:587
+```
+
+L'application est maintenant accessible sur **http://localhost:8080**.
+
+### Accès aux e-mails (Mailpit)
+
+En développement, tous les e-mails (vérification d'e-mail, codes 2FA) sont interceptés par **Mailpit** et consultables sur :
+
+```
+http://localhost:8025
+```
+
+Aucun e-mail réel n'est envoyé en mode dev.
+
+---
 
 ##  Référence des commandes Makefile
 
-Le projet inclut un `Makefile` pour simplifier les tâches courantes.
+### Docker & infrastructure
 
 | Commande | Description |
 | :--- | :--- |
-| `make help` | Affiche la liste des commandes disponibles. |
-| `make build` | Construit les images Docker à partir de zéro. |
-| `make up` | Démarre les conteneurs (Serveur + DB) en arrière-plan. |
-| `make down` | Arrête et supprime les conteneurs du projet. |
-| `make restart` | Redémarre tous les conteneurs. |
-| `make logs` | Affiche les logs en temps réel. |
-| `make ps` | Liste tous les conteneurs en cours d'exécution. |
-| `make shell` | Ouvre un shell interactif dans le conteneur `app`. |
-| `make db-shell` | Ouvre un shell psql dans le conteneur `database`. |
-| `make migrate` | Exécute les migrations de base de données. |
-| `make composer-install` | Installe les dépendances avec Composer. |
-| `make cc` | Vide le cache de Symfony. |
-| **Génération de Code** | |
-| `make make-migration` | Génère une nouvelle classe de migration. |
-| `make make-entity` | Crée ou modifie une entité Doctrine. |
-| `make make-command` | Crée une nouvelle commande Symfony. |
-| `make fixtures` | Charge les données de test (fixtures) en base. |
+| `make up` | Démarre les conteneurs en arrière-plan |
+| `make down` | Arrête et supprime les conteneurs |
+| `make restart` | Redémarre tous les conteneurs |
+| `make build` | Reconstruit les images Docker (sans cache) |
+| `make logs` | Affiche les logs de tous les conteneurs |
+| `make ps` | Liste les conteneurs en cours d'exécution |
+| `make shell` | Ouvre un shell dans le conteneur `app` |
+| `make db-shell` | Ouvre un shell psql dans le conteneur `database` |
+
+### Application
+
+| Commande | Description |
+| :--- | :--- |
+| `make composer-install` | Installe les dépendances Composer |
+| `make migrate` | Exécute les migrations Doctrine |
+| `make db-setup` | Recrée la BDD, migre et charge les fixtures (purge) |
+| `make fixtures` | Charge les fixtures sans purger la BDD |
+| `make fixtures-append` | Ajoute les fixtures sans purger la BDD |
+| `make jwt-keys` | Génère les clés RSA pour JWT |
+| `make cc` | Vide le cache Symfony |
+| `make messenger-consume` | Lance le worker Messenger |
+| `make log_tail` | Suit les logs Symfony en temps réel |
+
+### Génération de code
+
+| Commande | Description |
+| :--- | :--- |
+| `make make-migration` | Génère une nouvelle classe de migration |
+| `make make-entity` | Crée ou modifie une entité Doctrine |
+| `make make-command` | Crée une nouvelle commande Symfony |
+
+### Tests
+
+| Commande | Description |
+| :--- | :--- |
+| `make test` | Lance tous les tests (unit + functional + E2E) |
+| `make test-unit` | Tests unitaires (`tests/Service/`, `tests/Security/`) |
+| `make test-functional` | Tests fonctionnels WebTestCase (`tests/Controller/`) |
+| `make test-e2e` | Tests E2E Panther — navigateur headless (`tests/E2E/`) |
+| `make test-db-setup` | Prépare la BDD de test (utilisé automatiquement par les cibles test-*) |
+| `make fixtures-test` | Charge les fixtures dans la BDD de test |
+
+> `make test-functional` et `make test-e2e` appellent automatiquement `make test-db-setup` avant de s'exécuter.
 
 ##  Configuration de la base de données
 
@@ -89,7 +150,7 @@ Le projet utilise **PostgreSQL 16**.
 - **Utilisateur :** `app`
 - **Mot de passe :** `!ChangeMe!`
 - **Base de données :** `app`
-- **Hôte :** `database` (interne Docker) ou `localhost` (externe).
+- **Hôte :** `database` (interne Docker) ou `localhost:5432` (externe).
 
 ## Variables d'environnement
 
@@ -98,14 +159,12 @@ Toutes les variables secrètes doivent être définies dans `.env.local` (jamais
 | Variable | Obligatoire | Description |
 | :--- | :---: | :--- |
 | `VAULT_ENCRYPTION_KEY` | Oui | Clé AES-256 pour chiffrer/déchiffrer les mots de passe en base |
-| `MAILER_DSN` | Oui | DSN SMTP pour l'envoi d'e-mails (vérification d'e-mail, 2FA) |
-| `JWT_SECRET_KEY` | Oui | Chemin vers la clé privée RSA (`%kernel.project_dir%/config/jwt/private.pem`) |
-| `JWT_PUBLIC_KEY` | Oui | Chemin vers la clé publique RSA (`%kernel.project_dir%/config/jwt/public.pem`) |
+| `MAILER_DSN` | Oui | DSN SMTP (`smtp://mailer:1025` par défaut via Mailpit en dev) |
+| `JWT_SECRET_KEY` | Oui | Chemin vers la clé privée RSA (géré automatiquement via volume Docker) |
+| `JWT_PUBLIC_KEY` | Oui | Chemin vers la clé publique RSA (géré automatiquement via volume Docker) |
 | `JWT_PASSPHRASE` | Oui | Passphrase utilisée lors de la génération des clés JWT |
 
-### `VAULT_ENCRYPTION_KEY`
-
-**Générer une clé sécurisée** (à faire une seule fois à l'installation) :
+### Générer `VAULT_ENCRYPTION_KEY`
 
 ```bash
 # Option 1 — OpenSSL (recommandée)
@@ -114,20 +173,6 @@ openssl rand -base64 32
 # Option 2 — PHP
 php -r "echo base64_encode(random_bytes(32));"
 ```
-
-### Clés JWT
-
-```bash
-# Via la commande Symfony (recommandée)
-php bin/console lexik:jwt:generate-keypair
-
-# Ou manuellement avec OpenSSL
-mkdir -p config/jwt
-openssl genpkey -algorithm RSA -out config/jwt/private.pem -pkeyopt rsa_keygen_bits:4096
-openssl pkey -in config/jwt/private.pem -out config/jwt/public.pem -pubout
-```
-
-> `config/jwt/*.pem` est gitignorée — les clés doivent être générées localement sur chaque environnement.
 
 ## API REST
 
@@ -171,21 +216,16 @@ Retourne `{ "token": "..." }`.
 ## Tests
 
 ```bash
-# Entrer dans le conteneur
-make shell
+# Tous les tests
+make test
 
-# Tests unitaires et fonctionnels (WebTestCase)
-php bin/phpunit
-
-# Tests d'un répertoire spécifique
-php bin/phpunit tests/Controller/
-php bin/phpunit tests/Service/
-
-# Tests E2E via Panther (navigateur headless — nécessite le serveur démarré)
-php bin/phpunit tests/E2E/
+# Par catégorie
+make test-unit        # Services et voters
+make test-functional  # Contrôleurs (WebTestCase)
+make test-e2e         # Navigateur headless (Panther)
 ```
 
-Les tests fonctionnels utilisent la base `app_test` (configurée dans `.env.test`). Les tests E2E utilisent l'environnement `panther`.
+Les tests fonctionnels et E2E utilisent la base `app_test`. `make test-functional` et `make test-e2e` configurent cette base automatiquement avant de s'exécuter.
 
 ##  Structure du projet
 
@@ -208,10 +248,10 @@ tests/
 ├── E2E/                # Tests Panther (navigateur headless)
 └── Service/            # Tests unitaires
 migrations/             # Migrations Doctrine
-config/jwt/             # Clés RSA (gitignorées)
+config/jwt/             # Clés RSA (gitignorées, générées par make jwt-keys)
 ```
 
 **Infrastructure :**
 - `Dockerfile` : Basé sur **FrankenPHP** pour un serveur web performant tout-en-un.
-- `compose.yaml` : Configuration des services (App, DB).
-- `Makefile` : Raccourcis pour les commandes courantes.
+- `compose.yaml` : Trois services — `app` (port 8080), `database` (port 5432), `mailer` Mailpit (port 8025).
+- `Makefile` : Raccourcis pour toutes les commandes courantes.
