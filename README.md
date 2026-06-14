@@ -174,6 +174,101 @@ openssl rand -base64 32
 php -r "echo base64_encode(random_bytes(32));"
 ```
 
+## Utilisation de l'interface web
+
+L'application est accessible sur **http://localhost:8080** après `make up`.
+
+### Compte utilisateur
+
+| Action | URL |
+| :--- | :--- |
+| Page d'accueil | `/` |
+| Inscription | `/register` |
+| Connexion | `/login` |
+| Déconnexion | `/logout` |
+| Profil (modifier nom, e-mail, mot de passe) | `/profile` |
+
+Après l'inscription, un e-mail de vérification est envoyé. En développement, il est consultable sur **http://localhost:8025** (Mailpit). L'accès aux pages protégées est bloqué jusqu'à la vérification.
+
+### Tableau de bord
+
+`/dashboard` — vue synthétique : nombre de coffres, d'entrées, dernières activités et notifications non lues.
+
+### Coffres-forts
+
+`/vaults` — liste de tous les coffres de l'utilisateur.
+
+| Action | Comment |
+| :--- | :--- |
+| Créer un coffre | Formulaire intégré dans la page `/vaults` |
+| Voir le contenu | Clic sur un coffre → `/vaults/{id}` |
+| Renommer | Formulaire sur la page de détail |
+| Archiver / désarchiver | Bouton sur la page de détail |
+| Supprimer | Bouton sur la page de détail (suppression définitive) |
+
+### Mots de passe
+
+Chaque coffre contient des entrées de mots de passe. Les mots de passe sont chiffrés en AES-256-GCM — ils ne sont jamais stockés en clair.
+
+| Action | Comment |
+| :--- | :--- |
+| Ajouter une entrée | Formulaire sur la page du coffre (`/vaults/{id}`) |
+| Afficher le mot de passe | Bouton "Révéler" → `/passwords/{id}/decrypt` |
+| Modifier une entrée | Formulaire inline (`/password/{id}/edit`) |
+| Supprimer une entrée | Bouton de suppression sur la page du coffre |
+| Vue globale de toutes les entrées | `/passwords` |
+
+### Partage de coffres
+
+Un coffre peut être partagé avec d'autres utilisateurs inscrits.
+
+| Action | Comment |
+| :--- | :--- |
+| Partager un coffre | Page du coffre → onglet partages → `/vaults/{id}/shares` |
+| Envoyer une invitation | Formulaire avec e-mail du destinataire et niveau de permission (VIEW / EDIT / DELETE) |
+| Accepter / refuser une invitation | `/shares` — liste des invitations reçues |
+| Révoquer un partage | Bouton "Révoquer" sur la page de partages du coffre |
+
+### Alertes de sécurité
+
+`/alerts` — liste des événements de sécurité (connexions suspectes, tentatives échouées, etc.).
+
+- Marquer une alerte comme lue
+- Ignorer une alerte
+- Activer / désactiver la 2FA depuis cette page (section en bas de page)
+
+### Notifications
+
+`/notifications` — historique des notifications (nouveaux partages, connexions, activités).
+
+- Marquer comme lue individuellement ou en masse
+- Ignorer une notification
+
+### Authentification à deux facteurs (2FA)
+
+La 2FA s'active depuis `/alerts` (section "Conseil de sécurité"). Une fois activée :
+
+1. À chaque connexion, un code à 6 chiffres est envoyé par e-mail
+2. Le code est valable 10 minutes
+3. L'accès à toutes les pages est bloqué jusqu'à la saisie du code sur `/2fa/verify`
+4. Un bouton "Renvoyer un code" est disponible si l'e-mail n'arrive pas
+
+En développement, le code apparaît dans Mailpit sur **http://localhost:8025**.
+
+### Administration
+
+`/admin` — tableau de bord réservé aux utilisateurs avec le rôle `ROLE_ADMIN`.
+
+| Section | Contenu |
+| :--- | :--- |
+| Utilisateurs | CRUD complet, rôles, statut e-mail vérifié |
+| Coffres | Vue et gestion de tous les coffres |
+| Alertes | Consultation et suppression des alertes |
+| Journal d'activité | Historique de toutes les actions |
+| Tentatives de connexion | Adresses IP, dates, succès/échec |
+
+---
+
 ## API REST
 
 L'API REST est préfixée `/api/v1/`. Toutes les routes (sauf le login) requièrent un token JWT en header :
