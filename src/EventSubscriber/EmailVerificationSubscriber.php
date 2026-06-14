@@ -20,6 +20,8 @@ class EmailVerificationSubscriber implements EventSubscriberInterface
         'app_resend_verification',
         'app_verify_pending',
         'app_home',
+        'app_2fa_verify',
+        'app_2fa_resend',
     ];
 
     public function __construct(

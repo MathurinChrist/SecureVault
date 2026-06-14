@@ -123,16 +123,24 @@
             {% if app.user.is2faEnabled %}
                 <h3 class="text-lg font-bold text-green-400 mb-2">Protection Maximale Activée</h3>
                 <p class="text-slate-300 max-w-2xl">Félicitations ! Votre compte est protégé par l'authentification à deux facteurs (2FA). Cela rend votre coffre-fort virtuellement impénétrable.</p>
-                <div class="mt-4 flex items-center space-x-2 text-green-500 font-bold text-sm">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                    <span>2FA Activé</span>
+                <div class="mt-4 flex items-center justify-between">
+                    <div class="flex items-center space-x-2 text-green-500 font-bold text-sm">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                        <span>2FA Activé</span>
+                    </div>
+                    <form method="POST" action="{{ path('app_2fa_setup') }}">
+                        <input type="hidden" name="_token" value="{{ csrf_token('2fa_toggle') }}">
+                        <button type="submit" class="btn btn-ghost text-sm border border-white/10 text-red-400 hover:text-red-300">Désactiver</button>
+                    </form>
                 </div>
             {% else %}
                 <h3 class="text-lg font-bold text-indigo-400 mb-2">Conseil de sécurité : Activez la 2FA</h3>
-                <p class="text-slate-300 max-w-2xl">Activez l'authentification à deux facteurs (2FA) sur votre compte pour une couche de protection supplémentaire. C'est la meilleure barrière contre le vol d'identifiants.</p>
+                <p class="text-slate-300 max-w-2xl">Activez l'authentification à deux facteurs (2FA) sur votre compte pour une couche de protection supplémentaire. Un code vous sera envoyé par e-mail à chaque connexion.</p>
                 <div class="mt-6 flex space-x-4">
-                    <a href="{{ path('app_2fa_setup') }}" class="btn btn-primary text-sm px-6">Activer maintenant</a>
-                    <button class="btn btn-ghost text-sm border border-white/10">En savoir plus</button>
+                    <form method="POST" action="{{ path('app_2fa_setup') }}">
+                        <input type="hidden" name="_token" value="{{ csrf_token('2fa_toggle') }}">
+                        <button type="submit" class="btn btn-primary text-sm px-6">Activer maintenant</button>
+                    </form>
                 </div>
             {% endif %}
         </div>

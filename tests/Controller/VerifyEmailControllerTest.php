@@ -84,6 +84,7 @@ class VerifyEmailControllerTest extends WebTestCase
     public function testVerifyEmailWithUnknownIdShowsError(): void
     {
         $client = static::createClient();
+        $this->skipIfDatabaseUnavailable();
         $client->request('GET', '/verify/email?id=99999999');
 
         $this->assertResponseRedirects('/login');

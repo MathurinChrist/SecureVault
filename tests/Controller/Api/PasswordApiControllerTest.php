@@ -182,4 +182,97 @@ class PasswordApiControllerTest extends WebTestCase
 
         $this->assertResponseStatusCodeSame(401);
     }
+
+    public function testUpdatePasswordTitle(): void
+    {
+        [$client, , $vault] = $this->createSetup();
+
+        $client->request('POST', '/api/v1/vaults/' . $vault->getId() . '/passwords', [], [], ['CONTENT_TYPE' => 'application/json'], json_encode(['title' => 'Original', 'password' => 'Secret1']));
+        $id = json_decode($client->getResponse()->getContent(), true)['id'];
+
+        $client->request('PATCH', '/api/v1/vaults/' . $vault->getId() . '/passwords/' . $id, [], [], ['CONTENT_TYPE' => 'application/json'], json_encode(['title' => 'Updated']));
+
+        $this->assertResponseIsSuccessful();
+        $data = json_decode($client->getResponse()->getContent(), true);
+        $this->assertSame('Updated', $data['title']);
+    }
+
+    public function testUpdatePasswordValue(): void
+    {
+        [$client, , $vault] = $this->createSetup();
+
+        $client->request('POST', '/api/v1/vaults/' . $vault->getId() . '/passwords', [], [], ['CONTENT_TYPE' => 'application/json'], json_encode(['title' => 'PwdChange', 'password' => 'OldPass!']));
+        $id = json_decode($client->getResponse()->getContent(), true)['id'];
+
+        $client->request('PATCH', '/api/v1/vaults/' . $vault->getId() . '/passwords/' . $id, [], [], ['CONTENT_TYPE' => 'application/json'], json_encode(['password' => 'NewPass!']));
+        $this->assertResponseIsSuccessful();
+
+        // Show endpoint should return new decrypted value
+        $client->request('GET', '/api/v1/vaults/' . $vault->getId() . '/passwords/' . $id);
+        $data = json_decode($client->getResponse()->getContent(), true);
+        $this->assertSame('NewPass!', $data['password']);
+    }
+
+    public function testUpdatePasswordWithEmptyTitleReturns422(): void
+    {
+        [$client, , $vault] = $this->createSetup();
+
+        $client->request('POST', '/api/v1/vaults/' . $vault->getId() . '/passwords', [], [], ['CONTENT_TYPE' => 'application/json'], json_encode(['title' => 'ToUpdate', 'password' => 'pass']));
+        $id = json_decode($client->getResponse()->getContent(), true)['id'];
+
+        $client->request('PATCH', '/api/v1/vaults/' . $vault->getId() . '/passwords/' . $id, [], [], ['CONTENT_TYPE' => 'application/json'], json_encode(['title' => '']));
+
+        $this->assertResponseStatusCodeSame(422);
+    }
+
+    public function testUpdatePasswordOnAnotherUsersVaultReturns403(): void
+    {
+        [$client, , $vault] = $this->createSetup();
+
+        $em     = static::getContainer()->get(EntityManagerInterface::class);
+        $hasher = static::getContainer()->get(UserPasswordHasherInterface::class);
+        $plain  = 'Pass123!';
+
+        $other = (new User())
+            ->setEmail('other_patch_' . uniqid() . '@example.com')
+            ->setFirstName('Other')->setLastName('User')
+            ->setPassword($hasher->hashPassword(new User(), $plain))
+            ->setEmailVerified(true);
+        $em->persist($other);
+        $em->flush();
+
+        // Login as other user
+        $client->request('POST', '/api/v1/auth/login', [], [], ['CONTENT_TYPE' => 'application/json'], json_encode(['email' => $other->getEmail(), 'password' => $plain]));
+        $otherJwt = json_decode($client->getResponse()->getContent(), true)['token'];
+        $client->setServerParameter('HTTP_AUTHORIZATION', 'Bearer ' . $otherJwt);
+
+        $client->request('PATCH', '/api/v1/vaults/' . $vault->getId() . '/passwords/1', [], [], ['CONTENT_TYPE' => 'application/json'], json_encode(['title' => 'Hijacked']));
+
+        $this->assertResponseStatusCodeSame(403);
+    }
+
+    public function testDeletePasswordOnAnotherUsersVaultReturns403(): void
+    {
+        [$client, , $vault] = $this->createSetup();
+
+        $em     = static::getContainer()->get(EntityManagerInterface::class);
+        $hasher = static::getContainer()->get(UserPasswordHasherInterface::class);
+        $plain  = 'Pass123!';
+
+        $other = (new User())
+            ->setEmail('other_del2_' . uniqid() . '@example.com')
+            ->setFirstName('Other')->setLastName('User')
+            ->setPassword($hasher->hashPassword(new User(), $plain))
+            ->setEmailVerified(true);
+        $em->persist($other);
+        $em->flush();
+
+        $client->request('POST', '/api/v1/auth/login', [], [], ['CONTENT_TYPE' => 'application/json'], json_encode(['email' => $other->getEmail(), 'password' => $plain]));
+        $otherJwt = json_decode($client->getResponse()->getContent(), true)['token'];
+        $client->setServerParameter('HTTP_AUTHORIZATION', 'Bearer ' . $otherJwt);
+
+        $client->request('DELETE', '/api/v1/vaults/' . $vault->getId() . '/passwords/1');
+
+        $this->assertResponseStatusCodeSame(403);
+    }
 }

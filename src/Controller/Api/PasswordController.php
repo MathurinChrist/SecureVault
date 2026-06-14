@@ -86,6 +86,52 @@ class PasswordController extends AbstractController
         ]);
     }
 
+    #[Route('/{id}', name: 'update', methods: ['PUT', 'PATCH'], requirements: ['id' => '\d+'])]
+    public function update(int $vaultId, PasswordEntry $entry, Request $request): JsonResponse
+    {
+        $check = $this->checkEntryAccess($vaultId, $entry);
+        if ($check instanceof JsonResponse) {
+            return $check;
+        }
+
+        $data = json_decode($request->getContent(), true);
+        $key  = hash('sha256', $this->encryptionKey, true);
+
+        if (isset($data['title'])) {
+            if (empty(trim($data['title']))) {
+                return $this->json(['error' => 'title cannot be empty.'], Response::HTTP_UNPROCESSABLE_ENTITY);
+            }
+            $entry->setTitle(trim($data['title']));
+        }
+
+        if (array_key_exists('username', $data)) {
+            $entry->setUsername($data['username']);
+        }
+
+        if (array_key_exists('url', $data)) {
+            $entry->setUrl($data['url']);
+        }
+
+        if (array_key_exists('notes', $data)) {
+            $entry->setNotes($data['notes']);
+        }
+
+        if (isset($data['favorite'])) {
+            $entry->setFavorite((bool) $data['favorite']);
+        }
+
+        if (isset($data['password'])) {
+            if (empty($data['password'])) {
+                return $this->json(['error' => 'password cannot be empty.'], Response::HTTP_UNPROCESSABLE_ENTITY);
+            }
+            $entry->setEncryptedPassword($this->encryptionService->encrypt($data['password'], $key));
+        }
+
+        $this->em->flush();
+
+        return $this->json($this->serializeSafe($entry));
+    }
+
     #[Route('/{id}', name: 'delete', methods: ['DELETE'], requirements: ['id' => '\d+'])]
     public function delete(int $vaultId, PasswordEntry $entry): JsonResponse
     {
