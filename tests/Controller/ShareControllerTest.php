@@ -90,12 +90,20 @@ class ShareControllerTest extends WebTestCase
 
     public function testShareInviteWithUnknownEmailShowsError(): void
     {
-        [$client, , $vault] = $this->createSetup();
+        [$client, , $vault, $em] = $this->createSetup();
+
+        $perm = $em->getRepository(VaultPermission::class)->findOneBy(['code' => 'VIEW']);
+        if (!$perm) {
+            $perm = (new VaultPermission())->setCode('VIEW')->setName('Lecture');
+            $em->persist($perm);
+            $em->flush();
+        }
+
         $client->request('GET', '/vaults/' . $vault->getId() . '/shares');
 
         $client->submitForm('Envoyer l\'invitation', [
             'email'      => 'nobody_unknown_' . uniqid() . '@nowhere.invalid',
-            'permission' => 'READ',
+            'permission' => 'VIEW',
         ]);
 
         $this->assertResponseRedirects();

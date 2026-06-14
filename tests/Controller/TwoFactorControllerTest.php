@@ -82,10 +82,9 @@ class TwoFactorControllerTest extends WebTestCase
         $session->set('2fa_pending', true);
         $session->save();
 
-        $client->request('POST', '/2fa/verify', [
-            '_token' => $client->getContainer()->get('security.csrf.token_manager')->getToken('2fa_verify')->getValue(),
-            'code'   => '123456',
-        ]);
+        $crawler = $client->request('GET', '/2fa/verify');
+        $token   = $crawler->filter('form[action$="/2fa/verify"] input[name="_token"]')->attr('value');
+        $client->request('POST', '/2fa/verify', ['_token' => $token, 'code' => '123456']);
 
         $this->assertResponseRedirects('/dashboard');
 
@@ -110,10 +109,9 @@ class TwoFactorControllerTest extends WebTestCase
         $session->set('2fa_pending', true);
         $session->save();
 
-        $client->request('POST', '/2fa/verify', [
-            '_token' => $client->getContainer()->get('security.csrf.token_manager')->getToken('2fa_verify')->getValue(),
-            'code'   => '000000',
-        ]);
+        $crawler = $client->request('GET', '/2fa/verify');
+        $token   = $crawler->filter('form[action$="/2fa/verify"] input[name="_token"]')->attr('value');
+        $client->request('POST', '/2fa/verify', ['_token' => $token, 'code' => '000000']);
 
         $this->assertResponseRedirects('/2fa/verify');
         $client->followRedirect();
@@ -135,10 +133,9 @@ class TwoFactorControllerTest extends WebTestCase
         $session->set('2fa_pending', true);
         $session->save();
 
-        $client->request('POST', '/2fa/verify', [
-            '_token' => $client->getContainer()->get('security.csrf.token_manager')->getToken('2fa_verify')->getValue(),
-            'code'   => '111111',
-        ]);
+        $crawler = $client->request('GET', '/2fa/verify');
+        $token   = $crawler->filter('form[action$="/2fa/verify"] input[name="_token"]')->attr('value');
+        $client->request('POST', '/2fa/verify', ['_token' => $token, 'code' => '111111']);
 
         $this->assertResponseRedirects('/2fa/verify');
         $client->followRedirect();
@@ -201,7 +198,7 @@ class TwoFactorControllerTest extends WebTestCase
         $this->assertResponseRedirects('/alerts');
 
         $conn    = static::getContainer()->get('doctrine.dbal.default_connection');
-        $enabled = $conn->fetchOne('SELECT is_2fa_enabled FROM "user" WHERE id = ?', [$user->getId()]);
+        $enabled = $conn->fetchOne('SELECT is2fa_enabled FROM "user" WHERE id = ?', [$user->getId()]);
         $this->assertTrue((bool) $enabled);
     }
 
@@ -219,7 +216,7 @@ class TwoFactorControllerTest extends WebTestCase
         $this->assertResponseRedirects('/alerts');
 
         $conn    = static::getContainer()->get('doctrine.dbal.default_connection');
-        $enabled = $conn->fetchOne('SELECT is_2fa_enabled FROM "user" WHERE id = ?', [$user->getId()]);
+        $enabled = $conn->fetchOne('SELECT is2fa_enabled FROM "user" WHERE id = ?', [$user->getId()]);
         $this->assertFalse((bool) $enabled);
     }
 
@@ -240,9 +237,9 @@ class TwoFactorControllerTest extends WebTestCase
         $session->set('2fa_expires_at', time() + 600);
         $session->save();
 
-        $client->request('POST', '/2fa/resend', [
-            '_token' => $client->getContainer()->get('security.csrf.token_manager')->getToken('2fa_resend')->getValue(),
-        ]);
+        $crawler = $client->request('GET', '/2fa/verify');
+        $token   = $crawler->filter('form[action$="/2fa/resend"] input[name="_token"]')->attr('value');
+        $client->request('POST', '/2fa/resend', ['_token' => $token]);
 
         $this->assertResponseRedirects('/2fa/verify');
     }
@@ -255,9 +252,20 @@ class TwoFactorControllerTest extends WebTestCase
         [$user] = $this->createUser();
         $client->loginUser($user);
 
-        $client->request('POST', '/2fa/resend', [
-            '_token' => $client->getContainer()->get('security.csrf.token_manager')->getToken('2fa_resend')->getValue(),
-        ]);
+        // Temporarily set pending to render the /2fa/verify page and extract the resend CSRF token
+        $client->request('GET', '/dashboard');
+        $session = $client->getRequest()->getSession();
+        $session->set('2fa_pending', true);
+        $session->save();
+
+        $crawler = $client->request('GET', '/2fa/verify');
+        $token   = $crawler->filter('form[action$="/2fa/resend"] input[name="_token"]')->attr('value');
+
+        $session = $client->getRequest()->getSession();
+        $session->remove('2fa_pending');
+        $session->save();
+
+        $client->request('POST', '/2fa/resend', ['_token' => $token]);
 
         $this->assertResponseRedirects('/dashboard');
     }
