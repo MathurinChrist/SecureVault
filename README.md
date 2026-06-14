@@ -2,6 +2,18 @@
 
 Bienvenue dans le projet **SecureVault**. Ce guide fournit des instructions sur la gestion de l'infrastructure du projet à l'aide de Docker et du `Makefile` fourni.
 
+## Fonctionnalités
+
+- Gestion de coffres-forts chiffrés (AES-256-GCM)
+- Entrées de mots de passe avec titre, identifiant, URL, notes et favoris
+- Partage de coffres avec permissions granulaires (VIEW / EDIT / DELETE)
+- Authentification JWT pour l'API REST
+- Vérification d'e-mail obligatoire à l'inscription
+- Authentification à deux facteurs par e-mail (2FA, optionnelle par compte)
+- Tableau de bord admin (EasyAdmin) à `/admin` — CRUD complet sur toutes les entités
+- Journal d'activité, alertes de sécurité, notifications en temps réel
+- Suivi des tentatives de connexion
+
 ## Prérequis
 
 Avant de commencer, assurez-vous d'avoir les éléments suivants installés sur votre machine :
@@ -27,6 +39,16 @@ Si vous venez de cloner le projet, exécutez ces commandes dans l'ordre pour tou
     ```bash
     make migrate
     ```
+
+4.  **Générer les clés JWT :**
+    ```bash
+    make shell
+    php bin/console lexik:jwt:generate-keypair
+    ```
+    Les clés sont créées dans `config/jwt/` (gitignorées — à faire une seule fois par environnement).
+
+5.  **Configurer les variables d'environnement :**
+    Créez `.env.local` à la racine et remplissez les valeurs requises (voir section [Variables d'environnement](#variables-denvironnement)).
 
 Une fois ces étapes terminées, le serveur est accessible sur [http://localhost](http://localhost).
 
@@ -71,9 +93,17 @@ Le projet utilise **PostgreSQL 16**.
 
 ## Variables d'environnement
 
-### `VAULT_ENCRYPTION_KEY`
+Toutes les variables secrètes doivent être définies dans `.env.local` (jamais commité).
 
-Cette clé est utilisée pour chiffrer/déchiffrer les mots de passe stockés en base de données (AES-256-GCM via `EncryptionService`).
+| Variable | Obligatoire | Description |
+| :--- | :---: | :--- |
+| `VAULT_ENCRYPTION_KEY` | Oui | Clé AES-256 pour chiffrer/déchiffrer les mots de passe en base |
+| `MAILER_DSN` | Oui | DSN SMTP pour l'envoi d'e-mails (vérification d'e-mail, 2FA) |
+| `JWT_SECRET_KEY` | Oui | Chemin vers la clé privée RSA (`%kernel.project_dir%/config/jwt/private.pem`) |
+| `JWT_PUBLIC_KEY` | Oui | Chemin vers la clé publique RSA (`%kernel.project_dir%/config/jwt/public.pem`) |
+| `JWT_PASSPHRASE` | Oui | Passphrase utilisée lors de la génération des clés JWT |
+
+### `VAULT_ENCRYPTION_KEY`
 
 **Générer une clé sécurisée** (à faire une seule fois à l'installation) :
 
@@ -85,10 +115,103 @@ openssl rand -base64 32
 php -r "echo base64_encode(random_bytes(32));"
 ```
 
-**Ajouter la valeur dans `.env.local`** 
+### Clés JWT
+
+```bash
+# Via la commande Symfony (recommandée)
+php bin/console lexik:jwt:generate-keypair
+
+# Ou manuellement avec OpenSSL
+mkdir -p config/jwt
+openssl genpkey -algorithm RSA -out config/jwt/private.pem -pkeyopt rsa_keygen_bits:4096
+openssl pkey -in config/jwt/private.pem -out config/jwt/public.pem -pubout
+```
+
+> `config/jwt/*.pem` est gitignorée — les clés doivent être générées localement sur chaque environnement.
+
+## API REST
+
+L'API REST est préfixée `/api/v1/`. Toutes les routes (sauf le login) requièrent un token JWT en header :
+
+```
+Authorization: Bearer <token>
+```
+
+### Authentification
+
+```
+POST /api/v1/auth/login
+Content-Type: application/json
+
+{ "email": "user@example.com", "password": "motdepasse" }
+```
+
+Retourne `{ "token": "..." }`.
+
+### Coffres (Vaults)
+
+| Méthode | Route | Description |
+| :--- | :--- | :--- |
+| `GET` | `/api/v1/vaults` | Liste des coffres de l'utilisateur |
+| `GET` | `/api/v1/vaults/{id}` | Détail d'un coffre |
+| `POST` | `/api/v1/vaults` | Créer un coffre (`name` requis, `description` optionnel) |
+| `PATCH` | `/api/v1/vaults/{id}` | Modifier (`name`, `description`, `archived`) |
+| `DELETE` | `/api/v1/vaults/{id}` | Supprimer un coffre |
+
+### Entrées de mots de passe
+
+| Méthode | Route | Description |
+| :--- | :--- | :--- |
+| `GET` | `/api/v1/vaults/{vaultId}/passwords` | Liste des entrées (sans mot de passe déchiffré) |
+| `GET` | `/api/v1/vaults/{vaultId}/passwords/{id}` | Détail avec mot de passe déchiffré |
+| `POST` | `/api/v1/vaults/{vaultId}/passwords` | Créer (`title` et `password` requis) |
+| `PATCH` | `/api/v1/vaults/{vaultId}/passwords/{id}` | Modifier (`title`, `username`, `url`, `notes`, `favorite`, `password`) |
+| `DELETE` | `/api/v1/vaults/{vaultId}/passwords/{id}` | Supprimer |
+
+## Tests
+
+```bash
+# Entrer dans le conteneur
+make shell
+
+# Tests unitaires et fonctionnels (WebTestCase)
+php bin/phpunit
+
+# Tests d'un répertoire spécifique
+php bin/phpunit tests/Controller/
+php bin/phpunit tests/Service/
+
+# Tests E2E via Panther (navigateur headless — nécessite le serveur démarré)
+php bin/phpunit tests/E2E/
+```
+
+Les tests fonctionnels utilisent la base `app_test` (configurée dans `.env.test`). Les tests E2E utilisent l'environnement `panther`.
 
 ##  Structure du projet
 
+```
+src/
+├── Controller/
+│   ├── Api/            # API REST stateless (JWT)
+│   ├── Admin/          # Tableau de bord EasyAdmin (CRUD)
+│   └── *.php           # Contrôleurs web (dashboard, vaults, profil, 2FA…)
+├── Entity/             # 15 entités Doctrine (User, Vault, PasswordEntry…)
+├── Service/            # Chiffrement, 2FA, alertes, notifications, activité
+├── EventSubscriber/    # Vérification e-mail, blocage 2FA, notifications login
+└── Security/           # VaultVoter (VIEW / EDIT / DELETE / SHARE)
+templates/
+├── emails/             # Templates Twig pour e-mails transactionnels
+├── security/           # Pages login, vérification 2FA
+└── vault/, profile/, alerts/, …
+tests/
+├── Controller/         # Tests fonctionnels WebTestCase
+├── E2E/                # Tests Panther (navigateur headless)
+└── Service/            # Tests unitaires
+migrations/             # Migrations Doctrine
+config/jwt/             # Clés RSA (gitignorées)
+```
+
+**Infrastructure :**
 - `Dockerfile` : Basé sur **FrankenPHP** pour un serveur web performant tout-en-un.
 - `compose.yaml` : Configuration des services (App, DB).
 - `Makefile` : Raccourcis pour les commandes courantes.
