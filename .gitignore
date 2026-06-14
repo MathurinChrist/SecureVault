@@ -11,3 +11,9 @@
 !/config/jwt/checkpoint
 /phpunit.xml
 /.phpunit.result.cache
+/drivers/
+/.phpunit.cache/
+
+###> lexik/jwt-authentication-bundle ###
+/config/jwt/*.pem
+###< lexik/jwt-authentication-bundle ###

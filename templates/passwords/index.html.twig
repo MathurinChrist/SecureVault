@@ -9,7 +9,7 @@
             <h1 class="text-3xl font-bold">Mots de Passe</h1>
             <p class="text-slate-400 mt-1">Gérez tous vos identifiants à partir d'un seul endroit.</p>
         </div>
-        <button class="btn btn-primary flex items-center space-x-2">
+        <button onclick="openAddModal()" class="btn btn-primary flex items-center space-x-2">
             <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
             </svg>
@@ -17,58 +17,110 @@
         </button>
     </div>
 
-    <!-- Filters & Search -->
     <div class="flex flex-col md:flex-row space-y-4 md:space-y-0 md:space-x-4">
         <div class="flex-1 relative">
             <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-500">
                 <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
             </span>
-            <input type="text" placeholder="Rechercher par service, email ou URL..." class="block w-full pl-10 pr-3 py-3 bg-white/5 border border-white/10 rounded-xl text-sm placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 transition">
+            <input type="text" id="pw-search" placeholder="Rechercher par service, email ou URL..."
+                   oninput="filterPasswords()"
+                   class="block w-full pl-10 pr-3 py-3 bg-white/5 border border-white/10 rounded-xl text-sm placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 transition">
         </div>
-        <select class="bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-slate-300 focus:outline-none focus:ring-1 focus:ring-indigo-500">
-            <option>Tous les coffres</option>
-            <option>Coffre Personnel</option>
+        <select id="vault-filter" onchange="filterPasswords()"
+                class="bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-slate-300 focus:outline-none focus:ring-1 focus:ring-indigo-500">
+            <option value="">Tous les coffres</option>
+            {% for vault in vaults %}
+                <option value="{{ vault.id }}">{{ vault.name }}</option>
+            {% endfor %}
         </select>
     </div>
 
-    <!-- Password List -->
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+    <div id="passwords-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {% for password in passwords %}
-        <div class="glass-card p-6 rounded-3xl hover:bg-white/10 transition group">
+        <div class="glass-card p-6 rounded-3xl hover:bg-white/10 transition group password-card"
+             data-search="{{ (password.title ~ ' ' ~ password.username|default('') ~ ' ' ~ password.url|default(''))|lower }}"
+             data-vault-id="{{ password.vault ? password.vault.id : '' }}">
+
             <div class="flex items-center justify-between mb-4">
-                <div class="flex items-center space-x-3">
-                    <div class="h-10 w-10 rounded-xl bg-indigo-600/20 flex items-center justify-center text-indigo-400 font-bold">
-                        {{ password.serviceName|first|upper }}
+                <div class="flex items-center space-x-3 min-w-0">
+                    <div class="h-10 w-10 rounded-xl bg-indigo-600/20 flex items-center justify-center text-indigo-400 font-bold shrink-0">
+                        {{ password.title|first|upper }}
                     </div>
-                    <div>
-                        <h3 class="font-bold">{{ password.serviceName }}</h3>
-                        <p class="text-xs text-slate-500">{{ password.url|default('Pas d\'URL') }}</p>
+                    <div class="min-w-0">
+                        <h3 class="font-bold truncate">{{ password.title }}</h3>
+                        <p class="text-xs text-slate-500 truncate">{{ password.url|default('Pas d\'URL') }}</p>
                     </div>
                 </div>
-                <div class="relative">
-                    <button class="p-2 hover:bg-white/10 rounded-lg text-slate-500">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z"/></svg>
+                <div class="flex items-center space-x-1 shrink-0 opacity-0 group-hover:opacity-100 transition ml-2">
+                    <button type="button" onclick="copyPassword({{ password.id }})"
+                            title="Copier le mot de passe"
+                            class="p-1.5 rounded-lg text-slate-400 hover:text-green-400 hover:bg-white/5 transition">
+                        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"/>
+                        </svg>
                     </button>
+                    <button type="button" onclick="openEditModal(this)"
+                            data-id="{{ password.id }}"
+                            data-title="{{ password.title|e('html_attr') }}"
+                            data-username="{{ password.username|default('')|e('html_attr') }}"
+                            data-url="{{ password.url|default('')|e('html_attr') }}"
+                            data-notes="{{ password.notes|default('')|e('html_attr') }}"
+                            data-favorite="{{ password.favorite ? '1' : '0' }}"
+                            data-vault-id="{{ password.vault ? password.vault.id : '' }}"
+                            title="Modifier"
+                            class="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-white/5 transition">
+                        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                        </svg>
+                    </button>
+                    <form method="post" action="{{ path('app_password_delete', {id: password.id}) }}" class="inline">
+                        <input type="hidden" name="_token" value="{{ csrf_token('delete_password_' ~ password.id) }}">
+                        <button type="submit"
+                                onclick="return confirm('Supprimer « {{ password.title|e('js') }} » ?')"
+                                title="Supprimer"
+                                class="p-1.5 rounded-lg text-slate-400 hover:text-red-400 hover:bg-white/5 transition">
+                            <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                            </svg>
+                        </button>
+                    </form>
                 </div>
             </div>
-            
+
             <div class="space-y-3 mb-6">
                 <div class="flex items-center justify-between text-sm">
                     <span class="text-slate-500">Utilisateur</span>
-                    <span class="text-slate-300">{{ password.username }}</span>
+                    <span class="text-slate-300">{{ password.username|default('—') }}</span>
                 </div>
                 <div class="flex items-center justify-between text-sm">
                     <span class="text-slate-500">Mot de passe</span>
                     <div class="flex items-center space-x-2">
-                        <span class="text-indigo-400 font-mono">••••••••••••</span>
-                        <button class="text-slate-500 hover:text-white"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2"/></svg></button>
+                        <span id="pwd-{{ password.id }}" class="text-indigo-400 font-mono text-sm">••••••••</span>
+                        <button type="button" onclick="toggleDecrypt({{ password.id }}, this)"
+                                title="Afficher / masquer"
+                                class="text-slate-500 hover:text-white transition">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                            </svg>
+                        </button>
                     </div>
                 </div>
             </div>
 
             <div class="flex space-x-2">
-                <button class="flex-1 btn btn-ghost text-xs border border-white/5 bg-white/5">Détails</button>
-                <button class="px-4 btn btn-primary text-xs">Accéder</button>
+                {% if password.vault %}
+                <a href="{{ path('app_vault_show', {id: password.vault.id}) }}"
+                   class="flex-1 btn btn-ghost text-xs border border-white/5 bg-white/5 text-center">
+                    Détails
+                </a>
+                {% endif %}
+                {% if password.url %}
+                <a href="{{ password.url }}" target="_blank" rel="noopener noreferrer"
+                   class="px-4 btn btn-primary text-xs">
+                    Accéder
+                </a>
+                {% endif %}
             </div>
         </div>
         {% else %}
@@ -77,5 +129,188 @@
         </div>
         {% endfor %}
     </div>
+
+    <div id="no-results" class="hidden py-20 glass-card rounded-3xl text-center">
+        <p class="text-slate-500 italic">Aucun résultat pour cette recherche.</p>
+    </div>
 </div>
+
+{# ============================= MODAL AJOUTER ============================= #}
+<div id="add-modal" class="{{ open_add_modal ? '' : 'hidden' }} fixed inset-0 z-50 flex items-center justify-center p-4" role="dialog" aria-modal="true">
+    <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" onclick="closeAddModal()"></div>
+    <div class="relative z-10 w-full max-w-lg glass-card rounded-2xl overflow-hidden shadow-2xl">
+        <div class="flex items-center justify-between px-6 py-5 border-b border-white/10">
+            <div class="flex items-center space-x-3">
+                <div class="h-9 w-9 rounded-xl bg-indigo-500/20 flex items-center justify-center">
+                    <svg class="h-5 w-5 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                    </svg>
+                </div>
+                <h2 class="text-lg font-bold">Ajouter un mot de passe</h2>
+            </div>
+            <button onclick="closeAddModal()" class="text-slate-400 hover:text-white transition rounded-lg p-1 hover:bg-white/5">
+                <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+            </button>
+        </div>
+        {{ form_start(password_form, {'action': path('app_password_new'), 'attr': {'novalidate': 'novalidate'}}) }}
+        <div class="px-6 py-5 space-y-4 max-h-[60vh] overflow-y-auto">
+            {% include 'dashboard/_form_fields.html.twig' with {'form': password_form, 'pwd_input_id': 'add-pwd'} %}
+        </div>
+        <div class="px-6 py-4 border-t border-white/10 flex justify-end space-x-3">
+            <button type="button" onclick="closeAddModal()" class="btn btn-ghost px-5">Annuler</button>
+            <button type="submit" class="btn btn-primary flex items-center space-x-2">
+                <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                <span>Enregistrer</span>
+            </button>
+        </div>
+        {{ form_end(password_form) }}
+    </div>
+</div>
+
+{# ============================= MODAL MODIFIER ============================= #}
+<div id="edit-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4" role="dialog" aria-modal="true">
+    <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" onclick="closeEditModal()"></div>
+    <div class="relative z-10 w-full max-w-lg glass-card rounded-2xl overflow-hidden shadow-2xl">
+        <div class="flex items-center justify-between px-6 py-5 border-b border-white/10">
+            <div class="flex items-center space-x-3">
+                <div class="h-9 w-9 rounded-xl bg-amber-500/20 flex items-center justify-center">
+                    <svg class="h-5 w-5 text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                    </svg>
+                </div>
+                <h2 class="text-lg font-bold">Modifier le mot de passe</h2>
+            </div>
+            <button onclick="closeEditModal()" class="text-slate-400 hover:text-white transition rounded-lg p-1 hover:bg-white/5">
+                <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+            </button>
+        </div>
+        {{ form_start(edit_form, {'attr': {'id': 'edit-form', 'novalidate': 'novalidate'}}) }}
+        <div class="px-6 py-5 space-y-4 max-h-[60vh] overflow-y-auto">
+            {% include 'dashboard/_form_fields.html.twig' with {'form': edit_form, 'pwd_input_id': 'edit-pwd'} %}
+        </div>
+        <div class="px-6 py-4 border-t border-white/10 flex justify-end space-x-3">
+            <button type="button" onclick="closeEditModal()" class="btn btn-ghost px-5">Annuler</button>
+            <button type="submit" class="btn btn-primary flex items-center space-x-2" style="background:linear-gradient(135deg,#d97706,#b45309)">
+                <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                <span>Mettre à jour</span>
+            </button>
+        </div>
+        {{ form_end(edit_form) }}
+    </div>
+</div>
+
+<script>
+function openAddModal()  { document.getElementById('add-modal').classList.remove('hidden'); }
+function closeAddModal() { document.getElementById('add-modal').classList.add('hidden'); }
+
+function openEditModal(btn) {
+    const form = document.getElementById('edit-form');
+    form.action = `/password/${btn.dataset.id}/edit`;
+    setValue(form, '[name$="[title]"]',    btn.dataset.title);
+    setValue(form, '[name$="[username]"]', btn.dataset.username);
+    setValue(form, '[name$="[url]"]',      btn.dataset.url);
+    setValue(form, '[name$="[notes]"]',    btn.dataset.notes);
+    const pwdField = form.querySelector('[name$="[plainPassword]"]');
+    if (pwdField) pwdField.value = '';
+    const vaultSelect = form.querySelector('[name$="[vault]"]');
+    if (vaultSelect) vaultSelect.value = btn.dataset.vaultId;
+    const fav = form.querySelector('[name$="[favorite]"]');
+    if (fav) fav.checked = btn.dataset.favorite === '1';
+    document.getElementById('edit-modal').classList.remove('hidden');
+}
+function closeEditModal() { document.getElementById('edit-modal').classList.add('hidden'); }
+
+function setValue(form, selector, value) {
+    const el = form.querySelector(selector);
+    if (el) el.value = value ?? '';
+}
+
+function filterPasswords() {
+    const query   = document.getElementById('pw-search').value.toLowerCase();
+    const vaultId = document.getElementById('vault-filter').value;
+    let visible   = 0;
+    document.querySelectorAll('.password-card').forEach(card => {
+        const matchSearch = !query   || card.dataset.search.includes(query);
+        const matchVault  = !vaultId || card.dataset.vaultId === vaultId;
+        const show = matchSearch && matchVault;
+        card.style.display = show ? '' : 'none';
+        if (show) visible++;
+    });
+    const noResults = document.getElementById('no-results');
+    if (noResults) noResults.classList.toggle('hidden', visible > 0);
+}
+
+const decryptedCache = {};
+
+async function toggleDecrypt(id, btn) {
+    const span = document.getElementById('pwd-' + id);
+    if (!span) return;
+    if (span.dataset.visible === '1') {
+        span.textContent     = '••••••••';
+        span.dataset.visible = '0';
+        return;
+    }
+    if (decryptedCache[id]) {
+        span.textContent     = decryptedCache[id];
+        span.dataset.visible = '1';
+        return;
+    }
+    btn.disabled = true;
+    try {
+        const res  = await fetch(`/passwords/${id}/decrypt`);
+        const data = await res.json();
+        decryptedCache[id]   = data.password;
+        span.textContent     = data.password;
+        span.dataset.visible = '1';
+    } catch {
+        span.textContent = 'Erreur';
+    } finally {
+        btn.disabled = false;
+    }
+}
+
+async function copyPassword(id) {
+    let pwd = decryptedCache[id];
+    if (!pwd) {
+        try {
+            const res  = await fetch(`/passwords/${id}/decrypt`);
+            const data = await res.json();
+            pwd = data.password;
+            decryptedCache[id] = pwd;
+        } catch { return; }
+    }
+    await navigator.clipboard.writeText(pwd);
+}
+
+function generatePassword(inputId, iconId) {
+    const lower = 'abcdefghijklmnopqrstuvwxyz', upper = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+    const digits = '0123456789', symbols = '!@#$%^&*-_=+';
+    const all = lower + upper + digits + symbols, length = 16;
+    const rand = new Uint32Array(length), shuffle = new Uint32Array(length);
+    crypto.getRandomValues(rand); crypto.getRandomValues(shuffle);
+    const pwd = [lower[rand[0]%lower.length], upper[rand[1]%upper.length], digits[rand[2]%digits.length], symbols[rand[3]%symbols.length]];
+    for (let i = 4; i < length; i++) pwd.push(all[rand[i] % all.length]);
+    for (let i = length - 1; i > 0; i--) { const j = shuffle[i] % (i + 1); [pwd[i], pwd[j]] = [pwd[j], pwd[i]]; }
+    const input = document.getElementById(inputId);
+    if (!input) return;
+    input.value = pwd.join(''); input.type = 'text';
+    const icon = document.getElementById(iconId);
+    if (icon) icon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"/>';
+}
+
+function togglePwd(inputId, iconId) {
+    const input = document.getElementById(inputId);
+    const icon  = document.getElementById(iconId);
+    if (!input) return;
+    const isHidden = input.type === 'password';
+    input.type = isHidden ? 'text' : 'password';
+    if (icon) icon.innerHTML = isHidden
+        ? '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"/>'
+        : '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>';
+}
+
+document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') { closeAddModal(); closeEditModal(); }
+});
+</script>
 {% endblock body_connected %}

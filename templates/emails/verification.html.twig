@@ -1,0 +1,30 @@
+{% extends 'emails/base_email.html.twig' %}
+
+{% block title %}Confirmez votre adresse e-mail{% endblock %}
+
+{% block body %}
+<h1>Confirmez votre adresse e-mail</h1>
+
+<p>Bonjour {{ user.firstName }},</p>
+
+<p>
+    Merci de vous être inscrit sur <strong>SecureVault</strong>. Pour activer votre compte
+    et commencer à sécuriser vos mots de passe, veuillez confirmer votre adresse e-mail.
+</p>
+
+<p style="text-align: center;">
+    <a href="{{ signedUrl }}" class="button">Confirmer mon adresse e-mail</a>
+</p>
+
+<div class="tip-box">
+    <p>
+        Ce lien est valable jusqu'au <strong>{{ expiresAt|date('d/m/Y à H:i') }}</strong>.
+        Si vous n'avez pas créé de compte, ignorez simplement cet e-mail.
+    </p>
+</div>
+
+<p style="font-size: 13px; color: #64748b;">
+    Si le bouton ne fonctionne pas, copiez-collez ce lien dans votre navigateur :<br>
+    <span style="color: #6366f1; word-break: break-all;">{{ signedUrl }}</span>
+</p>
+{% endblock %}
