@@ -1,4 +1,6 @@
 {
+    "name": "esgi/securevault",
+    "description": "Secure password vault manager with AES-256 encryption, JWT API, 2FA and vault sharing",
     "type": "project",
     "license": "proprietary",
     "minimum-stability": "stable",
