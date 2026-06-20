@@ -192,7 +192,10 @@ class VaultController extends AbstractController
     ): Response {
         /** @var \App\Entity\User $user */
         $user      = $this->getUser();
-        $passwords = $passwordEntryRepository->findByUser($user);
+        $query     = trim((string) $request->query->get('q', ''));
+        $passwords = $query !== ''
+            ? $passwordEntryRepository->searchByUser($user, $query)
+            : $passwordEntryRepository->findByUser($user);
         $vaults    = $vaultRepository->findByUser($user);
 
         $addForm = $formFactory->createNamed('add_password_entry', PasswordEntryType::class, new PasswordEntry(), [
@@ -211,6 +214,7 @@ class VaultController extends AbstractController
             'password_form'  => $addForm->createView(),
             'edit_form'      => $editForm->createView(),
             'open_add_modal' => $request->query->get('modal') === 'add',
+            'search_query'   => $query,
         ]);
     }
 
@@ -399,24 +403,24 @@ class VaultController extends AbstractController
     }
 
     #[Route('/alerts/mark-as-read/{id}', name: 'app_alerts_mark_read')]
-    public function markRead(int $id, AlertRepository $alertRepository, AlertService $alertService): Response
+    public function markRead(int $id, AlertRepository $alertRepository, AlertService $alertService, Request $request): Response
     {
         $alert = $alertRepository->find($id);
         if ($alert && $alert->getUser() === $this->getUser()) {
             $alertService->markAsRead($alert);
-            $this->addFlash('success', 'Alerte marquée comme lue.');
         }
-        return $this->redirectToRoute('app_alerts');
+        $redirect = $request->query->get('redirect', 'app_alerts');
+        return $this->redirectToRoute(in_array($redirect, ['app_alerts', 'app_dashboard']) ? $redirect : 'app_alerts');
     }
 
     #[Route('/alerts/mark-all-read', name: 'app_alerts_mark_all_read')]
-    public function markAllRead(AlertService $alertService): Response
+    public function markAllRead(AlertService $alertService, Request $request): Response
     {
         /** @var \App\Entity\User $user */
         $user = $this->getUser();
         $alertService->markAllAsRead($user);
-        $this->addFlash('success', 'Toutes les alertes ont été marquées comme lues.');
-        return $this->redirectToRoute('app_alerts');
+        $redirect = $request->query->get('redirect', 'app_alerts');
+        return $this->redirectToRoute(in_array($redirect, ['app_alerts', 'app_dashboard']) ? $redirect : 'app_alerts');
     }
 
     #[Route('/alerts/dismiss/{id}', name: 'app_alerts_dismiss')]

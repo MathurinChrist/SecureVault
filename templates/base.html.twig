@@ -5,16 +5,41 @@
         <title>{% block title %}SecureVault{% endblock %}</title>
         <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 128 128%22><text y=%221.2em%22 font-size=%2296%22>🛡️</text></svg>">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
         <script src="https://cdn.tailwindcss.com"></script>
         <script>
             tailwind.config = {
                 theme: {
                     extend: {
                         colors: {
-                            primary: '#4F46E5',
-                            secondary: '#6366F1',
-                            dark: '#0f172a',
-                            glass: 'rgba(255, 255, 255, 0.05)',
+                            /* ── SecureVault brand palette ── */
+                            brand: {
+                                DEFAULT: '#142F32', /* deep teal-green */
+                                light:   '#1c3e42', /* hover */
+                                lighter: '#24494e',
+                                mid:     '#2f7d5b', /* accent text / logo */
+                            },
+                            accent: {
+                                DEFAULT: '#E3FFCC', /* pale lime */
+                                dark:    '#d2f7b3',
+                            },
+                            charcoal: {
+                                DEFAULT: '#282930',
+                                dark:    '#1f2128',
+                            },
+                            ink: {
+                                DEFAULT: '#181d22',
+                                soft:    '#3c454c',
+                                muted:   '#6a7480',
+                            },
+                            canvas:  '#e9ecef', /* page background */
+                            surface: '#f4f6f7', /* light chips / tracks */
+                            line:    '#e0e4e8', /* borders */
+                            danger:  '#c4453a',
+                            warn:    '#b7791f',
+                            star:    '#e0a52e',
                         }
                     }
                 }
@@ -23,27 +48,32 @@
         <style type="text/tailwindcss">
             @layer base {
                 body {
-                    @apply bg-[#0f172a] text-slate-100 antialiased font-sans;
+                    @apply bg-gray-50 text-gray-900 antialiased;
+                    font-family: 'Manrope', system-ui, -apple-system, sans-serif;
                 }
             }
             @layer components {
+                /* Shared buttons */
                 .btn {
                     @apply px-4 py-2 rounded-xl font-semibold transition-all duration-200 transform active:scale-95 disabled:opacity-50;
                 }
                 .btn-primary {
-                    @apply bg-indigo-600 text-white hover:bg-indigo-700 shadow-lg shadow-indigo-500/20 active:shadow-none;
+                    @apply bg-brand text-white hover:bg-brand-light shadow-sm active:shadow-none;
                 }
                 .btn-ghost {
-                    @apply hover:bg-white/10 text-slate-300 hover:text-white;
+                    @apply hover:bg-gray-100 text-gray-600 hover:text-gray-900;
                 }
+                /* Dark glass (modals, home page cards, overlays) */
                 .glass-card {
                     @apply bg-white/5 backdrop-blur-xl border border-white/10 shadow-2xl;
                 }
-                .nav-link {
-                    @apply flex items-center space-x-3 px-4 py-3 rounded-xl transition-all duration-200 hover:bg-white/5 text-slate-400 hover:text-white;
+                /* Light dashboard cards */
+                .dash-card {
+                    @apply bg-white border border-gray-200 rounded-2xl shadow-sm;
                 }
-                .nav-link-active {
-                    @apply bg-indigo-600/10 text-indigo-400 border border-indigo-600/20;
+                /* Sidebar nav link — base only (no color, no bg) */
+                .nav-link {
+                    @apply flex items-center space-x-3 px-3 py-2.5 rounded-xl transition-all duration-200 text-sm font-medium;
                 }
             }
         </style>
@@ -51,167 +81,321 @@
         {% block javascripts %}{% endblock %}
     </head>
     <body class="min-h-screen flex">
-        {% if app.user %}
-            <!-- DASHBOARD LAYOUT (CONNECTED) -->
-            
-            <!-- Sidebar -->
-            <aside class="w-72 border-r border-white/5 bg-[#0b1222] hidden lg:flex flex-col fixed inset-y-0 z-50">
-                <div class="p-6 flex items-center space-x-3">
-                    <span class="text-2xl font-bold bg-gradient-to-r from-indigo-400 to-purple-400 bg-clip-text text-transparent">SecureVault</span>
-                </div>
-                
-                <nav class="flex-1 px-4 space-y-2 mt-4">
-                    <a href="{{ path('app_dashboard') }}" class="nav-link {{ app.request.get('_route') == 'app_dashboard' ? 'nav-link-active' : '' }}">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
-                        <span>Tableau de bord</span>
-                    </a>
-                    <a href="{{ path('app_vaults') }}" class="nav-link {{ app.request.get('_route') starts with 'app_vault' ? 'nav-link-active' : '' }}">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
-                        <span>Mes coffres</span>
-                    </a>
-                    <a href="{{ path('app_passwords') }}" class="nav-link {{ app.request.get('_route') starts with 'app_password' ? 'nav-link-active' : '' }}">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"/></svg>
-                        <span>Mots de passe</span>
-                    </a>
-                    <a href="{{ path('app_shares') }}" class="nav-link {{ app.request.get('_route') == 'app_shares' ? 'nav-link-active' : '' }}">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"/></svg>
-                        <span>Partages</span>
-                    </a>
-                    <a href="{{ path('app_alerts') }}" class="nav-link {{ app.request.get('_route') == 'app_alerts' ? 'nav-link-active' : '' }}">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
-                        <span>Alertes sécurité</span>
-                    </a>
-                    
-                    <div class="pt-4 pb-2 px-4 uppercase text-[10px] font-bold text-slate-500 tracking-widest">Personnel</div>
-                    
-                    <a href="{{ path('app_profile') }}" class="nav-link {{ app.request.get('_route') == 'app_profile' ? 'nav-link-active' : '' }}">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
-                        <span>Mon Profil</span>
-                    </a>
-                    
-                    <a href="{{ path('app_notifications') }}" class="nav-link {% if app.request.attributes.get('_route') == 'app_notifications' %}active{% endif %}">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
-                        <span>Notifications</span>
-                        {% if unread_notification_count > 0 %}
-                            <span class="ml-auto bg-indigo-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full">
-                                {{ unread_notification_count > 9 ? '9+' : unread_notification_count }}
-                            </span>
-                        {% endif %}
-                    </a>
+        {% if app.user and standalone_layout is not defined %}
+            <!-- ========= DASHBOARD LAYOUT ========= -->
 
-                    {% if is_granted('ROLE_ADMIN') %}
-                        <div class="pt-4 pb-2 px-4 uppercase text-[10px] font-bold text-slate-500 tracking-widest">Admin</div>
-                        <a href="{{ path('admin_dashboard') }}" class="nav-link">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37a1.724 1.724 0 002.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+            {%- set _route = app.request.get('_route') -%}
+            {%- set _li = 'flex items-center gap-3 px-3 py-2.5 rounded-xl text-[13.5px] font-semibold transition-all duration-150 mb-0.5' -%}
+            {%- set _active   = 'bg-accent text-brand' -%}
+            {%- set _inactive = 'text-white/60 hover:text-white hover:bg-white/[.06]' -%}
+
+            <!-- Sidebar -->
+            <aside id="svSidebar" class="w-64 bg-brand flex flex-col fixed inset-y-0 left-0 z-[60] -translate-x-full lg:translate-x-0 transition-transform duration-300 ease-out">
+
+                <!-- Logo -->
+                <div class="px-5 py-5 flex items-center gap-2.5 border-b border-white/[.08]">
+                    <svg class="w-8 h-8 flex-none" viewBox="0 0 32 32" fill="none"><circle cx="16" cy="16" r="13" stroke="#E3FFCC" stroke-width="5" stroke-dasharray="56 26" stroke-linecap="round"/><circle cx="16" cy="16" r="4.5" fill="#2f7d5b"/></svg>
+                    <div>
+                        <p class="text-white font-extrabold text-[15px] leading-tight tracking-tight">SecureVault</p>
+                        <p class="text-white/40 text-[11px]">Enterprise</p>
+                    </div>
+                </div>
+
+                <!-- Nav -->
+                <nav class="flex-1 px-3 py-5 overflow-y-auto space-y-6">
+
+                    <!-- VAULT -->
+                    <div>
+                        <p class="text-[10px] font-bold text-white/30 uppercase tracking-widest px-3 mb-2">Coffre</p>
+
+                        {%- set _is = (_route == 'app_dashboard') -%}
+                        <a href="{{ path('app_dashboard') }}" class="{{ _li }} {{ _is ? _active : _inactive }}">
+                            <svg class="w-[18px] h-[18px] flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/></svg>
+                            <span>Tableau de bord</span>
+                        </a>
+
+                        {%- set _is = (_route starts with 'app_vault') -%}
+                        <a href="{{ path('app_vaults') }}" class="{{ _li }} {{ _is ? _active : _inactive }}">
+                            <svg class="w-[18px] h-[18px] flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
+                            <span>Coffres</span>
+                        </a>
+
+                        {%- set _is = (_route starts with 'app_password') -%}
+                        <a href="{{ path('app_passwords') }}" class="{{ _li }} {{ _is ? _active : _inactive }}">
+                            <svg class="w-[18px] h-[18px] flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+                            <span>Tous les éléments</span>
+                        </a>
+
+                        {%- set _is = (_route == 'app_alerts') -%}
+                        <a href="{{ path('app_alerts') }}" class="{{ _li }} {{ _is ? _active : _inactive }}">
+                            <svg class="w-[18px] h-[18px] flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+                            <span>Centre de sécurité</span>
+                            {% if unreadAlertsCount is defined and unreadAlertsCount > 0 %}
+                                <span class="ml-auto bg-accent text-brand text-[10px] font-extrabold min-w-[20px] h-5 px-1.5 rounded-full flex items-center justify-center">{{ unreadAlertsCount > 9 ? '9+' : unreadAlertsCount }}</span>
+                            {% endif %}
+                        </a>
+                    </div>
+
+                    <!-- COLLABORATION -->
+                    <div>
+                        <p class="text-[10px] font-bold text-white/30 uppercase tracking-widest px-3 mb-2">Collaboration</p>
+
+                        {%- set _is = (_route == 'app_shares') -%}
+                        <a href="{{ path('app_shares') }}" class="{{ _li }} {{ _is ? _active : _inactive }}">
+                            <svg class="w-[18px] h-[18px] flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"/></svg>
+                            <span>Partages</span>
+                        </a>
+
+                        {%- set _is = (_route == 'app_notifications') -%}
+                        <a href="{{ path('app_notifications') }}" class="{{ _li }} {{ _is ? _active : _inactive }}">
+                            <svg class="w-[18px] h-[18px] flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
+                            <span>Notifications</span>
+                            {% if unread_notification_count is defined and unread_notification_count > 0 %}
+                                <span class="ml-auto bg-accent text-brand text-[10px] font-extrabold min-w-[20px] h-5 px-1.5 rounded-full flex items-center justify-center">{{ unread_notification_count > 9 ? '9+' : unread_notification_count }}</span>
+                            {% endif %}
+                        </a>
+                    </div>
+
+                    <!-- ACCOUNT -->
+                    <div>
+                        <p class="text-[10px] font-bold text-white/30 uppercase tracking-widest px-3 mb-2">Compte</p>
+
+                        {%- set _is = (_route == 'app_profile') -%}
+                        <a href="{{ path('app_profile') }}" class="{{ _li }} {{ _is ? _active : _inactive }}">
+                            <svg class="w-[18px] h-[18px] flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+                            <span>Profil &amp; Sécurité</span>
+                        </a>
+
+                        {% if is_granted('ROLE_ADMIN') %}
+                        {%- set _is = (_route == 'admin_dashboard') -%}
+                        <a href="{{ path('admin_dashboard') }}" class="{{ _li }} {{ _is ? _active : _inactive }}">
+                            <svg class="w-[18px] h-[18px] flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37a1.724 1.724 0 002.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
                             <span>Administration</span>
                         </a>
-                    {% endif %}
+                        {% endif %}
+                    </div>
                 </nav>
-                
-                <div class="p-4 border-t border-white/5">
-                    <a href="{{ path('app_logout') }}" class="nav-link text-red-400 hover:bg-red-500/10">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
-                        <span>Se déconnecter</span>
+
+                <!-- User card at bottom -->
+                <div class="border-t border-white/[.08] p-3 space-y-1">
+                    <a href="{{ path('app_profile') }}" class="flex items-center gap-3 px-2 py-2.5 rounded-xl hover:bg-white/[.06] transition">
+                        {% if app.user.profileImage %}
+                            <img src="/uploads/profiles/{{ app.user.profileImage }}"
+                                class="h-9 w-9 rounded-full object-cover flex-shrink-0">
+                        {% else %}
+                            <div class="h-9 w-9 rounded-full bg-accent flex items-center justify-center text-brand text-[12px] font-extrabold flex-shrink-0">
+                                {{ app.user.firstName|first|upper }}{{ app.user.lastName|first|upper }}
+                            </div>
+                        {% endif %}
+                        <div class="flex-1 min-w-0">
+                            <p class="text-white text-[13.5px] font-bold leading-tight truncate">{{ app.user.firstName }} {{ app.user.lastName }}</p>
+                            <p class="text-white/40 text-[11px]">Premium plan</p>
+                        </div>
+                    </a>
+                    <a href="{{ path('app_logout') }}"
+                       class="flex items-center gap-2.5 w-full px-3 py-2 rounded-xl text-white/50 hover:text-white hover:bg-white/[.06] transition">
+                        <svg class="w-[18px] h-[18px] flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
+                        </svg>
+                        <span class="text-[13.5px] font-semibold">Déconnexion</span>
                     </a>
                 </div>
             </aside>
 
-            <!-- Main Content Area -->
-            <div class="flex-1 lg:ml-72 flex flex-col">
+            <!-- Mobile sidebar overlay -->
+            <div id="svOverlay" onclick="svToggleSidebar(false)" class="fixed inset-0 bg-brand/40 backdrop-blur-sm z-50 hidden lg:hidden"></div>
+
+            <!-- Main Column -->
+            <div class="flex-1 lg:ml-64 flex flex-col min-h-screen bg-canvas min-w-0">
+
                 <!-- Top Navbar -->
-                <header class="h-16 border-b border-white/5 bg-[#0f172a]/80 backdrop-blur-md flex items-center justify-between px-8 sticky top-0 z-40">
-                    <div class="flex items-center flex-1 max-w-xl">
-                        <div class="relative w-full">
-                            <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-500">
-                                <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                <header class="h-16 bg-canvas/90 backdrop-blur border-b border-line flex items-center gap-2 sm:gap-3 px-4 lg:px-6 sticky top-0 z-40">
+                    <!-- Hamburger (mobile) -->
+                    <button onclick="svToggleSidebar(true)" class="lg:hidden p-2 -ml-2 text-ink-soft hover:text-ink rounded-xl hover:bg-white transition flex-shrink-0" aria-label="Ouvrir le menu">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
+                    </button>
+
+                    <!-- Mobile logo -->
+                    <a href="{{ path('app_dashboard') }}" class="lg:hidden flex items-center flex-shrink-0">
+                        <svg class="w-7 h-7" viewBox="0 0 32 32" fill="none"><circle cx="16" cy="16" r="13" stroke="#142F32" stroke-width="5" stroke-dasharray="56 26" stroke-linecap="round"/><circle cx="16" cy="16" r="4.5" fill="#2f7d5b"/></svg>
+                    </a>
+
+                    <!-- Search -->
+                    <div class="hidden sm:flex items-center flex-1 max-w-sm">
+                        <form method="GET" action="{{ path('app_passwords') }}" class="relative w-full">
+                            <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-ink-muted pointer-events-none">
+                                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
                             </span>
-                            <input type="text" placeholder="Rechercher partout..." class="block w-full pl-10 pr-3 py-2 bg-white/5 border border-white/10 rounded-xl text-sm placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 transition">
-                        </div>
+                            <input type="text" name="q"
+                                value="{{ app.request.query.get('q', '') }}"
+                                placeholder="Rechercher coffres, éléments…"
+                                id="topbarSearch"
+                                autocomplete="off"
+                                class="block w-full pl-9 pr-12 py-2.5 bg-white border border-line rounded-xl text-[13.5px] placeholder-ink-muted/60 text-ink focus:outline-none focus:ring-2 focus:ring-brand/25 focus:border-brand transition">
+                            <span class="absolute inset-y-0 right-0 pr-3 flex items-center">
+                                <kbd class="text-[10px] text-ink-muted bg-surface border border-line rounded px-1.5 py-0.5 font-mono">⌘K</kbd>
+                            </span>
+                        </form>
                     </div>
-                    
-                    <div class="flex items-center space-x-6 ml-8">
-                        <a href="{{ path('app_notifications') }}" class="text-slate-400 hover:text-white relative" title="Notifications">
-                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
-                            {% if unread_notification_count > 0 %}
-                                <span class="absolute -top-1 -right-1 h-4 w-4 bg-indigo-500 rounded-full border-2 border-[#0f172a] flex items-center justify-center text-[10px] font-bold text-white">
-                                    {{ unread_notification_count > 9 ? '9+' : unread_notification_count }}
-                                </span>
+
+                    <!-- spacer pushes actions right on mobile -->
+                    <div class="flex-1 sm:hidden"></div>
+
+                    <!-- Right actions -->
+                    <div class="flex items-center gap-1 sm:gap-3 flex-shrink-0">
+                        <button onclick="if(typeof openAddModal==='function'){openAddModal();}else{window.location.href='{{ path('app_dashboard') }}'}"
+                            class="flex items-center gap-1.5 bg-brand hover:bg-brand-light text-white text-[13.5px] font-bold px-3 sm:px-4 py-2.5 rounded-full transition">
+                            <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M12 4v16m8-8H4"/></svg>
+                            <span class="hidden sm:inline">Nouvel élément</span>
+                        </button>
+
+                        <a href="{{ path('app_notifications') }}" class="relative text-ink-muted hover:text-ink transition p-2 rounded-xl hover:bg-white" title="Notifications">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
+                            {% if unread_notification_count is defined and unread_notification_count > 0 %}
+                                <span class="absolute top-1 right-1 h-2.5 w-2.5 bg-brand-mid rounded-full border-2 border-canvas"></span>
                             {% endif %}
                         </a>
-                        
-                        <a href="{{ path('app_profile') }}" class="flex items-center space-x-3 group">
-                            <div class="text-right hidden sm:block">
-                                <p class="text-sm font-semibold">{{ app.user.firstName }} {{ app.user.lastName }}</p>
-                                <p class="text-xs text-slate-500">Utilisateur</p>
-                            </div>
-                            <img src="{{ app.user.profileImage ? '/uploads/profiles/' ~ app.user.profileImage : 'https://ui-avatars.com/api/?name=' ~ app.user.firstName ~ '+' ~ app.user.lastName ~ '&background=random' }}" class="h-10 w-10 rounded-xl border border-white/10 group-hover:border-indigo-500 transition-colors">
+
+                        <a href="{{ path('app_alerts') }}" class="text-ink-muted hover:text-ink transition p-2 rounded-xl hover:bg-white" title="Vérification sécurité">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+                        </a>
+
+                        <a href="{{ path('app_profile') }}" class="group">
+                            {% if app.user.profileImage %}
+                                <img src="/uploads/profiles/{{ app.user.profileImage }}"
+                                    class="h-9 w-9 rounded-full object-cover border-2 border-transparent group-hover:border-brand-mid transition">
+                            {% else %}
+                                <div class="h-9 w-9 rounded-full bg-brand flex items-center justify-center text-white text-[12px] font-extrabold border-2 border-transparent group-hover:border-brand-mid transition">
+                                    {{ app.user.firstName|first|upper }}{{ app.user.lastName|first|upper }}
+                                </div>
+                            {% endif %}
                         </a>
                     </div>
                 </header>
 
-                <main class="p-8">
+                <!-- Page content -->
+                <main class="flex-1 p-6 lg:p-8 bg-canvas text-ink">
                     {% for label, messages in app.flashes %}
                         {% for message in messages %}
-                            <div class="mb-6 p-4 rounded-xl glass-card flex items-center space-x-3 {% if label == 'success' %}text-green-400{% else %}text-red-400{% endif %}">
-                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                                <span>{{ message }}</span>
+                            <div class="mb-6 p-4 rounded-2xl flex items-center gap-3 border
+                                {% if label == 'success' %}bg-brand-mid/10 border-brand-mid/20 text-brand-mid{% else %}bg-warn/[.08] border-warn/20 text-warn{% endif %}">
+                                <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                <span class="text-sm font-semibold">{{ message }}</span>
                             </div>
                         {% endfor %}
                     {% endfor %}
-                    
+
                     {% block body_connected %}{% endblock %}
                 </main>
             </div>
 
+            <script>
+                /* ⌘K / Ctrl+K → focus search */
+                document.addEventListener('keydown', function(e) {
+                    if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+                        e.preventDefault();
+                        var s = document.getElementById('topbarSearch');
+                        if (s) { s.focus(); s.select(); }
+                    }
+                });
+
+                function svToggleSidebar(open) {
+                    var sb = document.getElementById('svSidebar'),
+                        ov = document.getElementById('svOverlay');
+                    if (!sb) return;
+                    if (open) {
+                        sb.classList.remove('-translate-x-full');
+                        ov.classList.remove('hidden');
+                        document.body.style.overflow = 'hidden';
+                    } else {
+                        sb.classList.add('-translate-x-full');
+                        ov.classList.add('hidden');
+                        document.body.style.overflow = '';
+                    }
+                }
+                /* reset on resize to desktop */
+                addEventListener('resize', function () {
+                    if (window.innerWidth >= 1024) svToggleSidebar(false);
+                });
+            </script>
+
         {% else %}
-            <!-- VISITOR LAYOUT -->
-            <div class="flex-1 flex flex-col">
-                <nav class="h-20 bg-[#0f172a]/80 backdrop-blur-md fixed top-0 w-full z-50 border-b border-white/5 px-8 flex items-center justify-between">
-                    <div class="flex items-center space-x-12">
-                        <a href="{{ path('app_home') }}" class="text-2xl font-bold bg-gradient-to-r from-indigo-400 to-purple-400 bg-clip-text text-transparent">SecureVault</a>
-                        <div class="hidden lg:flex items-center space-x-8 text-sm font-medium">
-                            <a href="{{ path('app_home') }}" class="hover:text-indigo-400 transition">Accueil</a>
-                            <a href="{{ path('app_features') }}" class="hover:text-indigo-400 transition">Fonctionnalités</a>
-                            <a href="{{ path('app_security') }}" class="hover:text-indigo-400 transition">Sécurité</a>
-                            <a href="{{ path('app_pricing') }}" class="hover:text-indigo-400 transition">Tarifs</a>
+            <!-- ========= VISITOR LAYOUT ========= -->
+            <div class="flex-1 flex flex-col bg-canvas">
+                <!-- Navbar -->
+                {% block visitor_navbar %}
+                <nav class="h-16 bg-white border-b border-gray-200 fixed top-0 w-full z-50 px-8 flex items-center justify-between shadow-sm">
+                    <div class="flex items-center space-x-10">
+                        <a href="{{ path('app_home') }}" class="flex items-center space-x-2.5">
+                            <div class="h-8 w-8 rounded-lg bg-brand flex items-center justify-center flex-shrink-0">
+                                <svg class="h-4 w-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+                                </svg>
+                            </div>
+                            <span class="text-gray-900 font-bold text-lg">SecureVault</span>
+                        </a>
+                        <div class="hidden lg:flex items-center space-x-6 text-sm font-medium text-gray-600">
+                            <a href="{{ path('app_home') }}" class="hover:text-brand-mid transition">Accueil</a>
+                            <a href="{{ path('app_home') }}#features" class="hover:text-brand-mid transition">Fonctionnalités</a>
+                            <a href="{{ path('app_home') }}#security" class="hover:text-brand-mid transition">Sécurité</a>
+                            <a href="{{ path('app_home') }}#pricing" class="hover:text-brand-mid transition">Tarifs</a>
                         </div>
                     </div>
-                    
-                    <div class="flex items-center space-x-4">
-                        <a href="{{ path('app_login') }}" class="btn btn-ghost">Connexion</a>
-                        <a href="{{ path('app_register') }}" class="btn btn-primary">Créer un compte</a>
+                    <div class="flex items-center space-x-2">
+                        <a href="{{ path('app_login') }}" class="text-sm font-semibold text-gray-700 hover:text-brand-mid px-4 py-2 rounded-lg hover:bg-gray-100 transition">Connexion</a>
+                        <a href="{{ path('app_register') }}" class="text-sm font-semibold bg-brand text-white px-4 py-2 rounded-lg hover:bg-brand-light transition shadow-sm">Créer un compte</a>
                     </div>
                 </nav>
+                {% endblock %}
 
-                <main class="pt-20">
+                <main class="{% block main_classes %}pt-16{% endblock %}">
                     {% block body %}{% endblock %}
                 </main>
 
-                <footer class="bg-black/20 border-t border-white/5 py-12 px-8">
-                    <div class="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-4 gap-12">
-                        <div class="col-span-2">
-                            <span class="text-2xl font-bold text-white mb-6 block">SecureVault</span>
-                            <p class="text-slate-400 max-w-sm">La solution de gestion de mots de passe de référence pour les entreprises et les particuliers soucieux de leur sécurité numérique.</p>
+                <!-- Footer -->
+                {% block visitor_footer %}
+                <footer class="bg-brand border-t border-white/5 py-14 px-8">
+                    <div class="max-w-6xl mx-auto">
+                        <div class="grid grid-cols-1 md:grid-cols-4 gap-10 mb-10">
+                            <div class="md:col-span-2">
+                                <div class="flex items-center space-x-2.5 mb-5">
+                                    <div class="h-8 w-8 rounded-lg bg-brand flex items-center justify-center flex-shrink-0">
+                                        <svg class="h-4 w-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+                                        </svg>
+                                    </div>
+                                    <span class="text-white font-bold text-lg">SecureVault</span>
+                                </div>
+                                <p class="text-slate-400 text-sm leading-relaxed max-w-xs">La solution de gestion de mots de passe de référence pour les entreprises et les particuliers soucieux de leur sécurité numérique.</p>
+                            </div>
+                            <div>
+                                <h4 class="text-white text-sm font-semibold mb-4">Produit</h4>
+                                <ul class="space-y-2.5 text-sm">
+                                    <li><a href="{{ path('app_home') }}#features" class="text-slate-400 hover:text-white transition">Fonctionnalités</a></li>
+                                    <li><a href="{{ path('app_home') }}#security" class="text-slate-400 hover:text-white transition">Sécurité</a></li>
+                                    <li><a href="{{ path('app_home') }}#pricing" class="text-slate-400 hover:text-white transition">Tarifs</a></li>
+                                    <li><a href="#" class="text-slate-400 hover:text-white transition">Entreprise</a></li>
+                                </ul>
+                            </div>
+                            <div>
+                                <h4 class="text-white text-sm font-semibold mb-4">Légal</h4>
+                                <ul class="space-y-2.5 text-sm">
+                                    <li><a href="#" class="text-slate-400 hover:text-white transition">Confidentialité</a></li>
+                                    <li><a href="#" class="text-slate-400 hover:text-white transition">Conditions d'utilisation</a></li>
+                                    <li><a href="#" class="text-slate-400 hover:text-white transition">Contact</a></li>
+                                </ul>
+                            </div>
                         </div>
-                        <div>
-                            <h4 class="text-white font-bold mb-4">Produits</h4>
-                            <ul class="text-slate-400 space-y-2 text-sm">
-                                <li><a href="#" class="hover:text-white transition">Fonctionnalités</a></li>
-                                <li><a href="#" class="hover:text-white transition">Sécurité</a></li>
-                                <li><a href="#" class="hover:text-white transition">Tarifs</a></li>
-                                <li><a href="#" class="hover:text-white transition">Entreprise</a></li>
-                            </ul>
-                        </div>
-                        <div>
-                            <h4 class="text-white font-bold mb-4">Légal</h4>
-                            <ul class="text-slate-400 space-y-2 text-sm">
-                                <li><a href="#" class="hover:text-white transition">Confidentialité</a></li>
-                                <li><a href="#" class="hover:text-white transition">Conditions d'utilisation</a></li>
-                                <li><a href="#" class="hover:text-white transition">Contact</a></li>
-                            </ul>
+                        <div class="border-t border-white/5 pt-6 flex flex-col md:flex-row items-center justify-between gap-4">
+                            <p class="text-slate-500 text-sm">© 2026 SecureVault. Tous droits réservés.</p>
+                            <div class="flex items-center space-x-2">
+                                <span class="h-1.5 w-1.5 rounded-full bg-green-400 inline-block"></span>
+                                <span class="text-slate-500 text-xs">Tous les systèmes opérationnels</span>
+                            </div>
                         </div>
                     </div>
                 </footer>
+                {% endblock %}
             </div>
         {% endif %}
     </body>

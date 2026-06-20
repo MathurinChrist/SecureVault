@@ -14,21 +14,9 @@ class HomeController extends AbstractController
         return $this->render('home/index.html.twig');
     }
 
-    #[Route('/features', name: 'app_features')]
-    public function features(): Response
+    #[Route('/{path}', name: 'app_not_found', requirements: ['path' => '.+'], priority: -10)]
+    public function notFound(): Response
     {
-        return $this->render('home/features.html.twig');
-    }
-
-    #[Route('/security', name: 'app_security')]
-    public function security(): Response
-    {
-        return $this->render('home/security.html.twig');
-    }
-
-    #[Route('/pricing', name: 'app_pricing')]
-    public function pricing(): Response
-    {
-        return $this->render('home/pricing.html.twig');
+        return $this->render('bundles/TwigBundle/Exception/error404.html.twig', [], new Response('', Response::HTTP_NOT_FOUND));
     }
 }

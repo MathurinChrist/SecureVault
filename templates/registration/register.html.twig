@@ -1,70 +1,180 @@
 {% extends 'base.html.twig' %}
+{% set standalone_layout = true %}
 
 {% block title %}Inscription - SecureVault{% endblock %}
 
+{% block visitor_navbar %}{% endblock %}
+{% block visitor_footer %}{% endblock %}
+{% block main_classes %}{% endblock %}
+
+{% block stylesheets %}
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  .auth { font-family: 'Manrope', system-ui, sans-serif; }
+  .auth ::selection { background: #E3FFCC; color: #142F32; }
+  .auth .field { width:100%; padding:13px 16px; background:#f4f6f7; border:1px solid #e0e4e8; border-radius:14px; color:#181d22; font-size:14px; outline:none; transition:.15s; }
+  .auth .field::placeholder { color:rgba(106,116,128,.5); }
+  .auth .field:focus { border-color:#142F32; background:#fff; box-shadow:0 0 0 3px rgba(20,47,50,.12); }
+  .auth .form-error, .auth ul li { color:#b7791f; font-size:12px; margin-top:5px; list-style:none; }
+  .auth ul { padding:0; margin:0; }
+  @keyframes authFloat { 0%,100%{transform:translateY(0) rotate(0)} 50%{transform:translateY(-14px) rotate(var(--rot,5deg))} }
+  .auth-float { animation: authFloat var(--dur,4.5s) ease-in-out infinite; will-change:transform; }
+  @media (prefers-reduced-motion: reduce){ .auth-float{ animation:none } }
+</style>
+{% endblock %}
+
 {% block body %}
-<div class="max-w-2xl mx-auto">
-    <div class="glass p-8 rounded-3xl shadow-2xl">
-        <div class="text-center mb-8">
-            <div class="inline-flex items-center justify-center h-16 w-16 rounded-2xl bg-indigo-600/20 text-indigo-400 mb-4 border border-indigo-500/30">
-                <svg class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
-                </svg>
-            </div>
-            <h1 class="text-3xl font-bold">Créer un compte</h1>
-            <p class="text-slate-400 mt-2">Rejoignez la révolution de la sécurité</p>
-        </div>
+<div class="auth relative min-h-screen bg-canvas text-ink overflow-hidden">
 
-        {{ form_start(registrationForm, {'attr': {'class': 'space-y-6'}}) }}
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                    <label class="block text-sm font-medium text-slate-300">Prénom</label>
-                    {{ form_widget(registrationForm.firstName, {'attr': {'class': 'mt-1 block w-full px-4 py-3 bg-slate-800 border border-white/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 transition'}}) }}
-                    {{ form_errors(registrationForm.firstName) }}
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-slate-300">Nom</label>
-                    {{ form_widget(registrationForm.lastName, {'attr': {'class': 'mt-1 block w-full px-4 py-3 bg-slate-800 border border-white/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 transition'}}) }}
-                    {{ form_errors(registrationForm.lastName) }}
-                </div>
-            </div>
+  {# ── Top header ── #}
+  <header class="relative z-20">
+   <div class="max-w-[1180px] mx-auto px-7 flex items-center justify-between h-[74px] gap-5">
+    <a href="{{ path('app_home') }}" class="flex items-center gap-2.5 font-extrabold text-[18px] tracking-tight">
+      <svg class="w-[30px] h-[30px] flex-none" viewBox="0 0 32 32" fill="none"><circle cx="16" cy="16" r="13" stroke="#142F32" stroke-width="5" stroke-dasharray="56 26" stroke-linecap="round"/><circle cx="16" cy="16" r="4.5" fill="#2f7d5b"/></svg>
+      SecureVault
+    </a>
+    <div class="flex items-center gap-4">
+      <span class="hidden sm:inline text-[13.5px] text-ink-muted">Déjà membre ?</span>
+      <a href="{{ path('app_login') }}" class="bg-white border border-line hover:border-brand text-ink font-bold text-[13.5px] px-5 py-2.5 rounded-full transition">Se connecter</a>
+    </div>
+   </div>
+  </header>
 
+  {# ── Floating animated icons ── #}
+  <span style="--dur:4s;--rot:6deg;animation-delay:-.2s"  class="auth-float hidden lg:grid place-items-center absolute z-0 w-12 h-12 rounded-2xl shadow-[0_10px_30px_rgba(20,47,50,.10)] top-[22%] left-[8%] bg-white text-brand"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 3v5c0 4.5-3 7.8-7 9-4-1.2-7-4.5-7-9V6l7-3z"/><path d="M9 12l2 2 4-4"/></svg></span>
+  <span style="--dur:5.2s;--rot:-7deg;animation-delay:-1.1s" class="auth-float hidden lg:grid place-items-center absolute z-0 w-11 h-11 rounded-2xl shadow-[0_10px_30px_rgba(20,47,50,.12)] top-[48%] left-[13%] bg-brand text-accent"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="15" r="4"/><path d="M10.85 12.15L20 3M18 5l2 2M15 8l2 2"/></svg></span>
+  <span style="--dur:4.6s;--rot:8deg;animation-delay:-2.3s"  class="auth-float hidden lg:grid place-items-center absolute z-0 w-11 h-11 rounded-2xl shadow-[0_10px_30px_rgba(20,47,50,.10)] bottom-[16%] left-[10%] bg-accent text-brand"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 19v-1a4 4 0 00-4-4H7a4 4 0 00-4 4v1M9.5 9.5a3.5 3.5 0 100-7 3.5 3.5 0 000 7z"/></svg></span>
+  <span style="--dur:4.3s;--rot:-6deg;animation-delay:-.7s"  class="auth-float hidden lg:grid place-items-center absolute z-0 w-12 h-12 rounded-2xl shadow-[0_10px_30px_rgba(20,47,50,.10)] top-[24%] right-[8%] bg-white text-brand-mid"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.9 5.8L20 10l-6.1 1.2L12 17l-1.9-5.8L4 10l6.1-1.2z"/></svg></span>
+  <span style="--dur:5.6s;--rot:7deg;animation-delay:-1.8s"  class="auth-float hidden lg:grid place-items-center absolute z-0 w-11 h-11 rounded-2xl shadow-[0_10px_30px_rgba(20,47,50,.12)] top-[50%] right-[13%] bg-charcoal text-accent"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 018 0v4"/></svg></span>
+  <span style="--dur:4.8s;--rot:-8deg;animation-delay:-2.6s" class="auth-float hidden lg:grid place-items-center absolute z-0 w-11 h-11 rounded-2xl shadow-[0_10px_30px_rgba(20,47,50,.10)] bottom-[18%] right-[10%] bg-accent text-brand"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5 9-11"/></svg></span>
+
+  {# ── Centered card ── #}
+  <div class="relative z-10 flex items-start justify-center px-4 pb-12">
+    <div class="w-full max-w-[480px]">
+      <div class="bg-white rounded-[28px] border border-line shadow-[0_30px_70px_rgba(20,47,50,.14)] p-7 sm:p-10">
+
+        <span class="inline-flex items-center gap-1.5 bg-accent/40 text-brand font-bold text-[12.5px] px-3 py-1.5 rounded-full mb-5">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.9 5.8L20 10l-6.1 1.2L12 17l-1.9-5.8L4 10l6.1-1.2z"/></svg>
+          100% gratuit
+        </span>
+
+        <h1 class="text-[30px] font-extrabold text-ink tracking-[-0.03em] mb-1.5">Créer un <span class="text-brand-mid">compte.</span></h1>
+        <p class="text-ink-muted text-[14.5px] mb-7">Commencez gratuitement en 30 secondes.</p>
+
+        {% for label, messages in app.flashes %}
+          {% for message in messages %}
+          <div class="mb-4 p-3.5 rounded-[12px] text-[13.5px] flex items-center gap-2.5
+            {{ label == 'error' ? 'bg-warn/[.08] border border-warn/20 text-warn' : 'bg-brand-mid/10 border border-brand-mid/20 text-brand-mid' }}">
+            <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            <span>{{ message }}</span>
+          </div>
+          {% endfor %}
+        {% endfor %}
+
+        {{ form_start(registrationForm, {'attr': {'class': 'space-y-4'}}) }}
+
+          <div class="grid grid-cols-2 gap-3">
             <div>
-                <label class="block text-sm font-medium text-slate-300">Email</label>
-                {{ form_widget(registrationForm.email, {'attr': {'class': 'mt-1 block w-full px-4 py-3 bg-slate-800 border border-white/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 transition'}}) }}
-                {{ form_errors(registrationForm.email) }}
+              <label class="block text-[11px] font-bold text-ink-soft uppercase tracking-wider mb-1.5">Prénom</label>
+              {{ form_widget(registrationForm.firstName, {'attr': {'class': 'field', 'placeholder': 'Marie'}}) }}
+              {{ form_errors(registrationForm.firstName) }}
             </div>
-
             <div>
-                <label class="block text-sm font-medium text-slate-300">Mot de passe</label>
-                {{ form_widget(registrationForm.plainPassword, {'attr': {'class': 'mt-1 block w-full px-4 py-3 bg-slate-800 border border-white/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 transition'}}) }}
-                <p class="mt-1 text-xs text-slate-500">Minimum 6 caractères</p>
-                {{ form_errors(registrationForm.plainPassword) }}
+              <label class="block text-[11px] font-bold text-ink-soft uppercase tracking-wider mb-1.5">Nom</label>
+              {{ form_widget(registrationForm.lastName, {'attr': {'class': 'field', 'placeholder': 'Laurent'}}) }}
+              {{ form_errors(registrationForm.lastName) }}
             </div>
+          </div>
 
-            <div class="flex items-start">
-                <div class="flex items-center h-5">
-                    {{ form_widget(registrationForm.agreeTerms, {'attr': {'class': 'h-4 w-4 bg-slate-800 border-white/10 rounded text-indigo-600 focus:ring-indigo-500'}}) }}
-                </div>
-                <div class="ml-3 text-sm">
-                    <label for="{{ registrationForm.agreeTerms.vars.id }}" class="text-slate-400">
-                        J'accepte les <a href="#" class="text-indigo-400 hover:underline">conditions d'utilisation</a> et la politique de confidentialité.
-                    </label>
-                    {{ form_errors(registrationForm.agreeTerms) }}
-                </div>
+          <div>
+            <label class="block text-[11px] font-bold text-ink-soft uppercase tracking-wider mb-1.5">E-mail</label>
+            {{ form_widget(registrationForm.email, {'attr': {'class': 'field', 'placeholder': 'vous@exemple.com'}}) }}
+            {{ form_errors(registrationForm.email) }}
+          </div>
+
+          <div>
+            <label class="block text-[11px] font-bold text-ink-soft uppercase tracking-wider mb-1.5">Mot de passe</label>
+            <div class="relative">
+              {{ form_widget(registrationForm.plainPassword, {'attr': {'class': 'field pr-12', 'placeholder': 'Minimum 6 caractères', 'id': 'reg_password'}}) }}
+              <button type="button" onclick="togglePwd('reg_password', this)"
+                class="absolute right-2.5 top-1/2 -translate-y-1/2 h-8 w-8 grid place-items-center text-ink-muted hover:text-ink rounded-lg hover:bg-surface transition">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+              </button>
             </div>
+            <div class="flex gap-1.5 mt-2.5" id="strength">
+              <span class="sbar h-[5px] flex-1 rounded-full bg-line transition-colors"></span>
+              <span class="sbar h-[5px] flex-1 rounded-full bg-line transition-colors"></span>
+              <span class="sbar h-[5px] flex-1 rounded-full bg-line transition-colors"></span>
+              <span class="sbar h-[5px] flex-1 rounded-full bg-line transition-colors"></span>
+            </div>
+            <p class="mt-2 text-[12px] text-ink-muted">Utilisez 12+ caractères, avec chiffres et symboles.</p>
+            {{ form_errors(registrationForm.plainPassword) }}
+          </div>
 
-            <button type="submit" class="w-full btn btn-primary py-4 text-lg">
-                S'inscrire
-            </button>
+          <div class="flex items-start gap-3 pt-1">
+            {{ form_widget(registrationForm.agreeTerms, {'attr': {'class': 'h-4 w-4 mt-0.5 rounded border-line text-brand focus:ring-brand/40 flex-shrink-0'}}) }}
+            <label for="{{ registrationForm.agreeTerms.vars.id }}" class="text-[12.5px] text-ink-muted leading-snug">
+              J'accepte les <a href="#" class="text-brand-mid hover:underline font-semibold">conditions d'utilisation</a> et la <a href="#" class="text-brand-mid hover:underline font-semibold">politique de confidentialité</a>.
+            </label>
+          </div>
+          {{ form_errors(registrationForm.agreeTerms) }}
+
+          <button type="submit"
+            class="w-full bg-brand hover:bg-brand-light text-white font-bold py-3.5 rounded-full transition text-[14.5px] mt-2 active:translate-y-px">
+            Créer mon compte
+          </button>
+
         {{ form_end(registrationForm) }}
 
-        <div class="mt-8 pt-6 border-t border-white/5 text-center">
-            <p class="text-sm text-slate-400">
-                Vous avez déjà un compte ? 
-                <a href="{{ path('app_login') }}" class="font-medium text-indigo-400 hover:text-indigo-300">Se connecter</a>
-            </p>
+        <div class="mt-6 flex items-center gap-3">
+          <div class="flex-1 h-px bg-line"></div>
+          <span class="text-[12px] text-ink-muted font-medium">ou</span>
+          <div class="flex-1 h-px bg-line"></div>
         </div>
+
+        <a href="{{ path('app_google_connect', {source: 'register'}) }}"
+           class="mt-4 w-full flex items-center justify-center gap-3 bg-white border border-line hover:border-brand hover:bg-surface font-bold text-[14px] text-ink py-3.5 rounded-full transition">
+          <svg width="18" height="18" viewBox="0 0 24 24"><path d="M12.48 10.92v3.28h7.84c-.24 1.84-.853 3.187-1.787 4.133-1.147 1.147-2.933 2.4-6.053 2.4-4.827 0-8.6-3.893-8.6-8.72s3.773-8.72 8.6-8.72c2.6 0 4.507 1.027 5.907 2.347l2.307-2.307C18.747 1.44 16.133 0 12.48 0 5.867 0 .307 5.387.307 12s5.56 12 12.173 12c3.573 0 6.267-1.173 8.373-3.36 2.16-2.16 2.84-5.213 2.84-7.667 0-.76-.053-1.467-.173-2.053H12.48z" fill="#4285F4"/></svg>
+          S'inscrire avec Google
+        </a>
+
+        <p class="mt-5 text-center text-[14px] text-ink-muted">
+          Vous avez déjà un compte ?
+          <a href="{{ path('app_login') }}" class="text-brand-mid font-bold hover:text-brand">Se connecter</a>
+        </p>
+      </div>
+
+      {# trust row #}
+      <div class="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 mt-7 text-[13px] text-ink-muted">
+        <span class="flex items-center gap-1.5"><svg class="w-4 h-4 text-brand-mid" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>Sans carte bancaire</span>
+        <span class="flex items-center gap-1.5"><svg class="w-4 h-4 text-brand-mid" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3l7 3v5c0 4.5-3 7.8-7 9-4-1.2-7-4.5-7-9V6l7-3z"/></svg>Hébergement Europe · RGPD</span>
+      </div>
     </div>
+  </div>
 </div>
+
+<script>
+function togglePwd(id, btn) {
+  const input = document.getElementById(id);
+  const isHidden = input.type === 'password';
+  input.type = isHidden ? 'text' : 'password';
+  btn.querySelector('svg').style.opacity = isHidden ? '0.4' : '1';
+}
+(function () {
+  const input = document.getElementById('reg_password');
+  if (!input) return;
+  const bars = document.querySelectorAll('#strength .sbar');
+  const colors = ['', '#c4453a', '#b7791f', '#2f7d5b', '#2f7d5b'];
+  input.addEventListener('input', function () {
+    const v = input.value; let s = 0;
+    if (v.length >= 6)  s++;
+    if (v.length >= 12) s++;
+    if (/[0-9]/.test(v) && /[a-zA-Z]/.test(v)) s++;
+    if (/[^a-zA-Z0-9]/.test(v)) s++;
+    bars.forEach(function (b, i) { b.style.background = i < s ? colors[s] : '#e0e4e8'; });
+  });
+})();
+</script>
 {% endblock %}

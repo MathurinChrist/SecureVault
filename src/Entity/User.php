@@ -62,6 +62,9 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Column(length: 255, nullable: true)]
     private ?string $twoFactorSecret = null;
 
+    #[ORM\Column(length: 255, nullable: true, unique: true)]
+    private ?string $googleId = null;
+
     #[ORM\OneToMany(mappedBy: 'user', targetEntity: UserSession::class, orphanRemoval: true)]
     private Collection $sessions;
 
@@ -242,4 +245,12 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     public function getActivityLogs(): Collection { return $this->activityLogs; }
 
     public function getLoginAttempts(): Collection { return $this->loginAttempts; }
+
+    public function getGoogleId(): ?string { return $this->googleId; }
+
+    public function setGoogleId(?string $googleId): static
+    {
+        $this->googleId = $googleId;
+        return $this;
+    }
 }
