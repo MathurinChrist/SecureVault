@@ -4,189 +4,190 @@
 
 {% block body_connected %}
 <div class="max-w-4xl mx-auto">
-    <div class="mb-8">
-        <h1 class="text-3xl font-bold">Paramètres du profil</h1>
-        <p class="text-slate-400 mt-1">Gérez vos informations personnelles et votre sécurité.</p>
+    <div class="mb-6">
+        <h1 class="text-3xl font-bold text-gray-900">Paramètres du profil</h1>
+        <p class="text-gray-500 mt-1 text-sm">Gérez vos informations personnelles et votre sécurité.</p>
     </div>
 
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
-        <!-- Sidebar Navigation -->
-        <div class="space-y-2">
-            <button onclick="showTab('info')" id="btn-info" class="w-full text-left px-4 py-3 rounded-xl transition-all font-medium bg-indigo-600/10 text-indigo-400 border border-indigo-600/20">
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <!-- Sidebar tabs -->
+        <div class="space-y-1">
+            <button onclick="showTab('info')" id="btn-info"
+                class="w-full text-left px-4 py-2.5 rounded-xl transition-all text-sm font-medium bg-brand text-white">
                 Informations personnelles
             </button>
-            <button onclick="showTab('security')" id="btn-security" class="w-full text-left px-4 py-3 rounded-xl transition-all font-medium text-slate-400 hover:bg-white/5">
+            <button onclick="showTab('security')" id="btn-security"
+                class="w-full text-left px-4 py-2.5 rounded-xl transition-all text-sm font-medium text-gray-600 hover:bg-gray-100">
                 Sécurité & Mot de passe
             </button>
-            <button onclick="showTab('sessions')" id="btn-sessions" class="w-full text-left px-4 py-3 rounded-xl transition-all font-medium text-slate-400 hover:bg-white/5">
+            <button onclick="showTab('sessions')" id="btn-sessions"
+                class="w-full text-left px-4 py-2.5 rounded-xl transition-all text-sm font-medium text-gray-600 hover:bg-gray-100">
                 Sessions
             </button>
-            <button onclick="showTab('encryption')" id="btn-encryption" class="w-full text-left px-4 py-3 rounded-xl transition-all font-medium text-slate-400 hover:bg-white/5">
+            <button onclick="showTab('encryption')" id="btn-encryption"
+                class="w-full text-left px-4 py-2.5 rounded-xl transition-all text-sm font-medium text-gray-600 hover:bg-gray-100">
                 Clé de chiffrement
             </button>
-            <button onclick="showTab('activity')" id="btn-activity" class="w-full text-left px-4 py-3 rounded-xl transition-all font-medium text-slate-400 hover:bg-white/5">
+            <button onclick="showTab('activity')" id="btn-activity"
+                class="w-full text-left px-4 py-2.5 rounded-xl transition-all text-sm font-medium text-gray-600 hover:bg-gray-100">
                 Activité récente
             </button>
         </div>
 
         <!-- Content -->
         <div class="md:col-span-2 space-y-6">
-            
-            <!-- Personal Info Tab -->
-            <div id="tab-info" class="glass-card p-8 rounded-3xl space-y-8">
+
+            <!-- Informations personnelles -->
+            <div id="tab-info" class="bg-white rounded-xl border border-gray-200 p-6 space-y-6">
                 {{ form_start(profileForm) }}
-                    <div class="flex items-center space-x-6 mb-8">
-                        <div class="relative group">
-                            <img id="preview" src="{{ app.user.profileImage ? '/uploads/profiles/' ~ app.user.profileImage : 'https://ui-avatars.com/api/?name=' ~ app.user.firstName ~ '+' ~ app.user.lastName ~ '&background=random' }}" class="h-24 w-24 rounded-2xl border-2 border-white/10 group-hover:border-indigo-500 transition shadow-xl object-cover">
-                            <div class="absolute inset-0 bg-black/40 rounded-2xl opacity-0 group-hover:opacity-100 flex items-center justify-center transition cursor-pointer">
-                                <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
-                            </div>
-                        </div>
-                        <div>
-                            <h3 class="font-bold text-lg">Photo de profil</h3>
-                            <p class="text-sm text-slate-500 mb-2">JPG, PNG ou WEBP. Max 2Mo.</p>
-                            {{ form_widget(profileForm.profileImageFile, {'attr': {'class': 'text-xs text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-indigo-600/10 file:text-indigo-400 hover:file:bg-indigo-600/20'}}) }}
+                <div class="flex items-center space-x-5">
+                    <div class="relative group cursor-pointer">
+                        <img id="preview" src="{{ app.user.profileImage ? '/uploads/profiles/' ~ app.user.profileImage : 'https://ui-avatars.com/api/?name=' ~ app.user.firstName ~ '+' ~ app.user.lastName ~ '&background=2b54b8&color=fff' }}"
+                            class="h-20 w-20 rounded-2xl object-cover border-2 border-gray-200 group-hover:border-brand transition shadow-sm">
+                        <div class="absolute inset-0 bg-black/30 rounded-2xl opacity-0 group-hover:opacity-100 flex items-center justify-center transition">
+                            <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
                         </div>
                     </div>
-
-                    <div class="grid grid-cols-2 gap-4 mb-6">
-                        <div>
-                            <label class="block text-sm font-medium text-slate-400 mb-1">Prénom</label>
-                            {{ form_widget(profileForm.firstName, {'attr': {'class': 'w-full bg-slate-800 border border-white/10 rounded-xl px-4 py-3 focus:ring-2 focus:ring-indigo-500 outline-none transition'}}) }}
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-slate-400 mb-1">Nom</label>
-                            {{ form_widget(profileForm.lastName, {'attr': {'class': 'w-full bg-slate-800 border border-white/10 rounded-xl px-4 py-3 focus:ring-2 focus:ring-indigo-500 outline-none transition'}}) }}
-                        </div>
+                    <div>
+                        <h3 class="font-bold text-gray-900 text-sm">Photo de profil</h3>
+                        <p class="text-xs text-gray-500 mb-2">JPG, PNG ou WEBP. Max 2Mo.</p>
+                        {{ form_widget(profileForm.profileImageFile, {'attr': {'class': 'text-xs text-gray-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-brand/10 file:text-brand-mid hover:file:bg-brand/20 file:cursor-pointer'}}) }}
                     </div>
+                </div>
 
-                    <div class="mb-8">
-                        <label class="block text-sm font-medium text-slate-400 mb-1">Email (Non modifiable)</label>
-                        <input type="text" disabled value="{{ app.user.email }}" class="w-full bg-slate-800/50 border border-white/5 rounded-xl px-4 py-3 text-slate-500 cursor-not-allowed">
+                <div class="grid grid-cols-2 gap-4 mt-4">
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-1.5">Prénom</label>
+                        {{ form_widget(profileForm.firstName, {'attr': {'class': 'w-full bg-white border border-gray-200 rounded-lg px-4 py-2.5 text-gray-900 focus:outline-none focus:ring-2 focus:ring-brand focus:border-transparent transition text-sm'}}) }}
                     </div>
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-1.5">Nom</label>
+                        {{ form_widget(profileForm.lastName, {'attr': {'class': 'w-full bg-white border border-gray-200 rounded-lg px-4 py-2.5 text-gray-900 focus:outline-none focus:ring-2 focus:ring-brand focus:border-transparent transition text-sm'}}) }}
+                    </div>
+                </div>
 
-                    <button type="submit" class="btn btn-primary w-full py-4 uppercase tracking-widest text-xs">
-                        Sauvegarder les modifications
-                    </button>
+                <div class="mt-4">
+                    <label class="block text-sm font-semibold text-gray-700 mb-1.5">Email <span class="text-gray-400 font-normal">(non modifiable)</span></label>
+                    <input type="text" disabled value="{{ app.user.email }}"
+                        class="w-full bg-gray-100 border border-gray-200 rounded-lg px-4 py-2.5 text-gray-400 text-sm cursor-not-allowed">
+                </div>
+
+                <button type="submit" class="w-full bg-brand hover:bg-brand-light text-white font-semibold py-2.5 mt-4 rounded-lg text-sm transition">
+                    Sauvegarder les modifications
+                </button>
                 {{ form_end(profileForm) }}
             </div>
 
-            <!-- Security Tab -->
-            <div id="tab-security" class="glass-card p-8 rounded-3xl space-y-8 hidden">
-                <h2 class="text-xl font-bold">Changer le mot de passe</h2>
+            <!-- Sécurité -->
+            <div id="tab-security" class="bg-white rounded-xl border border-gray-200 p-6 space-y-5 hidden">
+                <h2 class="text-lg font-bold text-gray-900">Changer le mot de passe</h2>
                 {{ form_start(passwordForm) }}
-                    <div class="space-y-4 mb-8">
-                        <div>
-                            <label class="block text-sm font-medium text-slate-400 mb-1">Nouveau mot de passe</label>
-                            {{ form_widget(passwordForm.plainPassword.first, {'attr': {'class': 'w-full bg-slate-800 border border-white/10 rounded-xl px-4 py-3 focus:ring-2 focus:ring-indigo-500 outline-none transition'}}) }}
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-slate-400 mb-1">Confirmer le mot de passe</label>
-                            {{ form_widget(passwordForm.plainPassword.second, {'attr': {'class': 'w-full bg-slate-800 border border-white/10 rounded-xl px-4 py-3 focus:ring-2 focus:ring-indigo-500 outline-none transition'}}) }}
-                        </div>
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-1.5">Nouveau mot de passe</label>
+                        {{ form_widget(passwordForm.plainPassword.first, {'attr': {'class': 'w-full bg-white border border-gray-200 rounded-lg px-4 py-2.5 text-gray-900 focus:outline-none focus:ring-2 focus:ring-brand focus:border-transparent transition text-sm'}}) }}
                     </div>
-
-                    <button type="submit" class="btn bg-red-600 hover:bg-red-700 text-white w-full py-4 uppercase tracking-widest text-xs">
-                        Mettre à jour le mot de passe
-                    </button>
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-1.5">Confirmer le mot de passe</label>
+                        {{ form_widget(passwordForm.plainPassword.second, {'attr': {'class': 'w-full bg-white border border-gray-200 rounded-lg px-4 py-2.5 text-gray-900 focus:outline-none focus:ring-2 focus:ring-brand focus:border-transparent transition text-sm'}}) }}
+                    </div>
+                </div>
+                <button type="submit" class="w-full bg-red-600 hover:bg-red-700 text-white font-semibold py-2.5 rounded-lg text-sm transition">
+                    Mettre à jour le mot de passe
+                </button>
                 {{ form_end(passwordForm) }}
             </div>
 
-            <!-- Sessions Tab -->
-            <div id="tab-sessions" class="glass-card p-8 rounded-3xl space-y-6 hidden">
-                <div class="flex items-center justify-between mb-2">
-                    <h2 class="text-xl font-bold">Sessions actives</h2>
-                    <span class="bg-indigo-600/10 text-indigo-400 text-xs px-2 py-1 rounded-lg border border-indigo-600/20">{{ sessions|length }} Session(s)</span>
+            <!-- Sessions -->
+            <div id="tab-sessions" class="bg-white rounded-xl border border-gray-200 p-6 space-y-4 hidden">
+                <div class="flex items-center justify-between">
+                    <h2 class="text-lg font-bold text-gray-900">Sessions actives</h2>
+                    <span class="bg-brand/10 text-brand-mid text-xs px-2.5 py-1 rounded-lg font-semibold">{{ sessions|length }} session(s)</span>
                 </div>
-                <p class="text-slate-400 text-sm mb-6">Voici les appareils connectés à votre compte. Si vous voyez une activité suspecte, déconnectez la session.</p>
-
-                <div class="space-y-4">
+                <p class="text-gray-500 text-sm">Appareils connectés à votre compte. Déconnectez les sessions suspectes.</p>
+                <div class="space-y-3">
                     {% for session in sessions %}
-                    <div class="flex items-center justify-between p-4 rounded-2xl bg-white/5 border border-white/5 hover:border-white/10 transition">
+                    <div class="flex items-center justify-between p-4 rounded-xl bg-gray-50 border border-gray-100 hover:border-gray-200 transition">
                         <div class="flex items-center space-x-4">
-                            <div class="h-12 w-12 rounded-xl bg-indigo-600/10 flex items-center justify-center text-indigo-400">
+                            <div class="h-11 w-11 rounded-xl bg-brand/10 flex items-center justify-center text-brand-mid">
                                 {% if 'Mobile' in session.userAgent %}
-                                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
                                 {% else %}
-                                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
                                 {% endif %}
                             </div>
                             <div>
-                                <p class="font-bold text-sm">{{ session.location|default('Localisation inconnue') }}</p>
-                                <p class="text-xs text-slate-500">{{ session.ipAddress }} • {{ session.lastUsedAt|date('d/m/Y H:i') }}</p>
-                                <p class="text-[10px] text-slate-600 mt-1 max-w-xs truncate">{{ session.userAgent }}</p>
+                                <p class="font-semibold text-gray-900 text-sm">{{ session.location|default('Localisation inconnue') }}</p>
+                                <p class="text-xs text-gray-500">{{ session.ipAddress }} · {{ session.lastUsedAt|date('d/m/Y H:i') }}</p>
                             </div>
                         </div>
-                        <button class="text-xs font-semibold text-red-400 hover:text-red-300 transition">Déconnecter</button>
+                        <button class="text-xs font-semibold text-red-500 hover:text-red-700 transition">Déconnecter</button>
                     </div>
                     {% else %}
-                    <p class="text-center py-8 text-slate-500 italic">Aucune session enregistrée.</p>
+                    <p class="text-center py-8 text-gray-400 text-sm italic">Aucune session enregistrée.</p>
                     {% endfor %}
                 </div>
             </div>
 
-            <!-- Encryption Key Tab -->
-            <div id="tab-encryption" class="glass-card p-8 rounded-3xl space-y-8 hidden">
-                <div class="flex items-center space-x-4 mb-4">
-                    <div class="h-14 w-14 rounded-2xl bg-amber-600/10 flex items-center justify-center text-amber-500">
-                        <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"/></svg>
+            <!-- Clé de chiffrement -->
+            <div id="tab-encryption" class="bg-white rounded-xl border border-gray-200 p-6 space-y-5 hidden">
+                <div class="flex items-center space-x-4">
+                    <div class="h-12 w-12 rounded-xl bg-amber-50 flex items-center justify-center text-amber-500">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"/></svg>
                     </div>
                     <div>
-                        <h2 class="text-xl font-bold">Votre Clé de Chiffrement</h2>
-                        <p class="text-slate-400 text-sm">Cette clé est utilisée pour sécuriser vos données.</p>
+                        <h2 class="text-lg font-bold text-gray-900">Votre Clé de Chiffrement</h2>
+                        <p class="text-gray-500 text-sm">Utilisée pour sécuriser vos données.</p>
                     </div>
                 </div>
-
-                <div class="p-6 rounded-2xl bg-black/20 border border-white/5 space-y-4">
-                    <p class="text-xs font-bold text-slate-500 uppercase tracking-widest">Master Key (Récupération)</p>
+                <div class="p-4 rounded-xl bg-gray-50 border border-gray-200">
+                    <p class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3">Master Key (Récupération)</p>
                     <div class="flex items-center space-x-3">
-                        <input type="password" readonly value="{{ app.user.encryptionKey }}" id="master-key" class="flex-1 bg-transparent border-none text-indigo-400 font-mono text-lg focus:ring-0 outline-none">
-                        <button onclick="toggleKeyVisibility()" class="text-slate-400 hover:text-white">
-                            <svg id="eye-icon" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                        <input type="password" readonly value="{{ app.user.encryptionKey }}" id="master-key"
+                            class="flex-1 bg-transparent border-none text-brand-mid font-mono text-sm focus:ring-0 outline-none">
+                        <button onclick="toggleKeyVisibility()" class="text-gray-400 hover:text-gray-700 transition p-1.5 rounded-lg hover:bg-gray-100">
+                            <svg id="eye-icon" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
                         </button>
-                        <button onclick="copyKey()" class="text-slate-400 hover:text-white">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"/></svg>
+                        <button onclick="copyKey()" class="text-gray-400 hover:text-gray-700 transition p-1.5 rounded-lg hover:bg-gray-100">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"/></svg>
                         </button>
                     </div>
                 </div>
-
-                <div class="bg-amber-600/10 border border-amber-600/20 p-4 rounded-xl flex items-start space-x-3 text-amber-500/80 text-sm">
-                    <svg class="w-5 h-5 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
-                    <p>Ne partagez jamais cette clé. Elle permet de déchiffrer tous vos mots de passe. En cas de perte de votre mot de passe, c'est votre seul moyen de récupérer vos données.</p>
+                <div class="bg-amber-50 border border-amber-200 p-4 rounded-xl flex items-start space-x-3 text-amber-700 text-sm">
+                    <svg class="w-5 h-5 mt-0.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+                    <p>Ne partagez jamais cette clé. Elle permet de déchiffrer tous vos mots de passe.</p>
                 </div>
-
-                <button class="btn btn-ghost w-full border border-white/10">Régénérer la clé (Action Dangereuse)</button>
+                <button class="w-full border border-gray-200 text-gray-600 hover:bg-gray-50 font-medium py-2.5 rounded-lg text-sm transition">Régénérer la clé (Action Dangereuse)</button>
             </div>
 
-            <!-- Activity Tab -->
-            <div id="tab-activity" class="glass-card p-8 rounded-3xl space-y-4 hidden">
-                <div class="flex items-center justify-between mb-2">
-                    <h2 class="text-xl font-bold">Activité récente</h2>
-                    <span class="bg-indigo-600/10 text-indigo-400 text-xs px-2 py-1 rounded-lg border border-indigo-600/20">{{ recentActivity|length }} événement(s)</span>
+            <!-- Activité -->
+            <div id="tab-activity" class="bg-white rounded-xl border border-gray-200 p-6 space-y-4 hidden">
+                <div class="flex items-center justify-between">
+                    <h2 class="text-lg font-bold text-gray-900">Activité récente</h2>
+                    <span class="bg-brand/10 text-brand-mid text-xs px-2.5 py-1 rounded-lg font-semibold">{{ recentActivity|length }} événement(s)</span>
                 </div>
-                <p class="text-slate-400 text-sm">Historique des dernières actions effectuées sur votre compte.</p>
-
+                <p class="text-gray-500 text-sm">Historique des dernières actions effectuées sur votre compte.</p>
                 {% if recentActivity is empty %}
-                    <p class="text-center py-8 text-slate-500 italic">Aucune activité enregistrée.</p>
+                <p class="text-center py-8 text-gray-400 text-sm italic">Aucune activité enregistrée.</p>
                 {% else %}
-                    <div class="space-y-2 mt-4">
-                        {% for log in recentActivity %}
-                            <div class="flex items-start space-x-4 p-3 rounded-xl bg-white/5 hover:bg-white/8 transition">
-                                <div class="h-8 w-8 rounded-lg bg-indigo-500/10 flex items-center justify-center shrink-0 mt-0.5">
-                                    <svg class="h-4 w-4 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
-                                    </svg>
-                                </div>
-                                <div class="flex-1 min-w-0">
-                                    <p class="text-sm text-slate-200">{{ log.action }}</p>
-                                    <p class="text-xs text-slate-500 mt-0.5">
-                                        {{ log.createdAt|date('d/m/Y à H:i') }}
-                                        {% if log.ipAddress %}· {{ log.ipAddress }}{% endif %}
-                                    </p>
-                                </div>
-                            </div>
-                        {% endfor %}
+                <div class="space-y-2">
+                    {% for log in recentActivity %}
+                    <div class="flex items-start space-x-3 p-3 rounded-xl bg-gray-50 hover:bg-gray-100 transition">
+                        <div class="h-8 w-8 rounded-lg bg-brand/10 flex items-center justify-center shrink-0 mt-0.5">
+                            <svg class="h-4 w-4 text-brand-mid" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+                            </svg>
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <p class="text-sm text-gray-800 font-medium">{{ log.action }}</p>
+                            <p class="text-xs text-gray-400 mt-0.5">
+                                {{ log.createdAt|date('d/m/Y à H:i') }}
+                                {% if log.ipAddress %}· {{ log.ipAddress }}{% endif %}
+                            </p>
+                        </div>
                     </div>
+                    {% endfor %}
+                </div>
                 {% endif %}
             </div>
 
@@ -196,29 +197,21 @@
 
 <script>
 function showTab(tab) {
-    // Hide all tabs
     ['info', 'security', 'sessions', 'encryption', 'activity'].forEach(id => {
         document.getElementById('tab-' + id).classList.add('hidden');
     });
-
-    // Reset buttons
-    const btns = ['btn-info', 'btn-security', 'btn-sessions', 'btn-encryption', 'btn-activity'];
-    btns.forEach(id => {
+    ['btn-info', 'btn-security', 'btn-sessions', 'btn-encryption', 'btn-activity'].forEach(id => {
         const btn = document.getElementById(id);
         if (btn) {
-            btn.classList.remove('bg-indigo-600/10', 'text-indigo-400', 'border', 'border-indigo-600/20');
-            btn.classList.add('text-slate-400', 'hover:bg-white/5');
+            btn.classList.remove('bg-brand', 'text-white');
+            btn.classList.add('text-gray-600', 'hover:bg-gray-100');
         }
     });
-
-    // Show selected tab
     document.getElementById('tab-' + tab).classList.remove('hidden');
-    
-    // Activate button
     const activeBtn = document.getElementById('btn-' + tab);
     if (activeBtn) {
-        activeBtn.classList.remove('text-slate-400', 'hover:bg-white/5');
-        activeBtn.classList.add('bg-indigo-600/10', 'text-indigo-400', 'border', 'border-indigo-600/20');
+        activeBtn.classList.remove('text-gray-600', 'hover:bg-gray-100');
+        activeBtn.classList.add('bg-brand', 'text-white');
     }
 }
 
@@ -227,20 +220,15 @@ function toggleKeyVisibility() {
     const icon = document.getElementById('eye-icon');
     if (input.type === 'password') {
         input.type = 'text';
-        icon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />';
+        icon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"/>';
     } else {
         input.type = 'password';
         icon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>';
     }
 }
-
 function copyKey() {
     const input = document.getElementById('master-key');
-    const originalType = input.type;
-    input.type = 'text';
-    input.select();
-    document.execCommand('copy');
-    input.type = originalType;
+    const t = input.type; input.type = 'text'; input.select(); document.execCommand('copy'); input.type = t;
     alert('Clé copiée dans le presse-papier !');
 }
 </script>

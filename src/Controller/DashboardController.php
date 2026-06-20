@@ -37,9 +37,11 @@ class DashboardController extends AbstractController
         /** @var \App\Entity\User $user */
         $user = $this->getUser();
 
-        $unreadAlertsCount = count($alertRepository->findUnreadByUser($user));
+        $unreadAlerts      = $alertRepository->findUnreadByUser($user);
+        $unreadAlertsCount = count($unreadAlerts);
         $passwordsCount    = $passwordEntryRepository->countByUser($user);
         $vaultsCount       = count($vaultRepository->findByUser($user));
+        $oldPasswordsCount = $passwordEntryRepository->countOldByUser($user, 180);
 
         if ($passwordsCount === 0 && $vaultsCount === 0) {
             $vault = new Vault();
@@ -70,7 +72,16 @@ class DashboardController extends AbstractController
             $vaultsCount    = 1;
         }
 
-        $recentPasswords = $passwordEntryRepository->findRecentByUser($user, 5);
+        $unreadAlerts    = $alertRepository->findUnreadByUser($user);
+        $score = 100;
+        $score -= min($unreadAlertsCount * 10, 50);
+        if ($passwordsCount > 0) {
+            $score -= (int)(($oldPasswordsCount / $passwordsCount) * 30);
+        }
+        $score = max($score, 0);
+
+        $recentAlerts    = array_slice($unreadAlerts, 0, 3);
+        $recentPasswords = $passwordEntryRepository->findRecentByUser($user, 6);
         $vaults          = $vaultRepository->findByUser($user);
 
         $passwordForm = $formFactory->createNamed('add_password_entry', PasswordEntryType::class, new PasswordEntry(), [
@@ -86,9 +97,12 @@ class DashboardController extends AbstractController
 
         return $this->render('dashboard/index.html.twig', [
             'unreadAlertsCount' => $unreadAlertsCount,
+            'recentAlerts'      => $recentAlerts,
             'passwordsCount'    => $passwordsCount,
             'vaultsCount'       => $vaultsCount,
+            'oldPasswordsCount' => $oldPasswordsCount,
             'recentPasswords'   => $recentPasswords,
+            'score'             => $score,
             'password_form'     => $passwordForm->createView(),
             'edit_form'         => $editForm->createView(),
             'open_modal'        => false,

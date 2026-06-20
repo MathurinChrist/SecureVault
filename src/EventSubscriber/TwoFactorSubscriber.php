@@ -3,6 +3,7 @@
 namespace App\EventSubscriber;
 
 use App\Entity\User;
+use App\Security\GoogleAuthenticator;
 use App\Service\TwoFactorService;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use Symfony\Component\HttpFoundation\RedirectResponse;
@@ -40,6 +41,11 @@ class TwoFactorSubscriber implements EventSubscriberInterface
 
     public function onLoginSuccess(LoginSuccessEvent $event): void
     {
+        // Google OAuth already proves identity — skip 2FA
+        if ($event->getAuthenticator() instanceof GoogleAuthenticator) {
+            return;
+        }
+
         $user = $event->getUser();
 
         if (!$user instanceof User || !$user->is2faEnabled()) {

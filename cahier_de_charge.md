@@ -1,5 +1,4 @@
 # SPÉCIFICATION FONCTIONNELLE
-
 # SecureVault – Gestionnaire de mots de passe sécurisé
 
 ---
@@ -8,514 +7,384 @@
 
 ## 1.1 Contexte
 
-La multiplication des services numériques impose aux utilisateurs de gérer un nombre croissant d'identifiants et de mots de passe.
+La multiplication des services numériques impose aux utilisateurs de gérer un nombre croissant d'identifiants et de mots de passe. Cette situation conduit souvent à l'utilisation de mots de passe faibles, à leur réutilisation, ou à un stockage non sécurisé.
 
-Cette situation conduit souvent à :
-
-* l'utilisation de mots de passe faibles ;
-* la réutilisation des mêmes mots de passe ;
-* le stockage non sécurisé des informations sensibles.
-
-**SecureVault** est une application web permettant aux utilisateurs de stocker, organiser, partager et sécuriser leurs mots de passe dans des coffres numériques.
-
-L'application s'inspire de solutions telles que :
-
-* Bitwarden
-* LastPass
-* 1Password
+**SecureVault** est une application web permettant de stocker, organiser, partager et sécuriser des mots de passe dans des coffres numériques chiffrés. Elle s'inspire de Bitwarden, LastPass et 1Password.
 
 ## 1.2 Objectifs
 
-Le système doit permettre :
+- Gestion sécurisée des mots de passe (AES-256-GCM)
+- Organisation par coffres thématiques
+- Partage sécurisé avec gestion des permissions
+- Détection des risques (mots de passe faibles, anciens)
+- Authentification moderne (email + Google OAuth2 + 2FA)
+- Administration complète de la plateforme
+- API REST pour usage programmatique
 
-* la gestion sécurisée des mots de passe ;
-* l'organisation par catégories et tags ;
-* le partage sécurisé de coffres ;
-* la détection des risques de sécurité ;
-* l'administration complète de la plateforme ;
-* l'exposition de fonctionnalités via API REST.
+## 1.3 Modèle économique
+
+L'application est **100% gratuite**. Toutes les fonctionnalités sont accessibles sans abonnement ni carte bancaire.
 
 ---
 
 # 2. Acteurs
 
 ## Visiteur
+- Consulter la page d'accueil
+- Créer un compte (email ou Google)
+- Se connecter (email ou Google)
+- Utiliser le générateur de mots de passe public
 
-Peut :
-
-* consulter la page d'accueil ;
-* créer un compte ;
-* se connecter.
-
-## Utilisateur
-
-Peut :
-
-* gérer son profil ;
-* créer des coffres ;
-* gérer des mots de passe ;
-* partager des coffres ;
-* consulter les alertes ;
-* utiliser l'API.
-
-## Gestionnaire
-
-Peut :
-
-* administrer les coffres partagés ;
-* gérer les permissions de partage.
+## Utilisateur authentifié
+- Gérer son profil (nom, e-mail, mot de passe, photo)
+- Créer, modifier, archiver, supprimer des coffres
+- Gérer des mots de passe dans les coffres
+- Partager des coffres avec d'autres utilisateurs
+- Consulter les alertes et notifications
+- Activer / désactiver la 2FA
+- Utiliser la recherche globale
+- Utiliser l'API REST
 
 ## Administrateur
-
-Peut :
-
-* gérer les utilisateurs ;
-* gérer les rôles ;
-* gérer les permissions ;
-* consulter les journaux ;
-* consulter les statistiques ;
-* accéder au back-office.
+- Accéder au back-office `/admin` (EasyAdmin)
+- Gérer tous les utilisateurs (CRUD, rôles, statuts)
+- Consulter tous les coffres, alertes, journaux
+- Gérer les permissions et rôles
 
 ---
 
 # 3. Entités du système
 
-Le système contient **14 entités métier**.
+Le système contient **15 entités métier** (dont `googleId` ajouté sur `User`).
 
 ## 3.1 User
 
-### Description
-
 Représente un utilisateur enregistré.
 
-### Champs
+| Champ              | Type      | Description                                    |
+| :----------------- | :-------- | :--------------------------------------------- |
+| `id`               | integer   | Identifiant auto-incrémenté                    |
+| `email`            | string    | Adresse e-mail (unique)                        |
+| `password`         | string    | Hash Argon2id (vide pour comptes Google)       |
+| `firstName`        | string    | Prénom                                         |
+| `lastName`         | string    | Nom                                            |
+| `isActive`         | boolean   | Compte actif                                   |
+| `emailVerified`    | boolean   | E-mail vérifié (automatique via Google)        |
+| `profileImage`     | string    | Chemin vers l'image de profil (nullable)       |
+| `encryptionKey`    | string    | Clé de chiffrement personnelle (nullable)      |
+| `is2faEnabled`     | boolean   | 2FA activée                                    |
+| `twoFactorSecret`  | string    | Secret 2FA (nullable)                          |
+| `googleId`         | string    | Identifiant Google OAuth2 (nullable, unique)   |
+| `createdAt`        | datetime  | Date de création                               |
+| `updatedAt`        | datetime  | Date de dernière modification (nullable)       |
 
-* id
-* email
-* password
-* firstName
-* lastName
-* isActive
-* emailVerified
-* createdAt
-* updatedAt
-
-### Relations
-
-* ManyToMany Role
-* OneToMany Vault
-* OneToMany Notification
-* OneToMany ActivityLog
-* OneToMany SecurityAlert
-* OneToMany LoginAttempt
+**Relations :** ManyToMany Role · OneToMany Vault · OneToMany Notification · OneToMany ActivityLog · OneToMany Alert · OneToMany LoginAttempt · OneToMany UserSession
 
 ---
 
 ## 3.2 Role
 
-### Description
+Définit un rôle fonctionnel (`ROLE_USER`, `ROLE_MANAGER`, `ROLE_ADMIN`).
 
-Définit un rôle fonctionnel.
+| Champ         | Type   |
+| :------------ | :----- |
+| `id`          | int    |
+| `name`        | string |
+| `description` | string |
 
-### Exemples
-
-* ROLE_USER
-* ROLE_MANAGER
-* ROLE_ADMIN
-
-### Champs
-
-* id
-* name
-* description
-
-### Relations
-
-* ManyToMany User
-* ManyToMany Permission
+**Relations :** ManyToMany User · ManyToMany Permission
 
 ---
 
 ## 3.3 Permission
 
-### Description
+Permission précise attachée à un rôle (`USER_MANAGE`, `VAULT_CREATE`, `ALERT_MANAGE`…).
 
-Décrit une permission précise.
+| Champ         | Type   |
+| :------------ | :----- |
+| `id`          | int    |
+| `code`        | string |
+| `description` | string |
 
-### Exemples
-
-* USER_MANAGE
-* USER_DELETE
-* VAULT_CREATE
-* VAULT_DELETE
-* ALERT_MANAGE
-
-### Champs
-
-* id
-* code
-* description
-
-### Relations
-
-* ManyToMany Role
+**Relations :** ManyToMany Role
 
 ---
 
 ## 3.4 Vault
 
-### Description
+Coffre contenant des mots de passe.
 
-Représente un coffre contenant des mots de passe.
+| Champ         | Type     |
+| :------------ | :------- |
+| `id`          | int      |
+| `name`        | string   |
+| `description` | string   |
+| `archived`    | boolean  |
+| `createdAt`   | datetime |
+| `updatedAt`   | datetime |
 
-### Champs
-
-* id
-* name
-* description
-* archived
-* createdAt
-* updatedAt
-
-### Relations
-
-* ManyToOne User (owner)
-* OneToMany PasswordEntry
-* OneToMany SharedVault
-* ManyToMany Tag
+**Relations :** ManyToOne User (owner) · OneToMany PasswordEntry · OneToMany SharedVault · ManyToMany Tag
 
 ---
 
 ## 3.5 VaultPermission
 
-### Description
+Niveau d'accès à un coffre partagé.
 
-Décrit un niveau d'accès à un coffre partagé.
-
-### Champs
-
-* id
-* code
-* name
-* description
-
-### Données initiales
-
-| Code  | Description    |
-| ----- | -------------- |
-| READ  | Consultation   |
-| WRITE | Modification   |
-| ADMIN | Administration |
-
-### Relations
-
-* OneToMany SharedVault
+| Code    | Description    |
+| :------ | :------------- |
+| `READ`  | Consultation   |
+| `WRITE` | Modification   |
+| `ADMIN` | Administration |
 
 ---
 
 ## 3.6 SharedVault
 
-### Description
+Partage d'un coffre entre deux utilisateurs.
 
-Association entre un utilisateur et un coffre partagé.
+| Champ      | Type     |
+| :--------- | :------- |
+| `id`       | int      |
+| `accepted` | boolean  |
+| `sharedAt` | datetime |
 
-### Champs
-
-* id
-* accepted
-* sharedAt
-
-### Relations
-
-* ManyToOne User
-* ManyToOne Vault
-* ManyToOne VaultPermission
+**Relations :** ManyToOne User (sender) · ManyToOne User (recipient) · ManyToOne Vault · ManyToOne VaultPermission
 
 ---
 
 ## 3.7 PasswordEntry
 
-### Description
+Entrée de mot de passe chiffrée.
 
-Stocke les informations d'accès à un service.
+| Champ               | Type     |
+| :------------------ | :------- |
+| `id`                | int      |
+| `title`             | string   |
+| `username`          | string   |
+| `encryptedPassword` | string   |
+| `url`               | string   |
+| `notes`             | text     |
+| `favorite`          | boolean  |
+| `createdAt`         | datetime |
+| `updatedAt`         | datetime |
 
-### Champs
-
-* id
-* title
-* username
-* encryptedPassword
-* url
-* notes
-* favorite
-* createdAt
-* updatedAt
-
-### Relations
-
-* ManyToOne Vault
-* ManyToMany Category
-* ManyToMany Tag
-* OneToMany PasswordHistory
+**Relations :** ManyToOne Vault · ManyToOne User · ManyToMany Category · ManyToMany Tag · OneToMany PasswordHistory
 
 ---
 
 ## 3.8 Category
 
-### Description
+Organisation des mots de passe (Travail, Banque, Personnel…).
 
-Permet d'organiser les mots de passe.
-
-### Exemples
-
-* Travail
-* Banque
-* Personnel
-* Réseaux sociaux
-
-### Champs
-
-* id
-* name
-* color
-
-### Relations
-
-* ManyToMany PasswordEntry
+**Relations :** ManyToMany PasswordEntry
 
 ---
 
 ## 3.9 Tag
 
-### Description
+Étiquettes libres (Important, Urgent, Personnel…).
 
-Étiquettes libres utilisées pour classer les données.
-
-### Exemples
-
-* Important
-* Projet Symfony
-* Urgent
-* Personnel
-
-### Champs
-
-* id
-* name
-* color
-
-### Relations
-
-* ManyToMany PasswordEntry
-* ManyToMany Vault
+**Relations :** ManyToMany PasswordEntry · ManyToMany Vault
 
 ---
 
-## 3.10 SecurityAlert
+## 3.10 Alert
 
-### Description
+Alerte de sécurité générée par le système.
 
-Alerte de sécurité générée automatiquement.
+| Champ         | Type     |
+| :------------ | :------- |
+| `id`          | int      |
+| `title`       | string   |
+| `description` | text     |
+| `type`        | string   |
+| `category`    | string   |
+| `isRead`      | boolean  |
+| `createdAt`   | datetime |
 
-### Types
-
-* WeakPassword
-* ReusedPassword
-* BreachedPassword
-* SuspiciousLogin
-
-### Champs
-
-* id
-* type
-* severity
-* message
-* resolved
-* createdAt
-
-### Relations
-
-* ManyToOne User
+**Relations :** ManyToOne User
 
 ---
 
 ## 3.11 Notification
 
-### Description
+Notification interne de l'application.
 
-Notification interne et historique d'envoi.
+| Champ      | Type     |
+| :--------- | :------- |
+| `id`       | int      |
+| `title`    | string   |
+| `message`  | text     |
+| `type`     | string   |
+| `isRead`   | boolean  |
+| `isDismissed` | boolean |
+| `createdAt` | datetime |
 
-### Champs
-
-* id
-* title
-* message
-* type
-* isRead
-* isSent
-* sentAt
-* createdAt
-
-### Relations
-
-* ManyToOne User
+**Relations :** ManyToOne User
 
 ---
 
 ## 3.12 ActivityLog
 
-### Description
+Journal de toutes les actions utilisateur.
 
-Historique des actions réalisées.
+| Champ       | Type     |
+| :---------- | :------- |
+| `id`        | int      |
+| `action`    | string   |
+| `ipAddress` | string   |
+| `userAgent` | string   |
+| `createdAt` | datetime |
 
-### Exemples
-
-* Création d'un coffre
-* Suppression d'un mot de passe
-* Modification du profil
-
-### Champs
-
-* id
-* action
-* ipAddress
-* userAgent
-* createdAt
-
-### Relations
-
-* ManyToOne User
+**Relations :** ManyToOne User
 
 ---
 
 ## 3.13 LoginAttempt
 
-### Description
-
 Historique des tentatives de connexion.
 
-### Champs
+| Champ       | Type     |
+| :---------- | :------- |
+| `id`        | int      |
+| `ipAddress` | string   |
+| `success`   | boolean  |
+| `createdAt` | datetime |
 
-* id
-* ipAddress
-* success
-* createdAt
-
-### Relations
-
-* ManyToOne User
+**Relations :** ManyToOne User
 
 ---
 
-## 3.14 PasswordHistory
+## 3.14 UserSession
 
-### Description
+Sessions actives de l'utilisateur.
+
+**Relations :** ManyToOne User
+
+---
+
+## 3.15 PasswordHistory
 
 Historique des anciens mots de passe.
 
-### Champs
+| Champ                  | Type     |
+| :--------------------- | :------- |
+| `id`                   | int      |
+| `previousPasswordHash` | string   |
+| `changedAt`            | datetime |
 
-* id
-* previousPasswordHash
-* changedAt
-
-### Relations
-
-* ManyToOne PasswordEntry
+**Relations :** ManyToOne PasswordEntry
 
 ---
 
-# 4. Relations principales
-
-## ManyToMany
-
-### User ↔ Role
-
-Un utilisateur peut posséder plusieurs rôles.
-
-### Role ↔ Permission
-
-Un rôle peut contenir plusieurs permissions.
-
-### PasswordEntry ↔ Category
-
-Une entrée peut appartenir à plusieurs catégories.
-
-### PasswordEntry ↔ Tag
-
-Une entrée peut posséder plusieurs tags.
-
-### Vault ↔ Tag
-
-Un coffre peut posséder plusieurs tags.
-
-## OneToMany / ManyToOne
-
-* User → Vault
-* User → Notification
-* User → ActivityLog
-* User → SecurityAlert
-* User → LoginAttempt
-* Vault → PasswordEntry
-* Vault → SharedVault
-* VaultPermission → SharedVault
-* PasswordEntry → PasswordHistory
-
----
-
-# 5. Fonctionnalités
+# 4. Fonctionnalités implémentées
 
 ## Gestion des comptes
 
-* Inscription
-* Validation email
-* Connexion
-* Déconnexion
-* Réinitialisation du mot de passe
-* Gestion du profil
+| Fonctionnalité                         | Statut |
+| :------------------------------------- | :----: |
+| Inscription par e-mail                 | ✅     |
+| Inscription par Google OAuth2          | ✅     |
+| Vérification d'e-mail obligatoire      | ✅     |
+| Connexion par e-mail + mot de passe    | ✅     |
+| Connexion par Google OAuth2            | ✅     |
+| Liaison automatique compte existant    | ✅     |
+| Double authentification (2FA e-mail)   | ✅     |
+| Gestion du profil (nom, photo, mdp)    | ✅     |
+| Déconnexion                            | ✅     |
 
 ## Gestion des coffres
 
-* Création
-* Modification
-* Suppression
-* Archivage
-* Partage
+| Fonctionnalité        | Statut |
+| :-------------------- | :----: |
+| Création              | ✅     |
+| Modification          | ✅     |
+| Archivage             | ✅     |
+| Suppression           | ✅     |
+| Partage (READ/WRITE/ADMIN) | ✅ |
+| Accepter / refuser partage | ✅ |
+| Révoquer un partage   | ✅     |
 
 ## Gestion des mots de passe
 
-* Création
-* Consultation
-* Modification
-* Suppression
+| Fonctionnalité                | Statut |
+| :---------------------------- | :----: |
+| Création                      | ✅     |
+| Consultation (déchiffrement)  | ✅     |
+| Modification                  | ✅     |
+| Suppression                   | ✅     |
+| Vue globale (`/passwords`)    | ✅     |
+| Recherche (titre/url/coffre)  | ✅     |
+| Favoris                       | ✅     |
 
 ## Générateur de mots de passe
 
-### Paramètres
+Disponible sur la page d'accueil et dans le dashboard.
 
-* Longueur
-* Majuscules
-* Minuscules
-* Chiffres
-* Caractères spéciaux
+| Paramètre           | Options                  |
+| :------------------ | :----------------------- |
+| Longueur            | 8 à 40 caractères        |
+| Majuscules          | A-Z                      |
+| Minuscules          | a-z                      |
+| Chiffres            | 0-9                      |
+| Caractères spéciaux | !@#$%^&*-_=+?            |
+| Indicateur de force | Très faible → Très fort  |
+| Temps de craquage   | Estimé en temps réel     |
 
-## Recherche
+## Audit de sécurité
 
-Recherche par :
-
-* Nom
-* URL
-* Catégorie
-* Tag
+| Fonctionnalité                        | Statut |
+| :------------------------------------ | :----: |
+| Score de sécurité sur 100             | ✅     |
+| Détection mots de passe faibles       | ✅     |
+| Détection mots de passe anciens (6m)  | ✅     |
+| Centre d'alertes                      | ✅     |
+| Suivi des connexions suspectes        | ✅     |
 
 ## Tableau de bord
 
-### Affichage
+- Nombre de coffres actifs
+- Nombre de mots de passe
+- Nombre d'alertes non lues
+- Score de sécurité (jauge circulaire)
+- Activité récente
+- Générateur de mots de passe (colonne droite)
+- Panneau d'alertes (colonne droite)
 
-* Nombre de coffres
-* Nombre de mots de passe
-* Nombre d'alertes
-* Dernières activités
+---
+
+# 5. Interface utilisateur
+
+## Design system
+
+- **Police :** Manrope (Google Fonts) + IBM Plex Mono (générateur)
+- **Palette :** vert marque `#142F32`, lime `#E3FFCC`, charcoal `#282930`, canvas `#e9ecef`
+- **Logo :** cercle pointillé SVG (identique web + emails)
+- **Framework CSS :** Tailwind CSS (CDN) avec palette nommée
+
+## Responsive / Mobile-first
+
+- Sidebar off-canvas avec bouton hamburger (mobile)
+- Navbar home avec drawer animé
+- Formulaires, tableaux et grilles adaptés à tous les écrans
+- Scroll horizontal sur les tableaux de données
+
+## Animations
+
+- Icônes flottantes animées sur la home et les pages auth (CSS `@keyframes`)
+- Logos de marques (Google, GitHub, Spotify…) dans une orbite animée
+- Anneaux rotatifs en pointillés autour de l'orbite
+
+## Pages principales
+
+| Page          | Description                                                   |
+| :------------ | :------------------------------------------------------------ |
+| Home `/`      | Hero, générateur, fonctionnalités, sécurité, tarifs, services |
+| Login `/login` | Fond canvas, icônes flottantes, bouton Google               |
+| Register `/register` | Même style, barres de force du mot de passe          |
+| 2FA `/2fa/verify` | Page autonome, saisie du code à 6 chiffres              |
+| Dashboard     | Stats, jauge score, activité, générateur, alertes            |
 
 ---
 
@@ -523,171 +392,151 @@ Recherche par :
 
 ## Authentification
 
-Symfony Security
-
-## Hashage
-
-Argon2id
+| Mécanisme                  | Détails                                             |
+| :------------------------- | :-------------------------------------------------- |
+| Email + mot de passe       | Symfony Security + form_login                       |
+| Google OAuth2              | KnpU OAuth2 Client Bundle + league/oauth2-google    |
+| Double authentification    | Code 6 chiffres par e-mail, TTL 10 min              |
+| JWT (API)                  | LexikJWTAuthenticationBundle, clés RSA              |
 
 ## Chiffrement
 
-AES-256-GCM
+| Élément               | Algorithme    |
+| :-------------------- | :------------ |
+| Mots de passe stockés | AES-256-GCM   |
+| Mots de passe users   | Argon2id      |
 
 ## Contrôle d'accès
 
-### Rôles
-
-* ROLE_USER
-* ROLE_MANAGER
-* ROLE_ADMIN
-
-### Voter
-
-**VaultVoter**
-
-Actions :
-
-* VIEW
-* EDIT
-* DELETE
-* SHARE
+- **Rôles :** `ROLE_USER`, `ROLE_MANAGER`, `ROLE_ADMIN`
+- **VaultVoter :** `VIEW` / `EDIT` / `DELETE` / `SHARE`
+- **2FA :** bloquée pour les logins Google (identité prouvée par Google)
 
 ---
 
 # 7. API REST
 
-## Préfixe
+**Préfixe :** `/api/v1/` · **Auth :** JWT Bearer Token
 
-```text
-/api/v1
-```
-
-## Authentification
-
-JWT
-
-## Endpoints
-
-* Authentification
-* Utilisateurs
-* Coffres
-* Mots de passe
-* Alertes
-* Notifications
-
-## Serializer Symfony
-
-* Groups
-* Normalization
-* Denormalization
+| Groupe         | Endpoints                                          |
+| :------------- | :------------------------------------------------- |
+| Auth           | `POST /api/v1/auth/login`                          |
+| Coffres        | CRUD `/api/v1/vaults`                              |
+| Mots de passe  | CRUD `/api/v1/vaults/{vaultId}/passwords`          |
 
 ---
 
-# 8. API Externe
+# 8. E-mails transactionnels
 
-## HaveIBeenPwned
+Envoyés via **Symfony Mailer** · Interceptés par **Mailpit** en développement.
 
-### Objectif
+| E-mail                    | Déclencheur                              |
+| :------------------------ | :--------------------------------------- |
+| Confirmation d'inscription | Après inscription par e-mail           |
+| Code 2FA                  | À chaque connexion avec 2FA activée     |
 
-Détecter les mots de passe compromis et générer des alertes.
-
----
-
-# 9. Notifications Email
-
-## Symfony Mailer
-
-### Emails
-
-* Confirmation d'inscription
-* Réinitialisation de mot de passe
-* Invitation à un coffre
-* Alertes de sécurité
+> Note : l'e-mail de réinitialisation de mot de passe n'est pas encore implémenté.
 
 ---
 
-# 10. Administration
+# 9. Services
 
-## EasyAdminBundle
-
-### Gestion
-
-* Utilisateurs
-* Rôles
-* Permissions
-* Coffres
-* Alertes
-* Logs
-* Statistiques
-
----
-
-# 11. Services
-
-* EncryptionService
-* PasswordGeneratorService
-* SecurityAlertService
-* MailNotificationService
-* ActivityLoggerService
-* VaultSharingService
+| Service                    | Rôle                                                  |
+| :------------------------- | :---------------------------------------------------- |
+| `EncryptionService`        | Chiffrement / déchiffrement AES-256-GCM               |
+| `TwoFactorService`         | Génération, envoi et vérification des codes 2FA       |
+| `AlertService`             | Création et gestion des alertes de sécurité           |
+| `NotificationService`      | Création et envoi des notifications internes          |
+| `ActivityLogService`       | Journalisation des actions utilisateur                |
+| `LoginAttemptService`      | Suivi des tentatives de connexion                     |
+| `PasswordGeneratorService` | Génération de mots de passe avec score de force       |
+| `EmailVerificationService` | Envoi et vérification du lien de confirmation e-mail  |
+| `FileUploader`             | Upload et gestion des images de profil                |
 
 ---
 
-# 12. Event Subscribers
+# 10. Event Subscribers
 
-* LoginSubscriber
-* ActivitySubscriber
-* SecuritySubscriber
+| Subscriber                      | Événements écoutés                                               |
+| :------------------------------ | :--------------------------------------------------------------- |
+| `TwoFactorSubscriber`           | `LoginSuccessEvent` (déclenche 2FA), `KernelEvents::REQUEST` (bloque si 2FA pending) |
+| `EmailVerificationSubscriber`   | Vérifie le statut e-mail sur chaque requête                      |
+
+---
+
+# 11. Sécurité — Authenticators
+
+| Authenticator        | Mécanisme                                                         |
+| :------------------- | :---------------------------------------------------------------- |
+| `form_login`         | E-mail + mot de passe (Symfony natif)                            |
+| `GoogleAuthenticator`| OAuth2 Google — création/liaison/connexion automatique           |
+
+---
+
+# 12. Administration
+
+Back-office EasyAdmin accessible à `/admin` (rôle `ROLE_ADMIN`).
+
+| Section              | Contenu                                          |
+| :------------------- | :----------------------------------------------- |
+| Utilisateurs         | CRUD complet, rôles, e-mail vérifié              |
+| Coffres              | Vue et gestion de tous les coffres               |
+| Alertes              | Consultation et suppression                      |
+| Journal d'activité   | Historique de toutes les actions                 |
+| Tentatives connexion | IP, dates, succès/échec                          |
 
 ---
 
 # 13. Tests
 
-## Tests unitaires
-
-* EncryptionServiceTest
-* PasswordGeneratorServiceTest
-
-## Tests fonctionnels
-
-* LoginControllerTest
-* VaultControllerTest
-
-## Tests API
-
-* Authentification JWT
-* CRUD Coffres
-* Gestion des permissions
+| Type           | Commande               | Couverture                          |
+| :------------- | :--------------------- | :---------------------------------- |
+| Unitaires      | `make test-unit`       | Services, Security                  |
+| Fonctionnels   | `make test-functional` | Contrôleurs (WebTestCase)           |
+| E2E            | `make test-e2e`        | Navigateur headless (Panther)       |
 
 ---
 
-# 14. CI/CD
+# 14. Infrastructure
 
-## GitHub Actions
-
-* Lint Symfony
-* Lint Twig
-* PHPStan
-* PHPUnit
+| Composant    | Technologie          | Version  |
+| :----------- | :------------------- | :------- |
+| Backend      | Symfony              | 7.x      |
+| Serveur      | FrankenPHP           | Latest   |
+| Base données | PostgreSQL           | 16       |
+| ORM          | Doctrine             | Latest   |
+| Auth OAuth2  | KnpU OAuth2 Bundle   | 2.x      |
+| Auth JWT     | LexikJWT Bundle      | Latest   |
+| Admin        | EasyAdminBundle      | Latest   |
+| CSS          | Tailwind CSS         | CDN      |
+| Mailer (dev) | Mailpit              | Latest   |
 
 ---
 
-# 15. Déploiement
+# 15. Variables d'environnement sensibles
 
-* VPS Linux
+| Variable               | Description                              |
+| :--------------------- | :--------------------------------------- |
+| `VAULT_ENCRYPTION_KEY` | Clé AES-256 — ne jamais commiter         |
+| `JWT_PASSPHRASE`       | Passphrase clés RSA                      |
+| `Google_Client_ID`     | OAuth2 Google — Google Cloud Console     |
+| `Google_Client_Secret` | OAuth2 Google — à régénérer si exposé    |
+| `DATABASE_URL`         | URL connexion PostgreSQL                 |
+
+> `.env` est gitignorée. Utiliser `.env.example` comme référence pour l'équipe.
 
 ---
 
 # 16. Livrables
 
-* Cahier des charges
-* UML
-* MCD
-* Code source
-* Migrations Doctrine
-* Fixtures
-* Documentation API
-* README
-* Rapport de tests
-* Application déployée
-
+- [x] Cahier des charges
+- [x] README avec guide de démarrage
+- [x] Code source (Symfony 7)
+- [x] Migrations Doctrine
+- [x] Fixtures de démonstration
+- [x] API REST documentée
+- [x] Templates e-mails
+- [x] Interface responsive (mobile-first)
+- [ ] Documentation API (Swagger/OpenAPI) — à venir
+- [ ] Réinitialisation de mot de passe — à venir
+- [ ] Déploiement VPS — à venir

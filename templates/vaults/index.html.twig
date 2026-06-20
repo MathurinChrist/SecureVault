@@ -19,13 +19,13 @@
 
     <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
         {% for vault in vaults %}
-        <div class="glass-card p-6 rounded-3xl hover:border-indigo-500 transition-all group cursor-pointer">
+        <div class="glass-card p-6 rounded-3xl hover:border-brand transition-all group cursor-pointer">
             <div class="flex items-center justify-between mb-4">
-                <div class="h-12 w-12 rounded-2xl bg-indigo-600/10 flex items-center justify-center text-indigo-400 group-hover:bg-indigo-600 group-hover:text-white transition-colors">
+                <div class="h-12 w-12 rounded-2xl bg-brand/10 flex items-center justify-center text-brand-mid group-hover:bg-brand group-hover:text-white transition-colors">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"/></svg>
                 </div>
                 <div class="flex -space-x-2">
-                    <img class="h-8 w-8 rounded-full border-2 border-[#0f172a]" src="https://ui-avatars.com/api/?name=User" alt="">
+                    <img class="h-8 w-8 rounded-full border-2 border-white" src="https://ui-avatars.com/api/?name=User" alt="">
                 </div>
             </div>
             <h3 class="text-xl font-bold mb-1">{{ vault.name }}</h3>
