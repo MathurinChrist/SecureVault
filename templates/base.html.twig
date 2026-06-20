@@ -3,7 +3,8 @@
     <head>
         <meta charset="UTF-8">
         <title>{% block title %}SecureVault{% endblock %}</title>
-        <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 128 128%22><text y=%221.2em%22 font-size=%2296%22>🛡️</text></svg>">
+        <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+        <link rel="shortcut icon" href="/favicon.svg">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <link rel="preconnect" href="https://fonts.googleapis.com">
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -242,12 +243,15 @@
                     <div class="flex-1 sm:hidden"></div>
 
                     <!-- Right actions -->
-                    <div class="flex items-center gap-1 sm:gap-3 flex-shrink-0">
+                    <div class="flex items-center gap-2 sm:gap-3 flex-shrink-0">
                         <button onclick="if(typeof openAddModal==='function'){openAddModal();}else{window.location.href='{{ path('app_dashboard') }}'}"
                             class="flex items-center gap-1.5 bg-brand hover:bg-brand-light text-white text-[13.5px] font-bold px-3 sm:px-4 py-2.5 rounded-full transition">
                             <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M12 4v16m8-8H4"/></svg>
                             <span class="hidden sm:inline">Nouvel élément</span>
                         </button>
+
+                        {# séparateur visuel #}
+                        <div class="hidden sm:block h-6 w-px bg-line flex-shrink-0"></div>
 
                         <a href="{{ path('app_notifications') }}" class="relative text-ink-muted hover:text-ink transition p-2 rounded-xl hover:bg-white" title="Notifications">
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
