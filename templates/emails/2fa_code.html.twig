@@ -1,0 +1,22 @@
+{% extends 'emails/base_email.html.twig' %}
+
+{% block title %}Votre code de connexion — SecureVault{% endblock %}
+
+{% block body %}
+<h1>Votre code de connexion</h1>
+
+<p>
+    Bonjour {{ user.firstName }}, utilisez le code ci-dessous pour finaliser votre connexion à SecureVault.
+    Ce code est valable pendant <strong style="color: #181d22;">10 minutes</strong>.
+</p>
+
+<div style="text-align: center; margin: 32px 0;">
+    <div style="display: inline-block; background: #142F32; border-radius: 16px; padding: 22px 44px;">
+        <span style="font-size: 40px; font-weight: 800; letter-spacing: 12px; color: #E3FFCC; font-family: 'IBM Plex Mono', monospace;">{{ code }}</span>
+    </div>
+</div>
+
+<p style="font-size: 14px;">
+    Si vous n'avez pas tenté de vous connecter, ignorez cet e-mail et pensez à modifier votre mot de passe.
+</p>
+{% endblock %}

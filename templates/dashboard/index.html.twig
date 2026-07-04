@@ -1,0 +1,441 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Dashboard - SecureVault{% endblock %}
+
+{% block body_connected %}
+
+{# ── Header ── #}
+<div class="mb-7">
+    <p class="text-[11px] font-bold text-ink-muted uppercase tracking-widest mb-1.5">
+        {%- set _jours = ['Dimanche','Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi'] -%}
+        {%- set _mois  = ['janvier','février','mars','avril','mai','juin','juillet','août','septembre','octobre','novembre','décembre'] -%}
+        {{ _jours["now"|date("w")] }} · {{ "now"|date("d") }} {{ _mois["now"|date("n") - 1] }} {{ "now"|date("Y") }}
+    </p>
+    <div class="flex flex-wrap items-start justify-between gap-4">
+        <div>
+            <h1 class="text-[28px] font-extrabold text-ink tracking-[-0.02em]">Bonjour, {{ app.user.firstName }}.</h1>
+            <p class="text-ink-muted mt-1 text-[14.5px]">Voici la posture de sécurité de vos coffres aujourd'hui.</p>
+        </div>
+        <div class="flex items-center gap-3 flex-shrink-0">
+            <a href="{{ path('app_alerts') }}" class="flex items-center gap-2 px-4 py-2.5 bg-white border border-line rounded-full text-[13.5px] font-semibold text-ink-soft hover:border-brand transition">
+                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+                <span>Vérif. sécurité</span>
+            </a>
+            <button onclick="openAddModal()" class="flex items-center gap-2 bg-brand hover:bg-brand-light text-white text-[13.5px] font-bold px-4 py-2.5 rounded-full transition">
+                <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M12 4v16m8-8H4"/></svg>
+                <span>Nouvel élément</span>
+            </button>
+        </div>
+    </div>
+</div>
+
+{# ── Stat cards ── #}
+<div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-5">
+
+    <div class="bg-white rounded-2xl border border-line p-5">
+        <div class="h-10 w-10 rounded-xl bg-brand/10 flex items-center justify-center mb-4">
+            <svg class="h-5 w-5 text-brand" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
+        </div>
+        <p class="text-[32px] font-extrabold text-ink tracking-[-0.02em] leading-none">{{ vaultsCount }}</p>
+        <p class="text-[13.5px] text-ink-muted mt-1.5">Coffres actifs</p>
+    </div>
+
+    <div class="bg-white rounded-2xl border border-line p-5">
+        <div class="h-10 w-10 rounded-xl bg-brand/10 flex items-center justify-center mb-4">
+            <svg class="h-5 w-5 text-brand" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"/></svg>
+        </div>
+        <p class="text-[32px] font-extrabold text-ink tracking-[-0.02em] leading-none">{{ passwordsCount }}</p>
+        <p class="text-[13.5px] text-ink-muted mt-1.5">Mots de passe</p>
+    </div>
+
+    <div class="bg-white rounded-2xl border border-line p-5">
+        <div class="h-10 w-10 rounded-xl {% if unreadAlertsCount > 0 %}bg-danger/10{% else %}bg-brand-mid/10{% endif %} flex items-center justify-center mb-4">
+            <svg class="h-5 w-5 {% if unreadAlertsCount > 0 %}text-danger{% else %}text-brand-mid{% endif %}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+        </div>
+        <p class="text-[32px] font-extrabold tracking-[-0.02em] leading-none {% if unreadAlertsCount > 0 %}text-danger{% else %}text-ink{% endif %}">{{ unreadAlertsCount }}</p>
+        <p class="text-[13.5px] text-ink-muted mt-1.5">Alertes de sécurité</p>
+    </div>
+</div>
+
+{# ── Main grid ── #}
+<div class="grid grid-cols-1 xl:grid-cols-3 gap-5">
+
+    {# LEFT COLUMN #}
+    <div class="xl:col-span-2 space-y-5">
+
+        {# Security status #}
+        <div class="bg-white rounded-2xl border border-line p-6">
+            <div class="flex items-center justify-between mb-5">
+                <h2 class="font-extrabold text-ink text-[16px]">État de sécurité</h2>
+                <a href="{{ path('app_alerts') }}" class="flex items-center gap-1 text-[13px] font-semibold text-ink-muted hover:text-ink border border-line px-3 py-1.5 rounded-full transition">
+                    <span>Voir les alertes</span>
+                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+                </a>
+            </div>
+            <div class="flex items-start gap-6">
+                {# Circular score gauge #}
+                <div class="flex-shrink-0 relative flex items-center justify-center w-28 h-28">
+                    <svg class="absolute inset-0 w-full h-full -rotate-90" viewBox="0 0 100 100">
+                        <circle cx="50" cy="50" r="40" fill="none" stroke="#e0e4e8" stroke-width="10"/>
+                        <circle cx="50" cy="50" r="40" fill="none"
+                            stroke="{% if score >= 80 %}#2f7d5b{% elseif score >= 50 %}#b7791f{% else %}#c4453a{% endif %}"
+                            stroke-width="10" stroke-linecap="round"
+                            stroke-dasharray="251.33"
+                            stroke-dashoffset="{{ (251.33 * (1 - score / 100))|round(2) }}"/>
+                    </svg>
+                    <div class="relative text-center">
+                        <p class="text-[26px] font-extrabold leading-none {% if score >= 80 %}text-brand-mid{% elseif score >= 50 %}text-warn{% else %}text-danger{% endif %}">{{ score }}</p>
+                        <p class="text-[10px] text-ink-muted font-semibold mt-0.5">/100</p>
+                    </div>
+                </div>
+                {# Status details #}
+                <div class="flex-1 space-y-3">
+                    {% if unreadAlertsCount == 0 %}
+                    <div class="flex items-center gap-3 p-3 bg-brand-mid/[.08] border border-brand-mid/20 rounded-xl">
+                        <svg class="h-5 w-5 text-brand-mid flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+                        <div>
+                            <p class="text-[13.5px] font-bold text-brand-mid">Aucune alerte active</p>
+                            <p class="text-[12px] text-brand-mid/80 mt-0.5">Vos coffres sont en bonne santé.</p>
+                        </div>
+                    </div>
+                    {% else %}
+                    <div class="flex items-center gap-3 p-3 bg-danger/[.08] border border-danger/20 rounded-xl">
+                        <svg class="h-5 w-5 text-danger flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+                        <div>
+                            <p class="text-[13.5px] font-bold text-danger">{{ unreadAlertsCount }} alerte{{ unreadAlertsCount > 1 ? 's' : '' }} non lue{{ unreadAlertsCount > 1 ? 's' : '' }}</p>
+                            <p class="text-[12px] text-danger/80 mt-0.5">Consultez "Alertes" pour les gérer.</p>
+                        </div>
+                    </div>
+                    {% endif %}
+                    <div class="grid grid-cols-2 gap-2">
+                        <div class="p-3 bg-surface rounded-xl">
+                            <p class="text-[11px] text-ink-muted">Coffres</p>
+                            <p class="text-[18px] font-extrabold text-ink mt-0.5">{{ vaultsCount }}</p>
+                        </div>
+                        <div class="p-3 bg-surface rounded-xl">
+                            <p class="text-[11px] text-ink-muted">Mots de passe</p>
+                            <p class="text-[18px] font-extrabold text-ink mt-0.5">{{ passwordsCount }}</p>
+                        </div>
+                    </div>
+                    {% if oldPasswordsCount > 0 %}
+                    <div class="p-3 bg-warn/[.08] border border-warn/20 rounded-xl">
+                        <p class="text-[12.5px] text-warn font-semibold">
+                            <span class="font-extrabold">{{ oldPasswordsCount }}</span> mot{{ oldPasswordsCount > 1 ? 's' : '' }} de passe vieilli{{ oldPasswordsCount > 1 ? 's' : '' }} (+6 mois)
+                        </p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        {# Recent activity #}
+        <div class="bg-white rounded-2xl border border-line p-6">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="font-extrabold text-ink text-[16px]">Activité récente</h2>
+                <a href="{{ path('app_passwords') }}" class="text-[13px] font-semibold text-ink-muted hover:text-ink border border-line px-3 py-1.5 rounded-full transition">Voir tout</a>
+            </div>
+            <div class="space-y-1">
+                {% for password in recentPasswords %}
+                <div class="flex items-center gap-4 py-3 border-b border-line/60 last:border-0">
+                    <div class="h-9 w-9 rounded-xl bg-brand/10 flex items-center justify-center text-brand font-extrabold text-[13px] flex-shrink-0">
+                        {{ password.title|first|upper }}
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <p class="text-[13.5px] font-bold text-ink truncate">{{ password.title }}</p>
+                        <p class="text-[12px] text-ink-muted truncate">
+                            {{ password.username }}{% if password.vault %} · {{ password.vault.name }}{% endif %}
+                        </p>
+                    </div>
+                    <div class="text-right flex-shrink-0">
+                        <p class="text-[12px] text-ink-muted">{{ password.createdAt|date('d/m/Y') }}</p>
+                        <button onclick="openEditModal(this)"
+                            data-id="{{ password.id }}"
+                            data-title="{{ password.title|e('html_attr') }}"
+                            data-username="{{ password.username|default('')|e('html_attr') }}"
+                            data-url="{{ password.url|default('')|e('html_attr') }}"
+                            data-notes="{{ password.notes|default('')|e('html_attr') }}"
+                            data-favorite="{{ password.favorite ? '1' : '0' }}"
+                            data-vault-id="{{ password.vault ? password.vault.id : '' }}"
+                            class="text-[12px] text-brand-mid hover:text-brand font-bold mt-0.5">
+                            Modifier
+                        </button>
+                    </div>
+                </div>
+                {% else %}
+                <p class="text-[13.5px] text-ink-muted text-center py-8 italic">Aucun mot de passe enregistré.</p>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    {# RIGHT COLUMN #}
+    <div class="space-y-5">
+
+        {# Password generator #}
+        <div class="bg-white rounded-2xl border border-line p-5">
+            <div class="flex items-center justify-between mb-4">
+                <div class="flex items-center gap-2.5">
+                    <span class="h-8 w-8 rounded-lg bg-accent text-brand grid place-items-center flex-none">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 11-2.6-6.4M21 4v5h-5"/></svg>
+                    </span>
+                    <h2 class="font-extrabold text-ink text-[16px]">Générateur</h2>
+                </div>
+                <div id="dgStr" class="flex items-center gap-1.5 text-[12.5px] font-bold">
+                    <span class="w-2 h-2 rounded-full block bg-brand-mid"></span>
+                    <span id="dgStrTxt" class="text-brand-mid">Excellent</span>
+                </div>
+            </div>
+
+            <div id="dgPw" class="font-mono text-[19px] leading-[1.5] break-all min-h-[58px] font-medium text-ink"></div>
+
+            <div class="flex items-center justify-between mt-2">
+                <div id="dgBars" class="flex gap-1">
+                    <i class="block w-[26px] h-1.5 rounded-full bg-line"></i>
+                    <i class="block w-[26px] h-1.5 rounded-full bg-line"></i>
+                    <i class="block w-[26px] h-1.5 rounded-full bg-line"></i>
+                    <i class="block w-[26px] h-1.5 rounded-full bg-line"></i>
+                </div>
+                <div class="flex gap-2">
+                    <button id="dgRe" title="Régénérer" type="button" class="h-9 w-9 rounded-[9px] border border-line bg-white text-ink-soft grid place-items-center hover:bg-surface hover:text-ink transition"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 11-2.6-6.4M21 4v5h-5"/></svg></button>
+                    <button id="dgCopy" title="Copier" type="button" class="h-9 w-9 rounded-[9px] border border-line bg-white text-ink-soft grid place-items-center hover:bg-surface hover:text-ink transition"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg></button>
+                </div>
+            </div>
+
+            <div class="flex items-center justify-between text-[13px] font-bold text-ink-soft mt-5 mb-2">
+                <span>Longueur</span>
+                <span id="dgLenV" class="font-mono bg-surface border border-line rounded-[7px] px-2.5 py-0.5">18</span>
+            </div>
+            <input id="dgLen" type="range" min="8" max="40" value="18" class="w-full mb-4" style="accent-color:#142F32">
+
+            <div class="flex flex-wrap gap-2">
+                <button type="button" data-k="upper" class="dg-opt on text-[12.5px] font-bold px-3.5 py-2 rounded-full transition">A-Z</button>
+                <button type="button" data-k="lower" class="dg-opt on text-[12.5px] font-bold px-3.5 py-2 rounded-full transition">a-z</button>
+                <button type="button" data-k="num"   class="dg-opt on text-[12.5px] font-bold px-3.5 py-2 rounded-full transition">0-9</button>
+                <button type="button" data-k="sym"   class="dg-opt on text-[12.5px] font-bold px-3.5 py-2 rounded-full transition">!@#</button>
+            </div>
+        </div>
+
+        {# Alerts #}
+        <div class="bg-white rounded-2xl border border-line p-5">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="font-extrabold text-ink text-[16px]">Alertes</h2>
+                {% if unreadAlertsCount > 0 %}
+                <span class="flex items-center gap-1 text-[11px] font-extrabold text-white bg-danger px-2 py-0.5 rounded-full">
+                    <span class="h-1.5 w-1.5 rounded-full bg-white animate-pulse"></span>
+                    <span>{{ unreadAlertsCount }}</span>
+                </span>
+                {% endif %}
+            </div>
+
+            {% if recentAlerts is defined and recentAlerts|length > 0 %}
+            <div class="space-y-1">
+                {% for alert in recentAlerts %}
+                <div class="flex items-start gap-3 p-3 rounded-xl hover:bg-surface transition group">
+                    <div class="h-8 w-8 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5
+                        {% if alert.type in ['critical', 'danger'] %}bg-danger/10
+                        {% elseif alert.type == 'warning' %}bg-warn/10
+                        {% else %}bg-brand/10{% endif %}">
+                        {% if alert.type in ['critical', 'danger'] %}
+                            <svg class="h-4 w-4 text-danger" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+                        {% elseif alert.type == 'warning' %}
+                            <svg class="h-4 w-4 text-warn" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+                        {% else %}
+                            <svg class="h-4 w-4 text-brand" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                        {% endif %}
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <p class="text-[13.5px] font-bold text-ink leading-tight">{{ alert.title }}</p>
+                        <p class="text-[12px] text-ink-muted mt-0.5 leading-relaxed">{{ alert.description|slice(0, 75) }}{% if alert.description|length > 75 %}…{% endif %}</p>
+                    </div>
+                    <a href="{{ path('app_alerts_mark_read', {id: alert.id, redirect: 'app_dashboard'}) }}"
+                       title="Marquer comme lu"
+                       class="flex-shrink-0 opacity-0 group-hover:opacity-100 transition text-ink-muted hover:text-brand-mid mt-1">
+                        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
+                    </a>
+                </div>
+                {% endfor %}
+            </div>
+            <a href="{{ path('app_alerts_mark_all_read', {redirect: 'app_dashboard'}) }}"
+               class="mt-3 flex items-center justify-center gap-2 w-full border border-line hover:bg-surface text-ink-soft hover:text-ink text-[13px] font-semibold py-2.5 rounded-full transition">
+                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                <span>Tout marquer comme lu</span>
+            </a>
+            {% else %}
+            <div class="text-center py-8">
+                <div class="h-12 w-12 rounded-full bg-brand-mid/10 flex items-center justify-center mx-auto mb-3">
+                    <svg class="h-6 w-6 text-brand-mid" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+                </div>
+                <p class="text-[13.5px] font-bold text-ink-soft">Tout est sécurisé</p>
+                <p class="text-[12px] text-ink-muted mt-1">Aucune alerte active</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+</div>
+
+
+{# ===== MODAL AJOUTER ===== #}
+<div id="add-modal" class="{{ open_modal ? '' : 'hidden' }} fixed inset-0 z-50 flex items-center justify-center p-4" role="dialog" aria-modal="true">
+    <div class="absolute inset-0 bg-brand/40 backdrop-blur-sm" onclick="closeAddModal()"></div>
+    <div class="relative z-10 w-full max-w-lg bg-white rounded-3xl overflow-hidden shadow-[0_24px_60px_rgba(20,47,50,.25)]">
+        <div class="flex items-center justify-between px-6 py-5 border-b border-line">
+            <div class="flex items-center gap-3">
+                <div class="h-10 w-10 rounded-xl bg-brand/10 flex items-center justify-center">
+                    <svg class="h-5 w-5 text-brand" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+                </div>
+                <div>
+                    <h2 class="text-[15px] font-extrabold text-ink">Ajouter un élément</h2>
+                    <p class="text-[12px] text-ink-muted">Identifiants de connexion</p>
+                </div>
+            </div>
+            <button onclick="closeAddModal()" class="text-ink-muted hover:text-ink transition rounded-lg p-1.5 hover:bg-surface">
+                <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+            </button>
+        </div>
+        {{ form_start(password_form, {'attr': {'novalidate': 'novalidate'}}) }}
+        <div class="px-6 py-5 space-y-4 max-h-[60vh] overflow-y-auto">
+            {% include 'dashboard/_form_fields.html.twig' with {'form': password_form, 'pwd_input_id': 'add-pwd'} %}
+        </div>
+        <div class="px-6 py-4 border-t border-line flex justify-end gap-3">
+            <button type="button" onclick="closeAddModal()" class="px-4 py-2.5 text-[13.5px] font-semibold text-ink-soft hover:text-ink hover:bg-surface rounded-full transition">Annuler</button>
+            <button type="submit" class="flex items-center gap-2 bg-brand hover:bg-brand-light text-white text-[13.5px] font-bold px-5 py-2.5 rounded-full transition">
+                <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                <span>Ajouter l'élément</span>
+            </button>
+        </div>
+        {{ form_end(password_form) }}
+    </div>
+</div>
+
+{# ===== MODAL MODIFIER ===== #}
+<div id="edit-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4" role="dialog" aria-modal="true">
+    <div class="absolute inset-0 bg-brand/40 backdrop-blur-sm" onclick="closeEditModal()"></div>
+    <div class="relative z-10 w-full max-w-lg bg-white rounded-3xl overflow-hidden shadow-[0_24px_60px_rgba(20,47,50,.25)]">
+        <div class="flex items-center justify-between px-6 py-5 border-b border-line">
+            <div class="flex items-center gap-3">
+                <div class="h-10 w-10 rounded-xl bg-warn/10 flex items-center justify-center">
+                    <svg class="h-5 w-5 text-warn" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                </div>
+                <div>
+                    <h2 class="text-[15px] font-extrabold text-ink">Modifier le mot de passe</h2>
+                    <p class="text-[12px] text-ink-muted">Mettre à jour les informations</p>
+                </div>
+            </div>
+            <button onclick="closeEditModal()" class="text-ink-muted hover:text-ink transition rounded-lg p-1.5 hover:bg-surface">
+                <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+            </button>
+        </div>
+        {{ form_start(edit_form, {'attr': {'id': 'edit-form', 'novalidate': 'novalidate'}}) }}
+        <div class="px-6 py-5 space-y-4 max-h-[60vh] overflow-y-auto">
+            {% include 'dashboard/_form_fields.html.twig' with {'form': edit_form, 'pwd_input_id': 'edit-pwd'} %}
+        </div>
+        <div class="px-6 py-4 border-t border-line flex justify-end gap-3">
+            <button type="button" onclick="closeEditModal()" class="px-4 py-2.5 text-[13.5px] font-semibold text-ink-soft hover:text-ink hover:bg-surface rounded-full transition">Annuler</button>
+            <button type="submit" class="flex items-center gap-2 bg-warn hover:brightness-95 text-white text-[13.5px] font-bold px-5 py-2.5 rounded-full transition">
+                <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                <span>Mettre à jour</span>
+            </button>
+        </div>
+        {{ form_end(edit_form) }}
+    </div>
+</div>
+
+<script>
+function openAddModal()  { document.getElementById('add-modal').classList.remove('hidden'); }
+function closeAddModal() { document.getElementById('add-modal').classList.add('hidden'); }
+
+function openEditModal(btn) {
+    const modal = document.getElementById('edit-modal');
+    const form  = document.getElementById('edit-form');
+    form.action = `/password/${btn.dataset.id}/edit`;
+    setValue(form, '[name$="[title]"]',    btn.dataset.title);
+    setValue(form, '[name$="[username]"]', btn.dataset.username);
+    setValue(form, '[name$="[url]"]',      btn.dataset.url);
+    setValue(form, '[name$="[notes]"]',    btn.dataset.notes);
+    const pwdField = form.querySelector('[name$="[plainPassword]"]');
+    if (pwdField) pwdField.value = '';
+    const vaultSelect = form.querySelector('[name$="[vault]"]');
+    if (vaultSelect) vaultSelect.value = btn.dataset.vaultId;
+    const favCheckbox = form.querySelector('[name$="[favorite]"]');
+    if (favCheckbox) favCheckbox.checked = btn.dataset.favorite === '1';
+    modal.classList.remove('hidden');
+}
+function closeEditModal() { document.getElementById('edit-modal').classList.add('hidden'); }
+function setValue(form, selector, value) { const el = form.querySelector(selector); if (el) el.value = value ?? ''; }
+
+function generatePassword(inputId, iconId) {
+    const chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*-_=+';
+    const rand = new Uint32Array(16); crypto.getRandomValues(rand);
+    const input = document.getElementById(inputId);
+    if (input) { input.value = Array.from(rand, v => chars[v % chars.length]).join(''); input.type = 'text'; }
+}
+function togglePwd(inputId, iconId) {
+    const input = document.getElementById(inputId);
+    const icon  = document.getElementById(iconId);
+    if (!input) return;
+    const isHidden = input.type === 'password';
+    input.type = isHidden ? 'text' : 'password';
+    icon.innerHTML = isHidden
+        ? '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.542 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"/>'
+        : '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>';
+}
+
+document.addEventListener('keydown', e => { if (e.key === 'Escape') { closeAddModal(); closeEditModal(); } });
+
+/* ===== Dashboard password generator ===== */
+(function () {
+    var pwEl = document.getElementById('dgPw');
+    if (!pwEl) return;
+    var opts = { upper: true, lower: true, num: true, sym: true };
+    var len = 18, current = '';
+
+    function gen() {
+        var L = 'abcdefghijkmnpqrstuvwxyz', U = 'ABCDEFGHJKLMNPQRSTUVWXYZ', N = '23456789', S = '!@#$%^&*-_=+?';
+        var set = ''; if (opts.lower) set += L; if (opts.upper) set += U; if (opts.num) set += N; if (opts.sym) set += S;
+        if (!set) set = L;
+        var must = []; if (opts.lower) must.push(L); if (opts.upper) must.push(U); if (opts.num) must.push(N); if (opts.sym) must.push(S);
+        var out = must.map(function (s) { return s[Math.floor(Math.random() * s.length)]; });
+        for (var i = out.length; i < len; i++) out.push(set[Math.floor(Math.random() * set.length)]);
+        for (var i = out.length - 1; i > 0; i--) { var j = Math.floor(Math.random() * (i + 1)); var t = out[i]; out[i] = out[j]; out[j] = t; }
+        return out.slice(0, len).join('');
+    }
+    function entropy() { var p = 0; if (opts.lower) p += 25; if (opts.upper) p += 24; if (opts.num) p += 8; if (opts.sym) p += 12; return Math.round(len * Math.log2(p || 25)); }
+    function render() {
+        current = gen();
+        pwEl.innerHTML = current.split('').map(function (c) {
+            if (/[0-9]/.test(c)) return '<span class="d">' + c + '</span>';
+            if (/[^a-zA-Z0-9]/.test(c)) return '<span class="y">' + c + '</span>';
+            return c;
+        }).join('');
+        var bits = entropy();
+        var lvl = bits >= 110 ? ['Excellent', '#2f7d5b', 4] : bits >= 80 ? ['Fort', '#2f7d5b', 3] : bits >= 55 ? ['Moyen', '#b7791f', 2] : ['Faible', '#c4453a', 1];
+        document.getElementById('dgStrTxt').textContent = lvl[0];
+        document.getElementById('dgStrTxt').style.color = lvl[1];
+        document.querySelector('#dgStr span').style.background = lvl[1];
+        document.querySelectorAll('#dgBars i').forEach(function (b, i) { b.style.background = i < lvl[2] ? lvl[1] : '#e0e4e8'; });
+    }
+    document.getElementById('dgLen').addEventListener('input', function (e) { len = +e.target.value; document.getElementById('dgLenV').textContent = len; render(); });
+    document.getElementById('dgRe').addEventListener('click', render);
+    document.getElementById('dgCopy').addEventListener('click', function () {
+        if (navigator.clipboard) navigator.clipboard.writeText(current);
+        var b = document.getElementById('dgCopy'); b.classList.add('text-brand-mid');
+        setTimeout(function () { b.classList.remove('text-brand-mid'); }, 900);
+    });
+    document.querySelectorAll('.dg-opt').forEach(function (o) {
+        o.addEventListener('click', function () {
+            var k = o.dataset.k; var enabled = Object.keys(opts).filter(function (x) { return opts[x]; });
+            if (opts[k] && enabled.length === 1) return;
+            opts[k] = !opts[k]; o.classList.toggle('on', opts[k]); render();
+        });
+    });
+    render();
+})();
+</script>
+<style>
+  .dg-opt { border: 1px solid #e0e4e8; color: #6a7480; background: #fff; }
+  .dg-opt.on { background: #142F32; color: #fff; border-color: #142F32; }
+  #dgPw .d { color: #2f7d5b; }
+  #dgPw .y { color: #c4453a; }
+</style>
+{% endblock body_connected %}

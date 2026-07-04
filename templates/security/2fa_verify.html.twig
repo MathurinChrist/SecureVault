@@ -1,0 +1,81 @@
+{% extends 'base.html.twig' %}
+{% set standalone_layout = true %}
+
+{% block title %}Vérification en deux étapes — SecureVault{% endblock %}
+
+{% block visitor_navbar %}{% endblock %}
+{% block visitor_footer %}{% endblock %}
+{% block main_classes %}{% endblock %}
+
+{% block stylesheets %}
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  .auth { font-family: 'Manrope', system-ui, sans-serif; }
+  .auth ::selection { background: #E3FFCC; color: #142F32; }
+</style>
+{% endblock %}
+
+{% block body %}
+<div class="auth min-h-screen bg-canvas flex items-center justify-center p-4 sm:p-6">
+  <div class="w-full max-w-[420px]">
+
+    <a href="{{ path('app_home') }}" class="flex items-center justify-center gap-2.5 font-extrabold text-[18px] tracking-tight text-ink mb-8">
+      <svg class="w-[30px] h-[30px] flex-none" viewBox="0 0 32 32" fill="none"><circle cx="16" cy="16" r="13" stroke="#142F32" stroke-width="5" stroke-dasharray="56 26" stroke-linecap="round"/><circle cx="16" cy="16" r="4.5" fill="#2f7d5b"/></svg>
+      SecureVault
+    </a>
+
+    <div class="bg-white rounded-[24px] border border-line shadow-[0_24px_60px_rgba(20,47,50,.12)] p-7 sm:p-9">
+
+      <div class="text-center mb-7">
+        <div class="inline-flex items-center justify-center h-14 w-14 rounded-2xl bg-brand/10 mb-4">
+          <svg class="w-7 h-7 text-brand-mid" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+        </div>
+        <h1 class="text-[22px] font-extrabold text-ink tracking-[-0.02em]">Vérification en deux étapes</h1>
+        <p class="text-ink-muted text-[14px] mt-2">
+          Un code à 6 chiffres a été envoyé à<br>
+          <span class="text-brand-mid font-bold">{{ email }}</span>
+        </p>
+      </div>
+
+      {% for label, messages in app.flashes %}
+        {% for message in messages %}
+          <div class="mb-4 px-4 py-3 rounded-[12px] text-[13.5px] font-semibold
+            {{ label == 'error' ? 'bg-warn/[.08] border border-warn/20 text-warn' : 'bg-brand-mid/10 border border-brand-mid/20 text-brand-mid' }}">
+            {{ message }}
+          </div>
+        {% endfor %}
+      {% endfor %}
+
+      <form method="POST" action="{{ path('app_2fa_verify') }}">
+        <input type="hidden" name="_token" value="{{ csrf_token('2fa_verify') }}">
+
+        <label for="code" class="block text-[12px] font-bold text-ink-soft mb-2">Code de vérification</label>
+        <input type="text" id="code" name="code" inputmode="numeric" pattern="[0-9]{6}" maxlength="6"
+               autocomplete="one-time-code" placeholder="000000" required autofocus
+               class="w-full px-4 py-3.5 text-center text-[26px] font-mono tracking-[0.5em] bg-surface border border-line rounded-[12px] text-ink placeholder-ink-muted/40 focus:outline-none focus:ring-2 focus:ring-brand/30 focus:border-brand focus:bg-white transition">
+        <p class="mt-2 text-[12px] text-ink-muted">Ce code expire dans 10 minutes.</p>
+
+        <button type="submit"
+          class="w-full mt-5 bg-brand hover:bg-brand-light text-white font-bold py-3.5 rounded-full transition text-[14.5px] active:translate-y-px">
+          Vérifier
+        </button>
+      </form>
+    </div>
+
+    <div class="mt-6 text-center">
+      <p class="text-[13px] text-ink-muted mb-2">Vous n'avez pas reçu le code ?</p>
+      <form method="POST" action="{{ path('app_2fa_resend') }}">
+        <input type="hidden" name="_token" value="{{ csrf_token('2fa_resend') }}">
+        <button type="submit" class="text-[13.5px] text-brand-mid hover:text-brand font-bold transition">Renvoyer un nouveau code</button>
+      </form>
+    </div>
+
+    <div class="mt-4 text-center">
+      <a href="{{ path('app_logout') }}" class="text-[12px] text-ink-muted hover:text-ink-soft transition">Se déconnecter</a>
+    </div>
+
+  </div>
+</div>
+{% endblock %}

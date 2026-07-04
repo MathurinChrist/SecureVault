@@ -1,0 +1,142 @@
+{% extends 'base.html.twig' %}
+{% set standalone_layout = true %}
+
+{% block title %}Connexion - SecureVault{% endblock %}
+
+{% block visitor_navbar %}{% endblock %}
+{% block visitor_footer %}{% endblock %}
+{% block main_classes %}{% endblock %}
+
+{% block stylesheets %}
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  .auth { font-family: 'Manrope', system-ui, sans-serif; }
+  .auth ::selection { background: #E3FFCC; color: #142F32; }
+  .auth .field { width:100%; padding:13px 16px; background:#f4f6f7; border:1px solid #e0e4e8; border-radius:14px; color:#181d22; font-size:14px; outline:none; transition:.15s; }
+  .auth .field::placeholder { color:rgba(106,116,128,.5); }
+  .auth .field:focus { border-color:#142F32; background:#fff; box-shadow:0 0 0 3px rgba(20,47,50,.12); }
+  @keyframes authFloat { 0%,100%{transform:translateY(0) rotate(0)} 50%{transform:translateY(-14px) rotate(var(--rot,5deg))} }
+  .auth-float { animation: authFloat var(--dur,4.5s) ease-in-out infinite; will-change:transform; }
+  @media (prefers-reduced-motion: reduce){ .auth-float{ animation:none } }
+</style>
+{% endblock %}
+
+{% block body %}
+<div class="auth relative min-h-screen bg-canvas text-ink overflow-hidden">
+
+  {# ── Top header ── #}
+  <header class="relative z-20">
+   <div class="max-w-[1180px] mx-auto px-7 flex items-center justify-between h-[74px] gap-5">
+    <a href="{{ path('app_home') }}" class="flex items-center gap-2.5 font-extrabold text-[18px] tracking-tight">
+      <svg class="w-[30px] h-[30px] flex-none" viewBox="0 0 32 32" fill="none"><circle cx="16" cy="16" r="13" stroke="#142F32" stroke-width="5" stroke-dasharray="56 26" stroke-linecap="round"/><circle cx="16" cy="16" r="4.5" fill="#2f7d5b"/></svg>
+      SecureVault
+    </a>
+    <div class="flex items-center gap-4">
+      <span class="hidden sm:inline text-[13.5px] text-ink-muted">Pas de compte ?</span>
+      <a href="{{ path('app_register') }}" class="bg-brand hover:bg-brand-light text-white font-bold text-[13.5px] px-5 py-2.5 rounded-full transition">Créer un compte</a>
+    </div>
+   </div>
+  </header>
+
+  {# ── Floating animated icons ── #}
+  <span style="--dur:4s;--rot:6deg;animation-delay:-.2s"  class="auth-float hidden lg:grid place-items-center absolute z-0 w-12 h-12 rounded-2xl shadow-[0_10px_30px_rgba(20,47,50,.10)] top-[22%] left-[8%] bg-white text-brand"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 3v5c0 4.5-3 7.8-7 9-4-1.2-7-4.5-7-9V6l7-3z"/><path d="M9 12l2 2 4-4"/></svg></span>
+  <span style="--dur:5.2s;--rot:-7deg;animation-delay:-1.1s" class="auth-float hidden lg:grid place-items-center absolute z-0 w-11 h-11 rounded-2xl shadow-[0_10px_30px_rgba(20,47,50,.12)] top-[48%] left-[13%] bg-brand text-accent"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="15" r="4"/><path d="M10.85 12.15L20 3M18 5l2 2M15 8l2 2"/></svg></span>
+  <span style="--dur:4.6s;--rot:8deg;animation-delay:-2.3s"  class="auth-float hidden lg:grid place-items-center absolute z-0 w-11 h-11 rounded-2xl shadow-[0_10px_30px_rgba(20,47,50,.10)] bottom-[16%] left-[10%] bg-accent text-brand"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5 9-11"/></svg></span>
+  <span style="--dur:4.3s;--rot:-6deg;animation-delay:-.7s"  class="auth-float hidden lg:grid place-items-center absolute z-0 w-12 h-12 rounded-2xl shadow-[0_10px_30px_rgba(20,47,50,.10)] top-[24%] right-[8%] bg-white text-brand-mid"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.9 5.8L20 10l-6.1 1.2L12 17l-1.9-5.8L4 10l6.1-1.2z"/></svg></span>
+  <span style="--dur:5.6s;--rot:7deg;animation-delay:-1.8s"  class="auth-float hidden lg:grid place-items-center absolute z-0 w-11 h-11 rounded-2xl shadow-[0_10px_30px_rgba(20,47,50,.12)] top-[50%] right-[13%] bg-charcoal text-accent"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 018 0v4"/></svg></span>
+  <span style="--dur:4.8s;--rot:-8deg;animation-delay:-2.6s" class="auth-float hidden lg:grid place-items-center absolute z-0 w-11 h-11 rounded-2xl shadow-[0_10px_30px_rgba(20,47,50,.10)] bottom-[18%] right-[10%] bg-brand text-accent"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg></span>
+
+  {# ── Centered card ── #}
+  <div class="relative z-10 flex items-center justify-center px-4 pb-12 min-h-[calc(100vh-160px)]">
+    <div class="w-full max-w-[440px]">
+      <div class="bg-white rounded-[28px] border border-line shadow-[0_30px_70px_rgba(20,47,50,.14)] p-7 sm:p-10">
+
+        <span class="inline-flex items-center gap-1.5 bg-accent/40 text-brand font-bold text-[12.5px] px-3 py-1.5 rounded-full mb-5">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 3v5c0 4.5-3 7.8-7 9-4-1.2-7-4.5-7-9V6l7-3z"/><path d="M9 12l2 2 4-4"/></svg>
+          Connexion sécurisée
+        </span>
+
+        <h1 class="text-[30px] font-extrabold text-ink tracking-[-0.03em] mb-1.5">Bon <span class="text-brand-mid">retour.</span></h1>
+        <p class="text-ink-muted text-[14.5px] mb-7">Connectez-vous à votre coffre.</p>
+
+        {% if error %}
+        <div class="mb-5 p-3.5 rounded-[12px] bg-warn/[.08] border border-warn/20 text-warn text-[13.5px] flex items-center gap-2.5">
+          <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+          <span>{{ error.messageKey|trans(error.messageData, 'security') }}</span>
+        </div>
+        {% endif %}
+
+        <form method="post" class="space-y-4">
+          <div>
+            <label for="inputEmail" class="block text-[11px] font-bold text-ink-soft uppercase tracking-wider mb-1.5">E-mail</label>
+            <input type="email" value="{{ last_username }}" name="email" id="inputEmail"
+              class="field" placeholder="vous@exemple.com" autocomplete="email" required autofocus>
+          </div>
+
+          <div>
+            <div class="flex items-center justify-between mb-1.5">
+              <label for="inputPassword" class="text-[11px] font-bold text-ink-soft uppercase tracking-wider">Mot de passe</label>
+              <a href="#" class="text-[12.5px] text-brand-mid hover:text-brand font-semibold">Oublié ?</a>
+            </div>
+            <div class="relative">
+              <input type="password" name="password" id="inputPassword"
+                class="field pr-12" placeholder="••••••••" autocomplete="current-password" required>
+              <button type="button" onclick="togglePwd('inputPassword', this)"
+                class="absolute right-2.5 top-1/2 -translate-y-1/2 h-8 w-8 grid place-items-center text-ink-muted hover:text-ink rounded-lg hover:bg-surface transition">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+              </button>
+            </div>
+          </div>
+
+          <input type="hidden" name="_csrf_token" value="{{ csrf_token('authenticate') }}">
+
+          <div class="flex items-center pt-1">
+            <input id="remember_me" name="_remember_me" type="checkbox"
+              class="h-4 w-4 rounded border-line text-brand focus:ring-brand/40">
+            <label for="remember_me" class="ml-2 text-[13.5px] text-ink-muted">Se souvenir de moi</label>
+          </div>
+
+          <button type="submit"
+            class="w-full bg-brand hover:bg-brand-light text-white font-bold py-3.5 rounded-full transition text-[14.5px] mt-2 active:translate-y-px">
+            Se connecter
+          </button>
+        </form>
+
+        <div class="mt-6 flex items-center gap-3">
+          <div class="flex-1 h-px bg-line"></div>
+          <span class="text-[12px] text-ink-muted font-medium">ou</span>
+          <div class="flex-1 h-px bg-line"></div>
+        </div>
+
+        <a href="{{ path('app_google_connect') }}"
+           class="mt-4 w-full flex items-center justify-center gap-3 bg-white border border-line hover:border-brand hover:bg-surface font-bold text-[14px] text-ink py-3.5 rounded-full transition">
+          <svg width="18" height="18" viewBox="0 0 24 24"><path d="M12.48 10.92v3.28h7.84c-.24 1.84-.853 3.187-1.787 4.133-1.147 1.147-2.933 2.4-6.053 2.4-4.827 0-8.6-3.893-8.6-8.72s3.773-8.72 8.6-8.72c2.6 0 4.507 1.027 5.907 2.347l2.307-2.307C18.747 1.44 16.133 0 12.48 0 5.867 0 .307 5.387.307 12s5.56 12 12.173 12c3.573 0 6.267-1.173 8.373-3.36 2.16-2.16 2.84-5.213 2.84-7.667 0-.76-.053-1.467-.173-2.053H12.48z" fill="#4285F4"/></svg>
+          Continuer avec Google
+        </a>
+
+        <p class="mt-5 text-center text-[14px] text-ink-muted">
+          Pas encore de compte ?
+          <a href="{{ path('app_register') }}" class="text-brand-mid font-bold hover:text-brand">S'inscrire gratuitement</a>
+        </p>
+      </div>
+
+      {# trust row #}
+      <div class="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 mt-7 text-[13px] text-ink-muted">
+        <span class="flex items-center gap-1.5"><svg class="w-4 h-4 text-brand-mid" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>Chiffrement AES-256-GCM</span>
+        <span class="flex items-center gap-1.5"><svg class="w-4 h-4 text-brand-mid" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>Double authentification</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+function togglePwd(id, btn) {
+  const input = document.getElementById(id);
+  const isHidden = input.type === 'password';
+  input.type = isHidden ? 'text' : 'password';
+  btn.querySelector('svg').style.opacity = isHidden ? '0.4' : '1';
+}
+</script>
+{% endblock %}

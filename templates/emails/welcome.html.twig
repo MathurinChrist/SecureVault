@@ -1,0 +1,23 @@
+{% extends 'emails/base_email.html.twig' %}
+
+{% block title %}Bienvenue sur SecureVault{% endblock %}
+
+{% block body %}
+    <h1>Bienvenue sur SecureVault !</h1>
+    
+    <p>Bonjour {{ user_email }},</p>
+    
+    <p>Nous sommes ravis de vous compter parmi nous. SecureVault est conçu pour vous offrir la meilleure protection possible pour vos mots de passe et données sensibles.</p>
+    
+    <div style="text-align: center;">
+        <a href="{{ url('app_dashboard') }}" class="button">Accéder à mon coffre</a>
+    </div>
+    
+    <div class="tip-box">
+        <p><strong>Conseil de sécurité :</strong> N'oubliez pas d'activer l'authentification à deux facteurs (2FA) dès votre première connexion pour renforcer la sécurité de votre compte.</p>
+    </div>
+    
+    <p>Si vous avez des questions, n'hésitez pas à répondre à cet email.</p>
+    
+    <p>L'équipe SecureVault</p>
+{% endblock %}

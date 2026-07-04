@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Page introuvable — SecureVault</title>
+        <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand:   { DEFAULT: '#142F32', light: '#1c3e42', mid: '#2f7d5b' },
+                        accent:  { DEFAULT: '#E3FFCC' },
+                        canvas:  '#e9ecef',
+                        surface: '#f4f6f7',
+                        line:    '#e0e4e8',
+                        ink:     { DEFAULT: '#181d22', soft: '#3c454c', muted: '#6a7480' },
+                    }
+                }
+            }
+        }
+    </script>
+    <style>body { font-family: 'Manrope', system-ui, sans-serif; }</style>
+</head>
+<body class="min-h-screen bg-canvas flex flex-col items-center justify-center px-4">
+
+    <div class="text-center max-w-md w-full">
+
+        <a href="/" class="inline-flex items-center gap-2.5 font-extrabold text-[18px] tracking-tight text-ink mb-12">
+            <svg class="w-[30px] h-[30px]" viewBox="0 0 32 32" fill="none"><circle cx="16" cy="16" r="13" stroke="#142F32" stroke-width="5" stroke-dasharray="56 26" stroke-linecap="round"/><circle cx="16" cy="16" r="4.5" fill="#2f7d5b"/></svg>
+            SecureVault
+        </a>
+
+        <div class="bg-white border border-line rounded-[24px] shadow-[0_24px_60px_rgba(20,47,50,.10)] p-10 sm:p-12">
+            <p class="text-[96px] font-extrabold text-brand/[.10] leading-none tracking-tight mb-2">404</p>
+            <h1 class="text-[22px] font-extrabold text-ink tracking-tight mb-3">Page introuvable</h1>
+            <p class="text-ink-muted text-[15px] leading-relaxed mb-8">
+                La page que vous cherchez n'existe pas ou a été déplacée.
+            </p>
+            <div class="flex flex-col sm:flex-row items-center justify-center gap-3">
+                <a href="/" class="w-full sm:w-auto text-center bg-brand hover:bg-brand-light text-white font-bold text-[14px] px-6 py-3 rounded-full transition">
+                    Retour à l'accueil
+                </a>
+                <a href="javascript:history.back()" class="w-full sm:w-auto text-center bg-surface hover:bg-line text-ink-soft font-semibold text-[14px] px-6 py-3 rounded-full transition">
+                    Page précédente
+                </a>
+            </div>
+        </div>
+
+    </div>
+</body>
+</html>

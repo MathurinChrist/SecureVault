@@ -1,0 +1,51 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}E-mail non vérifié — SecureVault{% endblock %}
+
+{% block body_connected %}
+<div class="flex items-center justify-center min-h-[70vh] px-4">
+    <div class="w-full max-w-md text-center">
+
+        {% for message in app.flashes('success') %}
+            <div class="mb-4 px-4 py-3 rounded-xl bg-green-500/10 border border-green-500/30 text-green-400 text-sm">
+                {{ message }}
+            </div>
+        {% endfor %}
+        {% for message in app.flashes('error') %}
+            <div class="mb-4 px-4 py-3 rounded-xl bg-red-500/10 border border-red-500/30 text-red-400 text-sm">
+                {{ message }}
+            </div>
+        {% endfor %}
+
+        <div class="glass-card rounded-3xl p-10">
+            <div class="h-20 w-20 rounded-full bg-amber-500/10 flex items-center justify-center mx-auto mb-6">
+                <svg class="h-10 w-10 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                </svg>
+            </div>
+
+            <h1 class="text-2xl font-bold mb-3">Confirmez votre e-mail</h1>
+            <p class="text-slate-400 mb-2">
+                Votre adresse e-mail n'a pas encore été vérifiée.
+            </p>
+            <p class="text-brand-mid font-semibold mb-6">{{ app.user.email }}</p>
+            <p class="text-slate-400 text-sm mb-8">
+                Consultez votre boîte de réception et cliquez sur le lien de confirmation
+                pour accéder à votre compte.
+            </p>
+
+            <form method="post" action="{{ path('app_resend_verification') }}">
+                <input type="hidden" name="_token" value="{{ csrf_token('resend_verification') }}">
+                <button type="submit" class="btn btn-primary w-full mb-3">
+                    Renvoyer l'e-mail de confirmation
+                </button>
+            </form>
+
+            <a href="{{ path('app_logout') }}" class="btn btn-ghost border border-white/10 text-sm w-full block text-center">
+                Se déconnecter
+            </a>
+        </div>
+
+    </div>
+</div>
+{% endblock %}

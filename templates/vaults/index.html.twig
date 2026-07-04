@@ -1,0 +1,46 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Mes Coffres - SecureVault{% endblock %}
+
+{% block body_connected %}
+<div class="space-y-8">
+    <div class="flex items-center justify-between">
+        <div>
+            <h1 class="text-3xl font-bold">Mes Coffres</h1>
+            <p class="text-slate-400 mt-1">Organisez vos mots de passe dans des dossiers sécurisés.</p>
+        </div>
+        <button class="btn btn-primary flex items-center space-x-2">
+            <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+            </svg>
+            <span>Créer un coffre</span>
+        </button>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+        {% for vault in vaults %}
+        <div class="glass-card p-6 rounded-3xl hover:border-brand transition-all group cursor-pointer">
+            <div class="flex items-center justify-between mb-4">
+                <div class="h-12 w-12 rounded-2xl bg-brand/10 flex items-center justify-center text-brand-mid group-hover:bg-brand group-hover:text-white transition-colors">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"/></svg>
+                </div>
+                <div class="flex -space-x-2">
+                    <img class="h-8 w-8 rounded-full border-2 border-white" src="https://ui-avatars.com/api/?name=User" alt="">
+                </div>
+            </div>
+            <h3 class="text-xl font-bold mb-1">{{ vault.name }}</h3>
+            <p class="text-slate-400 text-sm mb-6">{{ vault.description|default('Aucune description') }}</p>
+            
+            <div class="flex items-center justify-between pt-4 border-t border-white/5">
+                <span class="text-xs font-bold text-slate-500 uppercase tracking-widest">{{ vault.passwords|length }} Mots de passe</span>
+                <svg class="w-5 h-5 text-slate-500 group-hover:text-white transform group-hover:translate-x-1 transition" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
+            </div>
+        </div>
+        {% else %}
+        <div class="col-span-3 py-20 glass-card rounded-3xl text-center">
+            <p class="text-slate-500 italic">Vous n'avez pas encore de coffre.</p>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock body_connected %}

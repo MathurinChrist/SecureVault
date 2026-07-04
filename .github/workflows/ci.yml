@@ -1,0 +1,252 @@
+name: CI
+
+on:
+  push:
+    branches: [main, develop, feat/**]
+  pull_request:
+    branches: [main, develop]
+
+jobs:
+  unit-tests:
+    name: Unit tests (PHP ${{ matrix.php }})
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        php: ['8.2', '8.3']
+
+    env:
+      VAULT_ENCRYPTION_KEY: ci-test-encryption-key-32bytes!!
+      JWT_SECRET_KEY: '%kernel.project_dir%/config/jwt/private.pem'
+      JWT_PUBLIC_KEY: '%kernel.project_dir%/config/jwt/public.pem'
+      JWT_PASSPHRASE: securevault
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php }}
+          extensions: pdo_pgsql, openssl, intl, ctype, iconv
+          coverage: none
+
+      - name: Cache Composer packages
+        uses: actions/cache@v4
+        with:
+          path: vendor
+          key: ${{ runner.os }}-php${{ matrix.php }}-composer-${{ hashFiles('composer.lock') }}
+          restore-keys: ${{ runner.os }}-php${{ matrix.php }}-composer-
+
+      - name: Install dependencies
+        run: composer install --prefer-dist --no-progress --no-interaction
+
+      - name: Generate JWT keys
+        run: |
+          mkdir -p config/jwt
+          openssl genpkey -algorithm RSA \
+            -out config/jwt/private.pem \
+            -pkeyopt rsa_keygen_bits:2048 \
+            -pass pass:securevault
+          openssl rsa -pubout \
+            -in config/jwt/private.pem \
+            -out config/jwt/public.pem \
+            -passin pass:securevault
+
+      - name: Run unit tests (Service + Security)
+        run: php vendor/bin/phpunit tests/Service/ tests/Security/ --configuration phpunit.dist.xml
+
+  functional-tests:
+    name: Functional tests (PHP ${{ matrix.php }})
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        php: ['8.2', '8.3']
+
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: app
+          POSTGRES_PASSWORD: '!ChangeMe!'
+          POSTGRES_DB: app_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    env:
+      APP_ENV: test
+      DATABASE_URL: postgresql://app:!ChangeMe!@127.0.0.1:5432/app_test?serverVersion=16&charset=utf8
+      VAULT_ENCRYPTION_KEY: ci-test-encryption-key-32bytes!!
+      JWT_SECRET_KEY: '%kernel.project_dir%/config/jwt/private.pem'
+      JWT_PUBLIC_KEY: '%kernel.project_dir%/config/jwt/public.pem'
+      JWT_PASSPHRASE: securevault
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php }}
+          extensions: pdo_pgsql, openssl, intl, ctype, iconv
+          coverage: none
+
+      - name: Validate composer.json
+        run: composer validate --strict
+
+      - name: Cache Composer packages
+        uses: actions/cache@v4
+        with:
+          path: vendor
+          key: ${{ runner.os }}-php${{ matrix.php }}-composer-${{ hashFiles('composer.lock') }}
+          restore-keys: ${{ runner.os }}-php${{ matrix.php }}-composer-
+
+      - name: Install dependencies
+        run: composer install --prefer-dist --no-progress --no-interaction
+
+      - name: Generate JWT keys
+        run: |
+          mkdir -p config/jwt
+          openssl genpkey -algorithm RSA \
+            -out config/jwt/private.pem \
+            -pkeyopt rsa_keygen_bits:2048 \
+            -pass pass:securevault
+          openssl rsa -pubout \
+            -in config/jwt/private.pem \
+            -out config/jwt/public.pem \
+            -passin pass:securevault
+
+      - name: Setup database
+        run: |
+          php bin/console doctrine:database:create --if-not-exists --env=test
+          php bin/console doctrine:migrations:migrate --no-interaction --env=test
+
+      - name: Run functional tests (Controllers)
+        run: php vendor/bin/phpunit tests/Controller/ --configuration phpunit.dist.xml
+
+  e2e-tests:
+    name: E2E tests (Panther)
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: app
+          POSTGRES_PASSWORD: '!ChangeMe!'
+          POSTGRES_DB: app_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    env:
+      APP_ENV: test
+      DATABASE_URL: postgresql://app:!ChangeMe!@127.0.0.1:5432/app_test?serverVersion=16&charset=utf8
+      VAULT_ENCRYPTION_KEY: ci-test-encryption-key-32bytes!!
+      JWT_SECRET_KEY: '%kernel.project_dir%/config/jwt/private.pem'
+      JWT_PUBLIC_KEY: '%kernel.project_dir%/config/jwt/public.pem'
+      JWT_PASSPHRASE: securevault
+      PANTHER_NO_SANDBOX: 1
+      PANTHER_CHROME_DRIVER_BINARY: drivers/chromedriver
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          extensions: pdo_pgsql, openssl, intl, ctype, iconv
+          coverage: none
+
+      - name: Install Chrome
+        run: |
+          sudo apt-get update -q
+          sudo apt-get install -y google-chrome-stable
+
+      - name: Cache Composer packages
+        uses: actions/cache@v4
+        with:
+          path: vendor
+          key: ${{ runner.os }}-php8.2-composer-${{ hashFiles('composer.lock') }}
+          restore-keys: ${{ runner.os }}-php8.2-composer-
+
+      - name: Install dependencies
+        run: composer install --prefer-dist --no-progress --no-interaction
+
+      - name: Install ChromeDriver
+        run: vendor/bin/bdi detect drivers
+
+      - name: Generate JWT keys
+        run: |
+          mkdir -p config/jwt
+          openssl genpkey -algorithm RSA \
+            -out config/jwt/private.pem \
+            -pkeyopt rsa_keygen_bits:2048 \
+            -pass pass:securevault
+          openssl rsa -pubout \
+            -in config/jwt/private.pem \
+            -out config/jwt/public.pem \
+            -passin pass:securevault
+
+      - name: Setup database
+        run: |
+          php bin/console doctrine:database:create --if-not-exists --env=test
+          php bin/console doctrine:migrations:migrate --no-interaction --env=test
+
+      - name: Run E2E tests
+        run: php vendor/bin/phpunit tests/E2E/ --configuration phpunit.dist.xml
+
+  lint:
+    name: Lint & config check
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          extensions: pdo_pgsql, openssl, intl, ctype, iconv
+          coverage: none
+
+      - name: Install dependencies
+        run: composer install --prefer-dist --no-progress --no-interaction
+
+      - name: Generate JWT keys
+        env:
+          VAULT_ENCRYPTION_KEY: lint-key
+          JWT_PASSPHRASE: securevault
+        run: |
+          mkdir -p config/jwt
+          openssl genpkey -algorithm RSA -out config/jwt/private.pem -pkeyopt rsa_keygen_bits:2048 -pass pass:securevault 2>/dev/null
+          openssl rsa -pubout -in config/jwt/private.pem -out config/jwt/public.pem -passin pass:securevault 2>/dev/null
+
+      - name: Check Twig templates
+        env:
+          VAULT_ENCRYPTION_KEY: lint-key
+          JWT_SECRET_KEY: '%kernel.project_dir%/config/jwt/private.pem'
+          JWT_PUBLIC_KEY: '%kernel.project_dir%/config/jwt/public.pem'
+          JWT_PASSPHRASE: securevault
+          DATABASE_URL: postgresql://app:app@127.0.0.1:5432/app?serverVersion=16
+        run: php bin/console lint:twig templates/
+
+      - name: Check YAML configs
+        run: php bin/console lint:yaml config/
