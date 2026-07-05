@@ -16,25 +16,17 @@ class PasswordE2ETest extends AbstractE2ETest
         $client->request('GET', '/dashboard');
         $client->waitFor('body');
 
-        // Navigate to vaults list and open the auto-created vault
+        // Navigate to vaults list and open the auto-created vault.
+        // Vault cards are plain divs navigated via onclick, not <a> links.
         $client->request('GET', '/vaults');
-        $client->waitFor('.glass-card');
+        $client->waitFor('[onclick*="/vaults/"]');
 
-        $link = $client->getCrawler()->filter('.glass-card a, a[href*="/vaults/"]')->first();
-        if ($link->count() === 0) {
-            $this->markTestSkipped('No vault found after dashboard visit.');
+        $cards = $client->getCrawler()->filter('[onclick*="/vaults/"]');
+        if ($cards->count() === 0) {
+            $this->markTestSkipped('No clickable vault card found.');
         }
-
-        $vaultUrl = $link->attr('href');
-        if (!str_starts_with($vaultUrl, '/vaults/') || str_contains($vaultUrl, '/new')) {
-            // Try clicking a vault card directly
-            $cards = $client->getCrawler()->filter('[onclick*="/vaults/"]');
-            if ($cards->count() === 0) {
-                $this->markTestSkipped('No clickable vault card found.');
-            }
-            preg_match("#/vaults/(\d+)'#", $cards->first()->attr('onclick') ?? '', $m);
-            $vaultUrl = '/vaults/' . ($m[1] ?? '');
-        }
+        preg_match("#/vaults/(\d+)'#", $cards->first()->attr('onclick') ?? '', $m);
+        $vaultUrl = '/vaults/' . ($m[1] ?? '');
 
         $client->request('GET', $vaultUrl);
         $client->waitFor('body');

@@ -69,11 +69,20 @@ abstract class AbstractE2ETest extends PantherTestCase
     /**
      * Bypass email verification via the test-helper endpoint.
      * Works because the Panther server runs in the 'panther' env (non-prod).
+     *
+     * Occasionally races with the previous navigation (registration submit) and lands
+     * back on an unrelated page instead of hitting the endpoint — retry once if so.
      */
     protected function verifyEmailForE2E(Client $client, string $email): void
     {
-        $client->request('GET', '/test/verify-email?email=' . urlencode($email));
-        $client->waitFor('body');
+        for ($attempt = 0; $attempt < 2; $attempt++) {
+            $client->request('GET', '/test/verify-email?email=' . urlencode($email));
+            $client->waitFor('body');
+
+            if (str_contains($client->getPageSource(), 'ok')) {
+                return;
+            }
+        }
     }
 
     /**

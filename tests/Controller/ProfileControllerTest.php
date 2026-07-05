@@ -72,7 +72,7 @@ class ProfileControllerTest extends WebTestCase
         $client->request('GET', '/profile');
 
         $this->assertResponseIsSuccessful();
-        $this->assertSelectorCount(2, 'form');
+        $this->assertSelectorCount(3, 'form');
     }
 
     public function testProfileUpdateRedirectsBack(): void

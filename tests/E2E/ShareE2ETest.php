@@ -82,7 +82,7 @@ class ShareE2ETest extends AbstractE2ETest
             'permission' => $permSelect->filter('option')->first()->attr('value'),
         ]);
         $client->submit($form);
-        $client->waitFor('body');
+        $client->waitForElementToContain('body', 'Aucun utilisateur');
 
         $this->assertSelectorTextContains('body', 'Aucun utilisateur');
     }
@@ -124,6 +124,7 @@ class ShareE2ETest extends AbstractE2ETest
         $clientA->waitFor('body');
 
         // Invitation sent → share appears in the list
+        $clientA->waitForElementToContain('body', $emailB);
         $this->assertSelectorTextContains('body', $emailB);
     }
 

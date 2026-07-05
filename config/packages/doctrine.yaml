@@ -33,6 +33,13 @@ when@test:
             # "TEST_TOKEN" is typically set by ParaTest
             dbname_suffix: '_test%env(default::TEST_TOKEN)%'
 
+when@panther:
+    doctrine:
+        dbal:
+            # The Panther-spawned web server boots with APP_ENV=panther (see .env.test),
+            # so it must resolve to the same suffixed database the test suite migrated.
+            dbname_suffix: '_test%env(default::TEST_TOKEN)%'
+
 when@prod:
     doctrine:
         orm:

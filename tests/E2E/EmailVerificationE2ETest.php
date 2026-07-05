@@ -127,8 +127,8 @@ class EmailVerificationE2ETest extends AbstractE2ETest
         $client->request('GET', '/dashboard');
         $client->waitFor('body');
 
-        $this->assertSelectorNotExists('h1:contains("Confirmez")');
-        $this->assertSelectorNotExists('h1:contains("Vérifiez")');
+        $this->assertSelectorTextNotContains('body', 'Confirmez');
+        $this->assertSelectorTextNotContains('body', 'Vérifiez');
     }
 
     public function testVerifiedUserCanAccessVaults(): void

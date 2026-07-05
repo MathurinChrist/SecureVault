@@ -10,6 +10,7 @@ class AuthE2ETest extends AbstractE2ETest
 
         $client = static::createPantherClient();
         $client->request('GET', '/login');
+        $client->waitFor('input[name="email"]');
 
         $this->assertSelectorExists('input[name="email"]');
         $this->assertSelectorExists('input[name="password"]');
@@ -71,15 +72,8 @@ class AuthE2ETest extends AbstractE2ETest
         $client->request('GET', '/logout');
         $client->waitFor('body');
 
-        $url = $client->getCurrentURL();
-        $this->assertThat(
-            $url,
-            $this->logicalOr(
-                $this->stringContains('/login'),
-                $this->stringContains('localhost')
-            )
-        );
-        // Must no longer be on a protected page
-        $this->assertStringNotContainsString('/dashboard', $url);
+        // Logout target is app_home (see security.yaml)
+        $this->assertStringNotContainsString('/dashboard', $client->getCurrentURL());
+        $this->assertMatchesRegularExpression('#/$#', $client->getCurrentURL());
     }
 }

@@ -16,7 +16,7 @@ class RegistrationE2ETest extends AbstractE2ETest
         $this->assertSelectorExists('input[name*="plainPassword"]');
     }
 
-    public function testSuccessfulRegistrationRedirectsToLogin(): void
+    public function testSuccessfulRegistrationShowsCheckEmailPage(): void
     {
         $this->skipIfUnavailable();
 
@@ -26,7 +26,7 @@ class RegistrationE2ETest extends AbstractE2ETest
         $email = static::generateEmail();
         $this->registerUser($client, $email);
 
-        $this->assertStringContainsString('/login', $client->getCurrentURL());
+        $this->assertSelectorTextContains('body', 'Vérifiez');
     }
 
     public function testRegistrationWithWeakPasswordShowsError(): void
