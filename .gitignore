@@ -3,7 +3,6 @@
 /var/
 /public/bundles/
 /public/uploads/
-/.env
 /.env.local
 /.env.local.php
 /.env.*.local

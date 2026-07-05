@@ -67,11 +67,7 @@ make composer-install
 
 ### 3. Configurer les variables d'environnement
 
-Copiez `.env.example` en `.env.local` et remplissez les valeurs :
-
-```bash
-cp .env.example .env.local
-```
+Créez un fichier `.env.local` à la racine et remplissez les valeurs (ignoré par git, ne pas mettre les vraies valeurs dans `.env`) :
 
 Variables minimales à définir :
 
