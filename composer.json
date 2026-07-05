@@ -1,4 +1,6 @@
 {
+    "name": "securevault/securevault",
+    "description": "Gestionnaire de mots de passe sécurisé avec chiffrement AES-256-GCM per-user, authentification Google OAuth2 et 2FA",
     "type": "project",
     "license": "proprietary",
     "minimum-stability": "stable",

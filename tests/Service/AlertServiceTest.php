@@ -5,7 +5,6 @@ namespace App\Tests\Service;
 use App\Entity\Alert;
 use App\Entity\User;
 use App\Service\AlertService;
-use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\ORM\EntityManagerInterface;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
@@ -68,7 +67,7 @@ class AlertServiceTest extends TestCase
         $user   = $this->makeUser();
         $alert1 = new Alert();
         $alert2 = new Alert();
-        $user->method('getAlerts')->willReturn(new ArrayCollection([$alert1, $alert2]));
+        $user->method('getAlerts')->willReturn([$alert1, $alert2]);
 
         $this->em->expects($this->once())->method('flush');
 

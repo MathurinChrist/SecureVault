@@ -33,7 +33,7 @@ abstract class AbstractE2ETest extends PantherTestCase
         $crawler = $client->request('GET', '/register');
         $client->waitFor('form');
 
-        $form = $crawler->selectButton("S'inscrire")->form([
+        $form = $crawler->selectButton('Créer mon compte')->form([
             'registration_form[firstName]'     => 'E2E',
             'registration_form[lastName]'      => 'User',
             'registration_form[email]'         => $email,

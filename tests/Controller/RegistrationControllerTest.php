@@ -34,7 +34,7 @@ class RegistrationControllerTest extends WebTestCase
 
         $email = 'newuser_' . uniqid() . '@example.com';
 
-        $client->submitForm('S\'inscrire', [
+        $client->submitForm('Créer mon compte', [
             'registration_form[email]'         => $email,
             'registration_form[firstName]'     => 'Test',
             'registration_form[lastName]'      => 'User',
@@ -54,7 +54,7 @@ class RegistrationControllerTest extends WebTestCase
         $this->skipIfDatabaseUnavailable();
         $client->request('GET', '/register');
 
-        $client->submitForm('S\'inscrire', [
+        $client->submitForm('Créer mon compte', [
             'registration_form[email]'         => 'test_' . uniqid() . '@example.com',
             'registration_form[firstName]'     => 'Test',
             'registration_form[lastName]'      => 'User',

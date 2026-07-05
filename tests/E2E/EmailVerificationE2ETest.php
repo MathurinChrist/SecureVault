@@ -17,7 +17,7 @@ class EmailVerificationE2ETest extends AbstractE2ETest
         $crawler = $client->request('GET', '/register');
         $client->waitFor('form');
 
-        $form = $crawler->selectButton("S'inscrire")->form([
+        $form = $crawler->selectButton('Créer mon compte')->form([
             'registration_form[firstName]'     => 'Test',
             'registration_form[lastName]'      => 'Verify',
             'registration_form[email]'         => $email,
@@ -42,7 +42,7 @@ class EmailVerificationE2ETest extends AbstractE2ETest
         $crawler = $client->request('GET', '/register');
         $client->waitFor('form');
 
-        $form = $crawler->selectButton("S'inscrire")->form([
+        $form = $crawler->selectButton('Créer mon compte')->form([
             'registration_form[firstName]'     => 'Test',
             'registration_form[lastName]'      => 'Verify',
             'registration_form[email]'         => $email,
@@ -68,7 +68,7 @@ class EmailVerificationE2ETest extends AbstractE2ETest
         // Register but do NOT verify
         $crawler = $client->request('GET', '/register');
         $client->waitFor('form');
-        $form = $crawler->selectButton("S'inscrire")->form([
+        $form = $crawler->selectButton('Créer mon compte')->form([
             'registration_form[firstName]'     => 'Test',
             'registration_form[lastName]'      => 'Unverified',
             'registration_form[email]'         => $email,
@@ -98,7 +98,7 @@ class EmailVerificationE2ETest extends AbstractE2ETest
 
         $crawler = $client->request('GET', '/register');
         $client->waitFor('form');
-        $form = $crawler->selectButton("S'inscrire")->form([
+        $form = $crawler->selectButton('Créer mon compte')->form([
             'registration_form[firstName]'     => 'Test',
             'registration_form[lastName]'      => 'Unverified',
             'registration_form[email]'         => $email,
@@ -157,7 +157,7 @@ class EmailVerificationE2ETest extends AbstractE2ETest
 
         $crawler = $client->request('GET', '/register');
         $client->waitFor('form');
-        $form = $crawler->selectButton("S'inscrire")->form([
+        $form = $crawler->selectButton('Créer mon compte')->form([
             'registration_form[firstName]'     => 'Test',
             'registration_form[lastName]'      => 'Pending',
             'registration_form[email]'         => $email,
