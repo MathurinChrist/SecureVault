@@ -69,6 +69,7 @@ entity SharedVault {
     recipient_id : INT <<FK>>
     permission_id : INT <<FK>>
     accepted : BOOLEAN
+    acceptedAt : TIMESTAMP
     sharedAt : TIMESTAMP
 }
 
@@ -182,9 +183,12 @@ entity UserSession {
     * id : INT <<PK>>
     --
     user_id : INT <<FK>>
-    sessionId : VARCHAR(255)
+    ipAddress : VARCHAR(45)
+    userAgent : TEXT
     createdAt : TIMESTAMP
-    expiresAt : TIMESTAMP
+    lastUsedAt : TIMESTAMP
+    isActive : BOOLEAN
+    location : VARCHAR(255)
 }
 
 ' ===================================

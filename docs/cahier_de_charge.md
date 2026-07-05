@@ -18,7 +18,7 @@ La multiplication des services numériques impose aux utilisateurs de gérer un 
 - Partage sécurisé avec gestion des permissions
 - Détection des risques (mots de passe faibles, anciens)
 - Authentification moderne (email + Google OAuth2 + 2FA)
-- Administration complète via un panel custom au design cohérent
+- Administration complète via EasyAdmin, reskinné aux couleurs du site
 - Page de contact avec stockage en base et notification par e-mail
 - API REST pour usage programmatique
 
@@ -48,18 +48,18 @@ L'application est **100% gratuite**. Toutes les fonctionnalités sont accessible
 - Utiliser l'API REST
 
 ## Administrateur
-- Accéder au panel admin custom (`/admin`) au design cohérent avec le site
+- Accéder à EasyAdmin (`/easyadmin`), reskinné aux couleurs du site
 - Consulter les statistiques globales (utilisateurs, coffres, connexions, messages)
 - Consulter la liste des utilisateurs inscrits
-- Lire et gérer les messages de contact (lecture, marquage lu/non lu, réponse par e-mail)
+- Lire et gérer les messages de contact (lecture, marquage lu/non lu)
 - Consulter le journal d'activité récente
-- Accéder à EasyAdmin (`/easyadmin`) pour la gestion avancée (CRUD complet)
+- Gérer en CRUD complet : utilisateurs, rôles, coffres, alertes, tentatives de connexion, journaux d'activité, messages de contact
 
 ---
 
 # 3. Entités du système
 
-Le système contient **16 entités métier**.
+Le système contient **17 entités métier**.
 
 ## 3.1 User
 
@@ -84,7 +84,7 @@ Représente un utilisateur enregistré.
 
 > `encryptionKey` sert de salt pour PBKDF2. La clé réelle est dérivée à la connexion et stockée uniquement en session — jamais en base de données.
 
-**Relations :** ManyToMany Role · OneToMany Vault · OneToMany Notification · OneToMany ActivityLog · OneToMany Alert · OneToMany LoginAttempt · OneToMany UserSession
+**Relations :** ManyToMany Role · OneToMany Vault · OneToMany BaseNotification (STI — Alert et Notification) · OneToMany ActivityLog · OneToMany LoginAttempt · OneToMany UserSession
 
 ---
 
@@ -322,6 +322,7 @@ Historique des anciens mots de passe.
 | Connexion par Google OAuth2            | ✅     |
 | Liaison automatique compte existant    | ✅     |
 | Double authentification (2FA e-mail)   | ✅     |
+| Réinitialisation de mot de passe oublié | ✅    |
 | Gestion du profil (nom, photo, mdp)    | ✅     |
 | Déconnexion                            | ✅     |
 
@@ -508,8 +509,7 @@ Envoyés via **Symfony Mailer** · Interceptés par **Mailpit** en développemen
 | Code 2FA                      | À chaque connexion avec 2FA activée      |
 | Notification de contact       | À la réception d'un message `/contact`   |
 | Confirmation de contact       | Envoyée à l'expéditeur du message        |
-
-> Note : l'e-mail de réinitialisation de mot de passe n'est pas encore implémenté.
+| Réinitialisation de mot de passe | Après demande via `/reset-password`   |
 
 ---
 
@@ -553,20 +553,9 @@ Envoyés via **Symfony Mailer** · Interceptés par **Mailpit** en développemen
 
 # 12. Administration
 
-## Panel admin custom (`/admin`)
-
-Interface au design cohérent avec le reste du site (sidebar teal, cartes blanches, Manrope).
-
-| Page                      | URL                    | Contenu                                              |
-| :------------------------ | :--------------------- | :--------------------------------------------------- |
-| Tableau de bord           | `/admin`               | Stats (users, coffres, connexions, messages non lus) + activité récente |
-| Utilisateurs              | `/admin/users`         | Liste avec nom, email, rôles, statut vérifié         |
-| Messages de contact       | `/admin/contacts`      | Liste filtrable (tous / non lus / lus) + badge compteur |
-| Détail message de contact | `/admin/contacts/{id}` | Contenu complet, marquage auto « lu », bouton répondre par e-mail |
-
 ## EasyAdmin (`/easyadmin`)
 
-Back-office avancé pour la gestion technique complète.
+Interface d'administration unique, reskinnée aux couleurs du site (sidebar teal, accent vert, Manrope). Le tableau de bord affiche les stats (utilisateurs, coffres, connexions échouées, messages non lus), les messages de contact non lus et l'activité récente ; le reste du back-office est du CRUD EasyAdmin standard.
 
 | Section              | Contenu                                         |
 | :------------------- | :---------------------------------------------- |
@@ -594,7 +583,7 @@ Déclenchée à chaque push sur `main`, `develop`, `feat/**` :
 
 | Job              | Description                                          |
 | :--------------- | :--------------------------------------------------- |
-| `unit-tests`     | Tests unitaires PHP 8.2 + 8.3                        |
+| `unit-tests`     | Tests unitaires PHP 8.4                              |
 | `functional-tests` | Tests fonctionnels avec PostgreSQL 16              |
 | `e2e-tests`      | Tests Panther (Chrome headless)                      |
 | `lint`           | `lint:twig` + `lint:yaml`                            |
@@ -606,14 +595,14 @@ Déclenchée à chaque push sur `main`, `develop`, `feat/**` :
 
 | Composant    | Technologie        | Version |
 | :----------- | :----------------- | :------ |
+| Langage      | PHP                | 8.4     |
 | Backend      | Symfony            | 7.x     |
 | Serveur      | FrankenPHP         | Latest  |
 | Base données | PostgreSQL         | 16      |
 | ORM          | Doctrine           | Latest  |
 | Auth OAuth2  | KnpU OAuth2 Bundle | 2.x     |
 | Auth JWT     | LexikJWT Bundle    | Latest  |
-| Admin custom | Symfony + Twig     | —       |
-| Admin avancé | EasyAdminBundle    | Latest  |
+| Administration | EasyAdminBundle  | Latest  |
 | CSS          | Tailwind CSS       | CDN     |
 | Animations   | GSAP               | 3.12.5  |
 | Mailer (dev) | Mailpit            | Latest  |
@@ -645,7 +634,7 @@ Déclenchée à chaque push sur `main`, `develop`, `feat/**` :
 - [x] Templates e-mails (bienvenue, 2FA, contact)
 - [x] Interface responsive (mobile-first)
 - [x] Page de contact avec stockage BD + e-mails
-- [x] Panel admin custom cohérent avec le design du site
+- [x] Administration EasyAdmin reskinnée aux couleurs du site
 - [x] Chiffrement per-user (PBKDF2 + migration automatique)
 - [x] Héritage d'entités Doctrine (STI — `BaseNotification` → `Alert` + `Notification`)
 - [x] Form Events (PRE_SET_DATA + PRE_SUBMIT dans `PasswordEntryType`)
@@ -653,6 +642,6 @@ Déclenchée à chaque push sur `main`, `develop`, `feat/**` :
 - [x] Commande CLI (`securevault:check-leaked-passwords`)
 - [x] Filtres Twig personnalisés (`time_ago`, `password_strength`)
 - [x] Pipeline CI GitHub Actions (unit, functional, E2E, lint, PHPStan niveau 5)
+- [x] Réinitialisation de mot de passe (`/reset-password`, SymfonyCasts ResetPasswordBundle)
 - [ ] Documentation API (Swagger/OpenAPI) — à venir
-- [ ] Réinitialisation de mot de passe — à venir
 - [ ] Déploiement VPS — à venir

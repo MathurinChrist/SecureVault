@@ -1,77 +1,69 @@
-{% extends 'admin/layout.html.twig' %}
+{% extends '@EasyAdmin/layout.html.twig' %}
 
-{% block title %}Tableau de bord{% endblock %}
-{% block page_label %}Tableau de bord{% endblock %}
+{% block content_title %}Tableau de bord{% endblock %}
 
-{% block content %}
+{% block main %}
 
 {# ── Stat cards ── #}
-<div class="grid grid-cols-2 xl:grid-cols-4 gap-4 mb-6">
+<div style="display:grid;grid-template-columns:repeat(2, 1fr);gap:1rem;margin-bottom:1.5rem;">
 
-    <div class="bg-white rounded-2xl border border-line p-5">
-        <div class="h-10 w-10 rounded-xl bg-brand/10 flex items-center justify-center mb-4">
-            <svg class="h-5 w-5 text-brand-mid" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
+    <div style="background:#fff;border-radius:16px;border:1px solid #e0e4e8;padding:1.25rem;">
+        <div style="height:40px;width:40px;border-radius:12px;background:rgba(20,47,50,.1);display:flex;align-items:center;justify-content:center;margin-bottom:1rem;">
+            <svg style="height:20px;width:20px;color:#2f7d5b;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
         </div>
-        <p class="text-[30px] font-extrabold text-ink tracking-[-0.02em] leading-none">{{ stats.users }}</p>
-        <p class="text-[13px] text-ink-muted mt-1.5">Utilisateurs</p>
+        <p style="font-size:30px;font-weight:800;color:#181d22;letter-spacing:-0.02em;line-height:1;">{{ stats.users }}</p>
+        <p style="font-size:13px;color:#6a7480;margin-top:0.375rem;">Utilisateurs</p>
     </div>
 
-    <div class="bg-white rounded-2xl border border-line p-5">
-        <div class="h-10 w-10 rounded-xl bg-brand/10 flex items-center justify-center mb-4">
-            <svg class="h-5 w-5 text-brand-mid" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
+    <div style="background:#fff;border-radius:16px;border:1px solid #e0e4e8;padding:1.25rem;">
+        <div style="height:40px;width:40px;border-radius:12px;background:rgba(20,47,50,.1);display:flex;align-items:center;justify-content:center;margin-bottom:1rem;">
+            <svg style="height:20px;width:20px;color:#2f7d5b;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
         </div>
-        <p class="text-[30px] font-extrabold text-ink tracking-[-0.02em] leading-none">{{ stats.vaults }}</p>
-        <p class="text-[13px] text-ink-muted mt-1.5">Coffres</p>
+        <p style="font-size:30px;font-weight:800;color:#181d22;letter-spacing:-0.02em;line-height:1;">{{ stats.vaults }}</p>
+        <p style="font-size:13px;color:#6a7480;margin-top:0.375rem;">Coffres</p>
     </div>
 
-    <div class="bg-white rounded-2xl border border-line p-5">
-        <div class="h-10 w-10 rounded-xl {% if stats.failed_logins > 0 %}bg-danger/10{% else %}bg-brand/10{% endif %} flex items-center justify-center mb-4">
-            <svg class="h-5 w-5 {% if stats.failed_logins > 0 %}text-danger{% else %}text-brand-mid{% endif %}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"/></svg>
+    <div style="background:#fff;border-radius:16px;border:1px solid #e0e4e8;padding:1.25rem;">
+        <div style="height:40px;width:40px;border-radius:12px;background:{{ stats.failed_logins > 0 ? 'rgba(196,69,58,.1)' : 'rgba(20,47,50,.1)' }};display:flex;align-items:center;justify-content:center;margin-bottom:1rem;">
+            <svg style="height:20px;width:20px;color:{{ stats.failed_logins > 0 ? '#c4453a' : '#2f7d5b' }};" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"/></svg>
         </div>
-        <p class="text-[30px] font-extrabold tracking-[-0.02em] leading-none {% if stats.failed_logins > 0 %}text-danger{% else %}text-ink{% endif %}">{{ stats.failed_logins }}</p>
-        <p class="text-[13px] text-ink-muted mt-1.5">Échecs connexion (24h)</p>
+        <p style="font-size:30px;font-weight:800;letter-spacing:-0.02em;line-height:1;color:{{ stats.failed_logins > 0 ? '#c4453a' : '#181d22' }};">{{ stats.failed_logins }}</p>
+        <p style="font-size:13px;color:#6a7480;margin-top:0.375rem;">Échecs connexion (24h)</p>
     </div>
 
-    <div class="bg-white rounded-2xl border border-line p-5">
-        <div class="h-10 w-10 rounded-xl {% if stats.unread_contacts > 0 %}bg-warn/10{% else %}bg-brand/10{% endif %} flex items-center justify-center mb-4">
-            <svg class="h-5 w-5 {% if stats.unread_contacts > 0 %}text-warn{% else %}text-brand-mid{% endif %}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+    <div style="background:#fff;border-radius:16px;border:1px solid #e0e4e8;padding:1.25rem;">
+        <div style="height:40px;width:40px;border-radius:12px;background:{{ stats.unread_contacts > 0 ? 'rgba(183,121,31,.1)' : 'rgba(20,47,50,.1)' }};display:flex;align-items:center;justify-content:center;margin-bottom:1rem;">
+            <svg style="height:20px;width:20px;color:{{ stats.unread_contacts > 0 ? '#b7791f' : '#2f7d5b' }};" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
         </div>
-        <p class="text-[30px] font-extrabold tracking-[-0.02em] leading-none {% if stats.unread_contacts > 0 %}text-warn{% else %}text-ink{% endif %}">{{ stats.unread_contacts }}</p>
-        <p class="text-[13px] text-ink-muted mt-1.5">Messages non lus</p>
+        <p style="font-size:30px;font-weight:800;letter-spacing:-0.02em;line-height:1;color:{{ stats.unread_contacts > 0 ? '#b7791f' : '#181d22' }};">{{ stats.unread_contacts }}</p>
+        <p style="font-size:13px;color:#6a7480;margin-top:0.375rem;">Messages non lus</p>
     </div>
 </div>
 
 {# ── Main grid ── #}
-<div class="grid grid-cols-1 xl:grid-cols-2 gap-5">
+<div style="display:grid;grid-template-columns:1fr;gap:1.25rem;">
 
     {# Recent contacts #}
-    <div class="bg-white rounded-2xl border border-line p-6">
-        <div class="flex items-center justify-between mb-5">
-            <h2 class="font-extrabold text-ink text-[16px]">Messages récents</h2>
-            <a href="{{ path('admin_contacts') }}" class="text-[13px] font-semibold text-ink-muted hover:text-ink border border-line px-3 py-1.5 rounded-full transition flex items-center gap-1">
-                <span>Voir tout</span>
-                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+    <div style="background:#fff;border-radius:16px;border:1px solid #e0e4e8;padding:1.5rem;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.25rem;">
+            <h2 style="font-weight:800;color:#181d22;font-size:16px;margin:0;">Messages récents</h2>
+            <a href="{{ path('easyadmin_dashboard_contact_message_index') }}" style="font-size:13px;font-weight:600;color:#6a7480;border:1px solid #e0e4e8;padding:0.375rem 0.75rem;border-radius:9999px;text-decoration:none;">
+                Voir tout →
             </a>
         </div>
         {% if recent_contacts is empty %}
-            <div class="flex flex-col items-center justify-center py-10 text-ink-muted">
-                <svg class="h-10 w-10 mb-3 opacity-30" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
-                <p class="text-[14px] font-semibold">Aucun message non lu</p>
-            </div>
+            <p style="font-size:14px;color:#6a7480;text-align:center;padding:2.5rem 0;">Aucun message non lu.</p>
         {% else %}
-            <div class="space-y-2">
+            <div>
             {% for msg in recent_contacts %}
-                <a href="{{ path('admin_contacts_show', {id: msg.id}) }}"
-                   class="flex items-start gap-3 p-3.5 rounded-xl hover:bg-surface border border-transparent hover:border-line transition group">
-                    <div class="h-9 w-9 rounded-full bg-warn/10 flex items-center justify-center flex-shrink-0 mt-0.5">
-                        <svg class="h-4 w-4 text-warn" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
-                    </div>
-                    <div class="flex-1 min-w-0">
-                        <div class="flex items-center justify-between gap-2">
-                            <p class="text-[13.5px] font-bold text-ink truncate">{{ msg.name }}</p>
-                            <span class="text-[11px] text-ink-muted whitespace-nowrap">{{ msg.createdAt|date('d/m H:i') }}</span>
+                <a href="{{ path('easyadmin_dashboard_contact_message_detail', {entityId: msg.id}) }}"
+                   style="display:flex;align-items:flex-start;gap:0.75rem;padding:0.875rem;border-radius:12px;border:1px solid transparent;text-decoration:none;">
+                    <div style="flex:1;min-width:0;">
+                        <div style="display:flex;align-items:center;justify-content:space-between;gap:0.5rem;">
+                            <p style="font-size:13.5px;font-weight:700;color:#181d22;margin:0;">{{ msg.name }}</p>
+                            <span style="font-size:11px;color:#6a7480;white-space:nowrap;">{{ msg.createdAt|date('d/m H:i') }}</span>
                         </div>
-                        <p class="text-[12.5px] text-ink-muted truncate mt-0.5">{{ msg.subject }}</p>
+                        <p style="font-size:12.5px;color:#6a7480;margin:0.125rem 0 0;">{{ msg.subject }}</p>
                     </div>
                 </a>
             {% endfor %}
@@ -80,27 +72,27 @@
     </div>
 
     {# Recent activity #}
-    <div class="bg-white rounded-2xl border border-line p-6">
-        <div class="flex items-center justify-between mb-5">
-            <h2 class="font-extrabold text-ink text-[16px]">Activité récente</h2>
-            <span class="text-[12px] text-ink-muted font-semibold bg-surface border border-line px-3 py-1.5 rounded-full">{{ stats.activity_today }} actions aujourd'hui</span>
+    <div style="background:#fff;border-radius:16px;border:1px solid #e0e4e8;padding:1.5rem;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.25rem;">
+            <h2 style="font-weight:800;color:#181d22;font-size:16px;margin:0;">Activité récente</h2>
+            <span style="font-size:12px;color:#6a7480;font-weight:600;background:#f4f6f7;border:1px solid #e0e4e8;padding:0.375rem 0.75rem;border-radius:9999px;">{{ stats.activity_today }} actions aujourd'hui</span>
         </div>
         {% if recent_activity is empty %}
-            <p class="text-[14px] text-ink-muted text-center py-10">Aucune activité récente.</p>
+            <p style="font-size:14px;color:#6a7480;text-align:center;padding:2.5rem 0;">Aucune activité récente.</p>
         {% else %}
-            <div class="space-y-1">
+            <div>
             {% for log in recent_activity %}
-                <div class="flex items-center justify-between gap-3 px-3 py-2.5 rounded-xl hover:bg-surface transition">
-                    <div class="flex items-center gap-3 min-w-0">
-                        <div class="h-2 w-2 rounded-full bg-brand-mid flex-shrink-0"></div>
-                        <div class="min-w-0">
-                            <span class="text-[13.5px] font-semibold text-ink truncate block">{{ log.action }}</span>
+                <div style="display:flex;align-items:center;justify-content:space-between;gap:0.75rem;padding:0.625rem 0.75rem;border-radius:12px;">
+                    <div style="display:flex;align-items:center;gap:0.75rem;min-width:0;">
+                        <div style="height:8px;width:8px;border-radius:9999px;background:#2f7d5b;flex-shrink:0;"></div>
+                        <div style="min-width:0;">
+                            <span style="font-size:13.5px;font-weight:600;color:#181d22;display:block;">{{ log.action }}</span>
                             {% if log.user %}
-                                <span class="text-[11.5px] text-ink-muted">{{ log.user.email }}</span>
+                                <span style="font-size:11.5px;color:#6a7480;">{{ log.user.email }}</span>
                             {% endif %}
                         </div>
                     </div>
-                    <span class="text-[11px] text-ink-muted whitespace-nowrap flex-shrink-0">{{ log.createdAt|date('d/m H:i') }}</span>
+                    <span style="font-size:11px;color:#6a7480;white-space:nowrap;flex-shrink:0;">{{ log.createdAt|date('d/m H:i') }}</span>
                 </div>
             {% endfor %}
             </div>

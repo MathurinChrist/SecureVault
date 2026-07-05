@@ -229,6 +229,12 @@ parameters:
 			path: src/Entity/Permission.php
 
 		-
+			message: '#^Property App\\Entity\\ResetPasswordRequest\:\:\$user type mapping mismatch\: property can contain App\\Entity\\User\|null but database expects App\\Entity\\User\.$#'
+			identifier: doctrine.associationType
+			count: 1
+			path: src/Entity/ResetPasswordRequest.php
+
+		-
 			message: '#^Property App\\Entity\\Role\:\:\$name type mapping mismatch\: property can contain string\|null but database expects string\.$#'
 			identifier: doctrine.columnType
 			count: 1

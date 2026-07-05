@@ -1,6 +1,6 @@
 # SecureVault — Gestionnaire de mots de passe sécurisé
 
-Application web de gestion de mots de passe développée avec **Symfony 7**, **PostgreSQL 16** et **FrankenPHP**. Interface responsive, chiffrement AES-256-GCM per-user (PBKDF2), authentification Google OAuth2, 2FA, panel admin custom et API REST JWT.
+Application web de gestion de mots de passe développée avec **Symfony 7**, **PostgreSQL 16** et **FrankenPHP**. Interface responsive, chiffrement AES-256-GCM per-user (PBKDF2), authentification Google OAuth2, 2FA, administration EasyAdmin et API REST JWT.
 
 **Documentation :**
 [Cahier des charges](docs/cahier_de_charge.md) · [Schéma BDD](docs/database-schema.md) · [Guide de test](docs/TESTING.md) · [Scénarios de test](docs/TEST_SCENARIOS.md)
@@ -22,12 +22,12 @@ Application web de gestion de mots de passe développée avec **Symfony 7**, **P
 - **Authentification Google OAuth2** (connexion et inscription)
 - Vérification d'e-mail obligatoire à l'inscription
 - Double authentification par e-mail (2FA, optionnelle par compte)
+- **Réinitialisation de mot de passe oublié** (`/reset-password`) par e-mail
 - Audit de sécurité (score, mots de passe faibles / anciens)
 - Journal d'activité, alertes de sécurité, notifications
 - Suivi des tentatives de connexion
 - **Page de contact** (`/contact`) — formulaire public avec stockage en base et e-mails automatiques (confirmation + notification admin)
-- **Panel admin custom** (`/admin`) au design cohérent avec le site
-- EasyAdmin avancé (`/easyadmin`) pour la gestion technique (CRUD complet)
+- **Administration EasyAdmin** (`/easyadmin`) reskinnée aux couleurs du site — dashboard + CRUD complet
 - **API REST v1 (JWT)** — sérialisée via Symfony Serializer avec groupes de normalisation (`#[Groups]`)
 - **Filtres Twig personnalisés** — `time_ago`, `password_strength`
 - **Fixtures réalistes** (FakerPHP) — 10 users, 15 coffres, ~48 mots de passe, ~60 alertes/notifications
@@ -42,6 +42,8 @@ Application web de gestion de mots de passe développée avec **Symfony 7**, **P
 - [Docker](https://docs.docker.com/get-docker/)
 - [Docker Compose](https://docs.docker.com/compose/install/)
 - [Make](https://www.gnu.org/software/make/)
+
+> L'application tourne en **PHP 8.4** (voir `Dockerfile` et la CI). Aucune installation locale de PHP n'est nécessaire grâce à Docker.
 
 ---
 
@@ -97,7 +99,7 @@ Cette commande charge les fixtures Faker : 10 utilisateurs, 15 coffres, ~48 mots
 
 | Email | Mot de passe | Rôle |
 | :---- | :----------- | :--- |
-| `admin@securevault.local` | `Admin1234!` | `ROLE_ADMIN` — panel custom `/admin` + back-office `/easyadmin` |
+| `admin@securevault.local` | `Admin1234!` | `ROLE_ADMIN` — administration `/easyadmin` |
 | `alice@securevault.local` | `User1234!`  | `ROLE_USER` |
 | `bob@securevault.local`   | `User1234!`  | `ROLE_USER` |
 | `carol@securevault.local` | `User1234!`  | `ROLE_USER` |
@@ -128,6 +130,12 @@ L'application est accessible sur **http://localhost:8080**.
 | `Google_Client_ID`     | Oui         | Client ID OAuth2 Google (Google Cloud Console)                            |
 | `Google_Client_Secret` | Oui         | Client Secret OAuth2 Google                                               |
 | `DATABASE_URL`         | Oui         | URL de connexion PostgreSQL                                               |
+| `APP_ENV`              | Non (défaut fourni) | Environnement Symfony (`dev`, `test`, `panther`, `prod`)          |
+| `APP_SECRET`           | Non (défaut fourni) | Secret Symfony (CSRF, signatures)                                 |
+| `APP_SHARE_DIR`        | Non (défaut fourni) | Répertoire de partage de fichiers                                 |
+| `DEFAULT_URI`          | Non (défaut fourni) | URI par défaut pour la génération d'URL en CLI                    |
+| `MESSENGER_TRANSPORT_DSN` | Non (défaut fourni) | Transport Symfony Messenger                                    |
+| `JWT_TTL`              | Non (défaut fourni) | Durée de vie du token JWT (secondes)                              |
 
 ### Générer `VAULT_ENCRYPTION_KEY`
 
@@ -221,10 +229,11 @@ Les utilisateurs Google **ne passent pas par la 2FA** (identité déjà prouvée
 
 | Page                       | URL                          | Accès                |
 | :------------------------- | :--------------------------- | :------------------- |
-| Accueil                    | `/`                          | Public               |
+| Accueil                    | `/` (redirige vers `/dashboard` si connecté) | Public |
 | Inscription                | `/register`                  | Public               |
 | Connexion                  | `/login`                     | Public               |
 | Connexion Google           | `/connect/google`            | Public               |
+| Mot de passe oublié        | `/reset-password`            | Public               |
 | Contact                    | `/contact`                   | Public               |
 | Vérification 2FA           | `/2fa/verify`                | Après connexion      |
 | Dashboard                  | `/dashboard`                 | Utilisateur connecté |
@@ -234,10 +243,7 @@ Les utilisateurs Google **ne passent pas par la 2FA** (identité déjà prouvée
 | Alertes de sécurité        | `/alerts`                    | Utilisateur connecté |
 | Notifications              | `/notifications`             | Utilisateur connecté |
 | Profil                     | `/profile`                   | Utilisateur connecté |
-| Panel admin                | `/admin`                     | `ROLE_ADMIN`         |
-| Admin — Utilisateurs       | `/admin/users`               | `ROLE_ADMIN`         |
-| Admin — Messages contact   | `/admin/contacts`            | `ROLE_ADMIN`         |
-| EasyAdmin avancé           | `/easyadmin`                 | `ROLE_ADMIN`         |
+| Administration (EasyAdmin) | `/easyadmin`                 | `ROLE_ADMIN`         |
 
 ### Page de contact
 
@@ -248,13 +254,11 @@ Les utilisateurs Google **ne passent pas par la 2FA** (identité déjà prouvée
 - E-mail de **notification** envoyé à l'admin (ReplyTo = expéditeur)
 - E-mail de **confirmation** envoyé à l'expéditeur (délai de réponse 48h)
 
-### Panel admin custom (`/admin`)
+### Administration (`/easyadmin`)
 
-Interface au design cohérent avec le reste du site :
-- Même sidebar teal, mêmes cartes blanches, même typographie Manrope
-- **Dashboard** : stats (utilisateurs, coffres, connexions échouées 24h, messages non lus)
-- **Utilisateurs** : liste avec rôles et statut de vérification
-- **Messages de contact** : liste filtrable (tous / non lus / lus) avec badge compteur, lecture auto-marque comme lu, bouton "Répondre par e-mail"
+Interface unique basée sur EasyAdmin, reskinnée aux couleurs et à la typographie du site (sidebar teal, accent vert, Manrope) :
+- **Dashboard** : stats (utilisateurs, coffres, connexions échouées 24h, messages non lus), messages de contact non lus et activité récente
+- CRUD complet : Utilisateurs, Rôles, Coffres, Alertes, Tentatives de connexion, Journaux d'activité, Messages de contact
 
 ### Générateur de mots de passe
 
@@ -270,6 +274,7 @@ Tous les e-mails sortants sont interceptés par Mailpit : http://localhost:8025
 | Code 2FA                      | À chaque connexion avec 2FA activée       |
 | Notification de contact       | À la réception d'un message via `/contact` |
 | Confirmation de contact       | Envoyée à l'expéditeur du message         |
+| Réinitialisation de mot de passe | Après demande via `/reset-password`    |
 
 ---
 
@@ -317,7 +322,7 @@ POST /api/v1/auth/login
 src/
 ├── Controller/
 │   ├── Api/                    # API REST stateless (JWT)
-│   ├── Admin/                  # CustomAdminController + EasyAdmin CRUD
+│   ├── Admin/                  # AdminDashboardController + EasyAdmin CRUD controllers
 │   ├── ContactController.php   # Formulaire de contact public
 │   ├── GoogleController.php    # OAuth2 Google (connect + callback)
 │   └── *.php                   # Dashboard, Vault, Passwords, 2FA…
@@ -344,10 +349,7 @@ templates/
 │   ├── index.html.twig         # Page d'accueil
 │   └── contact.html.twig       # Formulaire de contact
 ├── admin/
-│   ├── layout.html.twig        # Sidebar admin custom (teal)
-│   ├── dashboard.html.twig     # Stats + activité récente
-│   ├── contacts/               # index.html.twig, show.html.twig
-│   └── users/                  # index.html.twig
+│   └── dashboard.html.twig     # Contenu du dashboard EasyAdmin (stats + activité récente)
 ├── emails/
 │   ├── base_email.html.twig
 │   ├── contact_admin.html.twig       # Notification à l'admin
@@ -355,10 +357,13 @@ templates/
 │   └── …
 ├── security/                   # Login, 2FA
 ├── registration/               # Inscription, vérification e-mail
+├── reset_password/             # Mot de passe oublié (request, check-email, reset, email)
 └── dashboard/, vault/, passwords/, alerts/, …
 migrations/
 ├── Version20260705000000.php   # Table contact_message
 ├── Version20260705000001.php   # Colonne key_version sur password_entry
+├── Version20260705000002.php   # STI : fusion alert + notification dans base_notification
+├── Version20260705135241.php   # Table reset_password_request
 └── …
 config/
 ├── jwt/                        # Clés RSA (gitignorées)

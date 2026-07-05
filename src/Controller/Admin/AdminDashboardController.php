@@ -4,10 +4,12 @@ namespace App\Controller\Admin;
 
 use App\Repository\ActivityLogRepository;
 use App\Repository\AlertRepository;
+use App\Repository\ContactMessageRepository;
 use App\Repository\LoginAttemptRepository;
 use App\Repository\UserRepository;
 use App\Repository\VaultRepository;
 use EasyCorp\Bundle\EasyAdminBundle\Attribute\AdminDashboard;
+use EasyCorp\Bundle\EasyAdminBundle\Config\Assets;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Dashboard;
 use EasyCorp\Bundle\EasyAdminBundle\Config\MenuItem;
 use EasyCorp\Bundle\EasyAdminBundle\Controller\AbstractDashboardController;
@@ -24,6 +26,7 @@ class AdminDashboardController extends AbstractDashboardController
         private readonly AlertRepository $alertRepository,
         private readonly LoginAttemptRepository $loginAttemptRepository,
         private readonly ActivityLogRepository $activityLogRepository,
+        private readonly ContactMessageRepository $contactMessageRepository,
     ) {}
 
     public function index(): Response
@@ -32,23 +35,38 @@ class AdminDashboardController extends AbstractDashboardController
 
         return $this->render('admin/dashboard.html.twig', [
             'stats' => [
-                'users'          => $this->userRepository->count([]),
-                'vaults'         => $this->vaultRepository->count([]),
-                'unread_alerts'  => $this->alertRepository->count(['isRead' => false]),
-                'failed_logins'  => $this->loginAttemptRepository->countFailedSince24h($since24h),
-                'activity_today' => $this->activityLogRepository->countSince($since24h),
+                'users'           => $this->userRepository->count([]),
+                'vaults'          => $this->vaultRepository->count([]),
+                'unread_alerts'   => $this->alertRepository->count(['isRead' => false]),
+                'failed_logins'   => $this->loginAttemptRepository->countFailedSince24h($since24h),
+                'activity_today'  => $this->activityLogRepository->countSince($since24h),
+                'unread_contacts' => $this->contactMessageRepository->countUnread(),
             ],
             'recent_alerts'   => $this->alertRepository->findBy([], ['createdAt' => 'DESC'], 5),
             'recent_activity' => $this->activityLogRepository->findBy([], ['createdAt' => 'DESC'], 10),
+            'recent_contacts' => $this->contactMessageRepository->findBy(['isRead' => false], ['createdAt' => 'DESC'], 5),
         ]);
     }
 
     public function configureDashboard(): Dashboard
     {
+        $logo = <<<'SVG'
+            <svg width="26" height="26" viewBox="0 0 32 32" fill="none" style="vertical-align:middle;margin-right:8px">
+                <circle cx="16" cy="16" r="13" stroke="#E3FFCC" stroke-width="5" stroke-dasharray="56 26" stroke-linecap="round"/>
+                <circle cx="16" cy="16" r="4.5" fill="#2f7d5b"/>
+            </svg>
+            SVG;
+
         return Dashboard::new()
-            ->setTitle('SecureVault — Admin')
-            ->setFaviconPath('favicon.ico')
+            ->setTitle($logo . 'SecureVault')
+            ->setFaviconPath('favicon.svg')
             ->renderContentMaximized();
+    }
+
+    public function configureAssets(): Assets
+    {
+        return Assets::new()
+            ->addCssFile('styles/admin-theme.css');
     }
 
     public function configureMenuItems(): iterable
@@ -66,6 +84,6 @@ class AdminDashboardController extends AbstractDashboardController
         yield MenuItem::section('Support');
         yield MenuItem::linkTo(ContactMessageCrudController::class, 'Messages de contact', 'fa fa-envelope');
         yield MenuItem::section('');
-        yield MenuItem::linkToUrl('← Application', 'fa fa-arrow-left', '/dashboard');
+        yield MenuItem::linkToUrl('Application', 'fa fa-arrow-left', '/dashboard');
     }
 }
