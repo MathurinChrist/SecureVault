@@ -111,7 +111,7 @@ class VaultApiControllerTest extends WebTestCase
         foreach ($data as $v) {
             $this->assertArrayHasKey('id', $v);
             $this->assertArrayHasKey('name', $v);
-            $this->assertArrayHasKey('entries_count', $v);
+            $this->assertArrayHasKey('entriesCount', $v);
         }
     }
 

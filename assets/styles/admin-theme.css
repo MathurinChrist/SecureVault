@@ -1,0 +1,29 @@
+/* Reskin EasyAdmin to match the SecureVault brand (teal sidebar, Manrope font). */
+
+@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap');
+
+:root {
+    --font-family-sans-serif: 'Manrope', system-ui, -apple-system, sans-serif;
+    --font-family-base: var(--font-family-sans-serif);
+
+    --color-primary: #2f7d5b;
+
+    --sidebar-bg: #142F32;
+    --sidebar-border-color: #1c3e42;
+    --sidebar-logo-color: #ffffff;
+    --sidebar-menu-color: rgba(255, 255, 255, .7);
+    --sidebar-menu-icon-color: rgba(255, 255, 255, .55);
+    --sidebar-menu-header-color: rgba(255, 255, 255, .35);
+    --sidebar-menu-submenu-color: rgba(255, 255, 255, .55);
+    --sidebar-menu-active-item-bg: #E3FFCC;
+    --sidebar-menu-active-item-color: #142F32;
+    --sidebar-menu-badge-active-bg: #E3FFCC;
+    --sidebar-menu-badge-active-color: #142F32;
+
+    --responsive-header-logo-color: #142F32;
+}
+
+.main-menu .menu-item.selected > a,
+.main-menu .menu-item > a:hover {
+    color: var(--sidebar-menu-active-item-color);
+}

@@ -6,6 +6,7 @@ use App\Repository\UserRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
+use Doctrine\Common\Collections\Criteria;
 use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
 use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
 use Symfony\Component\Security\Core\User\UserInterface;
@@ -68,17 +69,14 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\OneToMany(mappedBy: 'user', targetEntity: UserSession::class, orphanRemoval: true)]
     private Collection $sessions;
 
-    #[ORM\OneToMany(mappedBy: 'user', targetEntity: Alert::class, orphanRemoval: true)]
-    private Collection $alerts;
+    #[ORM\OneToMany(mappedBy: 'user', targetEntity: BaseNotification::class, orphanRemoval: true)]
+    private Collection $baseNotifications;
 
     #[ORM\OneToMany(mappedBy: 'user', targetEntity: Vault::class, orphanRemoval: true)]
     private Collection $vaults;
 
     #[ORM\ManyToMany(targetEntity: Role::class, inversedBy: 'users')]
     private Collection $roleEntities;
-
-    #[ORM\OneToMany(mappedBy: 'user', targetEntity: Notification::class, orphanRemoval: true)]
-    private Collection $notifications;
 
     #[ORM\OneToMany(mappedBy: 'user', targetEntity: ActivityLog::class, orphanRemoval: true)]
     private Collection $activityLogs;
@@ -89,13 +87,12 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     public function __construct()
     {
         $this->createdAt     = new \DateTimeImmutable();
-        $this->sessions      = new ArrayCollection();
-        $this->alerts        = new ArrayCollection();
-        $this->vaults        = new ArrayCollection();
-        $this->roleEntities  = new ArrayCollection();
-        $this->notifications = new ArrayCollection();
-        $this->activityLogs  = new ArrayCollection();
-        $this->loginAttempts = new ArrayCollection();
+        $this->sessions           = new ArrayCollection();
+        $this->baseNotifications  = new ArrayCollection();
+        $this->vaults             = new ArrayCollection();
+        $this->roleEntities       = new ArrayCollection();
+        $this->activityLogs       = new ArrayCollection();
+        $this->loginAttempts      = new ArrayCollection();
     }
 
     public function getId(): ?int { return $this->id; }
@@ -218,7 +215,23 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         return $this;
     }
 
-    public function getAlerts(): Collection { return $this->alerts; }
+    public function getBaseNotifications(): Collection { return $this->baseNotifications; }
+
+    /** @return Alert[] */
+    public function getAlerts(): array
+    {
+        return $this->baseNotifications->filter(
+            fn($n) => $n instanceof Alert
+        )->toArray();
+    }
+
+    /** @return Notification[] */
+    public function getNotifications(): array
+    {
+        return $this->baseNotifications->filter(
+            fn($n) => $n instanceof Notification
+        )->toArray();
+    }
 
     public function getVaults(): Collection { return $this->vaults; }
 
@@ -239,8 +252,6 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         $this->roleEntities->removeElement($role);
         return $this;
     }
-
-    public function getNotifications(): Collection { return $this->notifications; }
 
     public function getActivityLogs(): Collection { return $this->activityLogs; }
 

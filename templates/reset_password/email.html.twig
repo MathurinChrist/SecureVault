@@ -1,0 +1,30 @@
+{% extends 'emails/base_email.html.twig' %}
+
+{% block title %}Réinitialisez votre mot de passe{% endblock %}
+
+{% block body %}
+<h1>Réinitialisez votre mot de passe</h1>
+
+<p>Bonjour {{ user.firstName }},</p>
+
+<p>
+    Vous avez demandé la réinitialisation de votre mot de passe SecureVault.
+    Cliquez sur le bouton ci-dessous pour choisir un nouveau mot de passe.
+</p>
+
+<p style="text-align: center;">
+    <a href="{{ url('app_reset_password', {token: resetToken.token}) }}" class="button">Réinitialiser mon mot de passe</a>
+</p>
+
+<div class="tip-box">
+    <p>
+        Ce lien expire {{ resetToken.expirationMessageKey|trans(resetToken.expirationMessageData, 'ResetPasswordBundle') }}.
+        Si vous n'êtes pas à l'origine de cette demande, ignorez simplement cet e-mail — votre mot de passe restera inchangé.
+    </p>
+</div>
+
+<p style="font-size: 13px; color: #6a7480;">
+    Si le bouton ne fonctionne pas, copiez-collez ce lien dans votre navigateur :<br>
+    <span style="color: #2f7d5b; word-break: break-all;">{{ url('app_reset_password', {token: resetToken.token}) }}</span>
+</p>
+{% endblock %}

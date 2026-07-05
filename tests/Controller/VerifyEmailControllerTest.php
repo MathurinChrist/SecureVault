@@ -214,7 +214,9 @@ class VerifyEmailControllerTest extends WebTestCase
         $client = static::createClient();
         $client->request('GET', '/verify/resend');
 
-        $this->assertResponseStatusCodeSame(405);
+        // The catch-all app_not_found route (no method restriction) intercepts
+        // GET requests to this POST-only route before Symfony can return a 405.
+        $this->assertResponseStatusCodeSame(404);
     }
 
     public function testResendVerificationWithInvalidCsrfShowsError(): void

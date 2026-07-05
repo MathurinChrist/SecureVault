@@ -39,10 +39,12 @@ class VaultCrudE2ETest extends AbstractE2ETest
         [$client] = $this->registerAndLogin();
         $vaultName = 'E2E Vault ' . uniqid();
 
-        $crawler = $client->request('GET', '/vaults');
+        $client->request('GET', '/vaults');
+        $client->waitFor('button[onclick="openCreateModal()"]');
+        $client->getCrawler()->filter('button[onclick="openCreateModal()"]')->first()->click();
         $client->waitFor('form[action="/vaults/new"]');
 
-        $form = $crawler->filter('form[action="/vaults/new"]')->form([
+        $form = $client->getCrawler()->filter('form[action="/vaults/new"]')->form([
             'vault[name]'        => $vaultName,
             'vault[description]' => 'Created by E2E test',
         ]);
@@ -61,18 +63,20 @@ class VaultCrudE2ETest extends AbstractE2ETest
         [$client] = $this->registerAndLogin();
         $vaultName = 'Clickable ' . uniqid();
 
-        $crawler = $client->request('GET', '/vaults');
+        $client->request('GET', '/vaults');
+        $client->waitFor('button[onclick="openCreateModal()"]');
+        $client->getCrawler()->filter('button[onclick="openCreateModal()"]')->first()->click();
         $client->waitFor('form[action="/vaults/new"]');
 
-        $form = $crawler->filter('form[action="/vaults/new"]')->form([
+        $form = $client->getCrawler()->filter('form[action="/vaults/new"]')->form([
             'vault[name]' => $vaultName,
         ]);
         $client->submit($form);
         $client->followRedirects();
         $client->waitForElementToContain('body', $vaultName);
 
-        // Click the vault card
-        $client->clickLink($vaultName);
+        // Click the vault card (navigated via onclick, not an <a> link)
+        $client->getCrawler()->filter('[onclick*="/vaults/"]')->first()->click();
         $client->waitFor('body');
 
         $this->assertMatchesRegularExpression('#/vaults/\d+#', $client->getCurrentURL());
@@ -84,22 +88,24 @@ class VaultCrudE2ETest extends AbstractE2ETest
 
         // Create user A with a vault
         [$clientA] = $this->registerAndLogin();
-        $crawler = $clientA->request('GET', '/vaults');
+        $clientA->request('GET', '/vaults');
+        $clientA->waitFor('button[onclick="openCreateModal()"]');
+        $clientA->getCrawler()->filter('button[onclick="openCreateModal()"]')->first()->click();
         $clientA->waitFor('form[action="/vaults/new"]');
 
-        $form = $crawler->filter('form[action="/vaults/new"]')->form([
+        $form = $clientA->getCrawler()->filter('form[action="/vaults/new"]')->form([
             'vault[name]' => 'User A Vault',
         ]);
         $clientA->submit($form);
         $clientA->waitFor('body');
 
-        // Extract vault id from the page
+        // Creation redirects back to /vaults (list), not the show page — extract the
+        // new vault's id from its card's onclick navigation handler.
         preg_match('#/vaults/(\d+)#', $clientA->getCurrentURL(), $m);
         if (empty($m[1])) {
-            // Navigate to vault show to get the ID
-            $clientA->clickLink('User A Vault');
-            $clientA->waitFor('body');
-            preg_match('#/vaults/(\d+)#', $clientA->getCurrentURL(), $m);
+            $clientA->waitFor('[onclick*="/vaults/"]');
+            $card = $clientA->getCrawler()->filter('[onclick*="/vaults/"]')->first();
+            preg_match("#/vaults/(\d+)'#", $card->attr('onclick') ?? '', $m);
         }
         $vaultId = $m[1] ?? null;
         $this->assertNotNull($vaultId, 'Could not determine vault ID');
@@ -127,6 +133,6 @@ class VaultCrudE2ETest extends AbstractE2ETest
         // Check that the vault list is not empty (auto-vault should exist)
         $client->request('GET', '/vaults');
         $client->waitFor('body');
-        $this->assertSelectorExists('.glass-card');
+        $this->assertSelectorExists('[onclick*="/vaults/"]');
     }
 }

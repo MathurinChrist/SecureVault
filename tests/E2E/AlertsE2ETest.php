@@ -15,7 +15,7 @@ class AlertsE2ETest extends AbstractE2ETest
         $this->assertStringContainsString('/alerts', $client->getCurrentURL());
     }
 
-    public function testAlertsPageShowsEmptyStateWhenNoAlerts(): void
+    public function testAlertsPageShowsLoginAlertOnFreshAccount(): void
     {
         $this->skipIfUnavailable();
 
@@ -23,11 +23,12 @@ class AlertsE2ETest extends AbstractE2ETest
         $client->request('GET', '/alerts');
         $client->waitFor('body');
 
-        // New user → no alerts yet; empty-state message should appear
-        $this->assertSelectorTextContains('body', 'ordre');
+        // Every successful login creates a "new connection" alert (SecuritySubscriber),
+        // so a freshly registered account always has exactly that one alert.
+        $this->assertSelectorTextContains('body', 'Nouvelle connexion détectée');
     }
 
-    public function testMarkAllReadLinkOnlyAppearsWithUnreadAlerts(): void
+    public function testMarkAllReadLinkAppearsWithUnreadAlerts(): void
     {
         $this->skipIfUnavailable();
 
@@ -35,9 +36,9 @@ class AlertsE2ETest extends AbstractE2ETest
         $client->request('GET', '/alerts');
         $client->waitFor('body');
 
-        // For a fresh account there are no alerts, so "Marquer tout comme lu" should NOT appear
+        // Login always creates one unread "new connection" alert, so the link should appear
         $links = $client->getCrawler()->filter('a[href*="mark-all-read"]');
-        $this->assertCount(0, $links);
+        $this->assertGreaterThan(0, $links->count());
     }
 
     /**

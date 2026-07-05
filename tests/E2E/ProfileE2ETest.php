@@ -45,10 +45,12 @@ class ProfileE2ETest extends AbstractE2ETest
         $newPassword = 'NewPass456!';
         [$client, $email] = $this->registerAndLogin();
 
-        $crawler = $client->request('GET', '/profile');
+        $client->request('GET', '/profile');
         $client->waitFor('form');
+        $client->getCrawler()->filter('#btn-security')->first()->click();
+        $client->waitFor('#tab-security:not(.hidden)');
 
-        $form = $crawler->selectButton('Mettre à jour le mot de passe')->form([
+        $form = $client->getCrawler()->filter('#tab-security form')->selectButton('Mettre à jour le mot de passe')->form([
             'change_password[plainPassword][first]'  => $newPassword,
             'change_password[plainPassword][second]' => $newPassword,
         ]);
@@ -71,7 +73,10 @@ class ProfileE2ETest extends AbstractE2ETest
         $client->waitFor('body');
 
         $this->assertStringContainsString('/profile', $client->getCurrentURL());
-        // Activity section header
+
+        // Activity section header — hidden behind a tab until clicked
+        $client->getCrawler()->filter('#btn-activity')->first()->click();
+        $client->waitFor('#tab-activity:not(.hidden)');
         $this->assertSelectorTextContains('body', 'actions');
     }
 }

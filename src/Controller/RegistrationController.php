@@ -6,6 +6,7 @@ use App\Entity\User;
 use App\Event\UserRegisteredEvent;
 use App\Form\RegistrationFormType;
 use App\Service\EmailVerificationService;
+use App\Service\VaultKeyService;
 use Doctrine\ORM\EntityManagerInterface;
 use Psr\Log\LoggerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -25,6 +26,7 @@ class RegistrationController extends AbstractController
         EventDispatcherInterface $eventDispatcher,
         LoggerInterface $logger,
         EmailVerificationService $emailVerificationService,
+        VaultKeyService $vaultKeyService,
     ): Response {
         $user = new User();
         $form = $this->createForm(RegistrationFormType::class, $user);
@@ -34,6 +36,7 @@ class RegistrationController extends AbstractController
             $user->setPassword(
                 $userPasswordHasher->hashPassword($user, $form->get('plainPassword')->getData())
             );
+            $user->setEncryptionKey($vaultKeyService->generateSalt());
 
             $entityManager->persist($user);
             $entityManager->flush();

@@ -1,12 +1,20 @@
 # SecureVault — Gestionnaire de mots de passe sécurisé
 
-Application web de gestion de mots de passe développée avec **Symfony 7**, **PostgreSQL 16** et **FrankenPHP**. Interface responsive, chiffrement AES-256-GCM, authentification Google OAuth2 et API REST JWT.
+Application web de gestion de mots de passe développée avec **Symfony 7**, **PostgreSQL 16** et **FrankenPHP**. Interface responsive, chiffrement AES-256-GCM per-user (PBKDF2), authentification Google OAuth2, 2FA, administration EasyAdmin et API REST JWT.
+
+**Documentation :**
+[Cahier des charges](docs/cahier_de_charge.md) · [Schéma BDD](docs/database-schema.md) · [Guide de test](docs/TESTING.md) · [Scénarios de test](docs/TEST_SCENARIOS.md)
+
+![Schéma base de données](docs/database-schema.png)
 
 ---
 
 ## Fonctionnalités
 
 - Gestion de coffres-forts chiffrés (AES-256-GCM)
+- **Chiffrement per-user** — clé dérivée via PBKDF2 (100 000 itérations) à la connexion, stockée en session uniquement. L'admin ne peut pas lire vos mots de passe.
+- **Héritage d'entités Doctrine** (STI) — `Alert` et `Notification` héritent de `BaseNotification`
+- **Vérification fuite de données** — API HaveIBeenPwned (k-anonymity via `HttpClient`) + commande CLI `securevault:check-leaked-passwords`
 - Générateur de mots de passe intégré (home + dashboard)
 - Recherche dans les coffres (titre, identifiant, URL, nom du coffre)
 - Partage de coffres avec permissions granulaires (READ / WRITE / ADMIN)
@@ -14,13 +22,18 @@ Application web de gestion de mots de passe développée avec **Symfony 7**, **P
 - **Authentification Google OAuth2** (connexion et inscription)
 - Vérification d'e-mail obligatoire à l'inscription
 - Double authentification par e-mail (2FA, optionnelle par compte)
+- **Réinitialisation de mot de passe oublié** (`/reset-password`) par e-mail
 - Audit de sécurité (score, mots de passe faibles / anciens)
 - Journal d'activité, alertes de sécurité, notifications
 - Suivi des tentatives de connexion
-- Tableau de bord admin (EasyAdmin) à `/admin`
-- API REST v1 (JWT)
+- **Page de contact** (`/contact`) — formulaire public avec stockage en base et e-mails automatiques (confirmation + notification admin)
+- **Administration EasyAdmin** (`/easyadmin`) reskinnée aux couleurs du site — dashboard + CRUD complet
+- **API REST v1 (JWT)** — sérialisée via Symfony Serializer avec groupes de normalisation (`#[Groups]`)
+- **Filtres Twig personnalisés** — `time_ago`, `password_strength`
+- **Fixtures réalistes** (FakerPHP) — 10 users, 15 coffres, ~48 mots de passe, ~60 alertes/notifications
+- **Pipeline CI complet** (GitHub Actions) — tests unitaires, fonctionnels, E2E, lint Twig/YAML, PHPStan niveau 5
 - Interface **100% gratuite** — aucun abonnement requis
-- Design responsive / mobile-first
+- Design responsive / mobile-first (Tailwind CSS, Manrope, GSAP)
 
 ---
 
@@ -29,6 +42,8 @@ Application web de gestion de mots de passe développée avec **Symfony 7**, **P
 - [Docker](https://docs.docker.com/get-docker/)
 - [Docker Compose](https://docs.docker.com/compose/install/)
 - [Make](https://www.gnu.org/software/make/)
+
+> L'application tourne en **PHP 8.4** (voir `Dockerfile` et la CI). Aucune installation locale de PHP n'est nécessaire grâce à Docker.
 
 ---
 
@@ -54,11 +69,7 @@ make composer-install
 
 ### 3. Configurer les variables d'environnement
 
-Copiez `.env.example` en `.env.local` et remplissez les valeurs :
-
-```bash
-cp .env.example .env.local
-```
+Créez un fichier `.env.local` à la racine et remplissez les valeurs (ignoré par git, ne pas mettre les vraies valeurs dans `.env`) :
 
 Variables minimales à définir :
 
@@ -67,6 +78,7 @@ VAULT_ENCRYPTION_KEY=<openssl rand -base64 32>
 JWT_PASSPHRASE=votre-passphrase
 Google_Client_ID=votre-client-id
 Google_Client_Secret=votre-client-secret
+MAILER_DSN=smtp://mailer:1025
 ```
 
 ### 4. Préparer la base de données
@@ -80,6 +92,19 @@ Pour repartir d'une base vierge avec données de démonstration :
 ```bash
 make db-setup
 ```
+
+Cette commande charge les fixtures Faker : 10 utilisateurs, 15 coffres, ~48 mots de passe, ~60 alertes/notifications.
+
+### Comptes de test (après `make db-setup`)
+
+| Email | Mot de passe | Rôle |
+| :---- | :----------- | :--- |
+| `admin@securevault.local` | `Admin1234!` | `ROLE_ADMIN` — administration `/easyadmin` |
+| `alice@securevault.local` | `User1234!`  | `ROLE_USER` |
+| `bob@securevault.local`   | `User1234!`  | `ROLE_USER` |
+| `carol@securevault.local` | `User1234!`  | `ROLE_USER` |
+
+> Les autres utilisateurs générés aléatoirement par Faker ont tous le mot de passe `User1234!`.
 
 ### 5. Générer les clés JWT
 
@@ -95,16 +120,22 @@ L'application est accessible sur **http://localhost:8080**.
 
 ## Variables d'environnement
 
-| Variable               | Obligatoire | Description                                                       |
-| :--------------------- | :---------: | :---------------------------------------------------------------- |
-| `VAULT_ENCRYPTION_KEY` | Oui         | Clé AES-256 pour chiffrer les mots de passe                      |
-| `MAILER_DSN`           | Oui         | DSN SMTP (`smtp://mailer:1025` via Mailpit en dev)                |
-| `JWT_SECRET_KEY`       | Oui         | Chemin vers la clé privée RSA (géré via volume Docker)            |
-| `JWT_PUBLIC_KEY`       | Oui         | Chemin vers la clé publique RSA (géré via volume Docker)          |
-| `JWT_PASSPHRASE`       | Oui         | Passphrase des clés JWT                                           |
-| `Google_Client_ID`     | Oui         | Client ID OAuth2 Google (Google Cloud Console)                    |
-| `Google_Client_Secret` | Oui         | Client Secret OAuth2 Google                                       |
-| `DATABASE_URL`         | Oui         | URL de connexion PostgreSQL                                       |
+| Variable               | Obligatoire | Description                                                               |
+| :--------------------- | :---------: | :------------------------------------------------------------------------ |
+| `VAULT_ENCRYPTION_KEY` | Oui         | Salt de base pour fallback AES (utilisateurs non-PBKDF2)                 |
+| `MAILER_DSN`           | Oui         | DSN SMTP (`smtp://mailer:1025` via Mailpit en dev)                        |
+| `JWT_SECRET_KEY`       | Oui         | Chemin vers la clé privée RSA (géré via volume Docker)                   |
+| `JWT_PUBLIC_KEY`       | Oui         | Chemin vers la clé publique RSA (géré via volume Docker)                 |
+| `JWT_PASSPHRASE`       | Oui         | Passphrase des clés JWT                                                   |
+| `Google_Client_ID`     | Oui         | Client ID OAuth2 Google (Google Cloud Console)                            |
+| `Google_Client_Secret` | Oui         | Client Secret OAuth2 Google                                               |
+| `DATABASE_URL`         | Oui         | URL de connexion PostgreSQL                                               |
+| `APP_ENV`              | Non (défaut fourni) | Environnement Symfony (`dev`, `test`, `panther`, `prod`)          |
+| `APP_SECRET`           | Non (défaut fourni) | Secret Symfony (CSRF, signatures)                                 |
+| `APP_SHARE_DIR`        | Non (défaut fourni) | Répertoire de partage de fichiers                                 |
+| `DEFAULT_URI`          | Non (défaut fourni) | URI par défaut pour la génération d'URL en CLI                    |
+| `MESSENGER_TRANSPORT_DSN` | Non (défaut fourni) | Transport Symfony Messenger                                    |
+| `JWT_TTL`              | Non (défaut fourni) | Durée de vie du token JWT (secondes)                              |
 
 ### Générer `VAULT_ENCRYPTION_KEY`
 
@@ -152,6 +183,21 @@ openssl rand -base64 32
 
 ---
 
+## Sécurité — chiffrement per-user
+
+À la connexion, `LoginSuccessSubscriber` :
+
+1. Récupère le mot de passe en clair depuis le formulaire
+2. Dérive une clé 256 bits via `PBKDF2(SHA-256, mot_de_passe, salt_user, 100 000 itérations)`
+3. Stocke la clé **en session uniquement** (jamais en base)
+4. Migre automatiquement toutes les entrées `keyVersion=0` (ancienne clé partagée) vers `keyVersion=1`
+
+**Résultat :** sans le mot de passe de l'utilisateur, personne — y compris l'admin — ne peut déchiffrer les mots de passe stockés.
+
+Les utilisateurs Google OAuth2 continuent d'utiliser la clé partagée (`keyVersion=0`) car aucun mot de passe en clair n'est disponible à la connexion.
+
+---
+
 ## Authentification Google OAuth2
 
 ### Configuration Google Cloud Console
@@ -181,21 +227,38 @@ Les utilisateurs Google **ne passent pas par la 2FA** (identité déjà prouvée
 
 ### URLs principales
 
-| Page                       | URL                          |
-| :------------------------- | :--------------------------- |
-| Accueil                    | `/`                          |
-| Inscription                | `/register`                  |
-| Connexion                  | `/login`                     |
-| Connexion Google           | `/connect/google`            |
-| Dashboard                  | `/dashboard`                 |
-| Coffres                    | `/vaults`                    |
-| Tous les mots de passe     | `/passwords`                 |
-| Partages                   | `/shares`                    |
-| Alertes de sécurité        | `/alerts`                    |
-| Notifications              | `/notifications`             |
-| Profil                     | `/profile`                   |
-| Administration             | `/admin`                     |
-| Vérification 2FA           | `/2fa/verify`                |
+| Page                       | URL                          | Accès                |
+| :------------------------- | :--------------------------- | :------------------- |
+| Accueil                    | `/` (redirige vers `/dashboard` si connecté) | Public |
+| Inscription                | `/register`                  | Public               |
+| Connexion                  | `/login`                     | Public               |
+| Connexion Google           | `/connect/google`            | Public               |
+| Mot de passe oublié        | `/reset-password`            | Public               |
+| Contact                    | `/contact`                   | Public               |
+| Vérification 2FA           | `/2fa/verify`                | Après connexion      |
+| Dashboard                  | `/dashboard`                 | Utilisateur connecté |
+| Coffres                    | `/vaults`                    | Utilisateur connecté |
+| Tous les mots de passe     | `/passwords`                 | Utilisateur connecté |
+| Partages                   | `/shares`                    | Utilisateur connecté |
+| Alertes de sécurité        | `/alerts`                    | Utilisateur connecté |
+| Notifications              | `/notifications`             | Utilisateur connecté |
+| Profil                     | `/profile`                   | Utilisateur connecté |
+| Administration (EasyAdmin) | `/easyadmin`                 | `ROLE_ADMIN`         |
+
+### Page de contact
+
+`/contact` — formulaire public avec :
+- Champs : nom, e-mail, sujet (select), message
+- Protection CSRF
+- Stockage du message en base de données (`contact_message`)
+- E-mail de **notification** envoyé à l'admin (ReplyTo = expéditeur)
+- E-mail de **confirmation** envoyé à l'expéditeur (délai de réponse 48h)
+
+### Administration (`/easyadmin`)
+
+Interface unique basée sur EasyAdmin, reskinnée aux couleurs et à la typographie du site (sidebar teal, accent vert, Manrope) :
+- **Dashboard** : stats (utilisateurs, coffres, connexions échouées 24h, messages non lus), messages de contact non lus et activité récente
+- CRUD complet : Utilisateurs, Rôles, Coffres, Alertes, Tentatives de connexion, Journaux d'activité, Messages de contact
 
 ### Générateur de mots de passe
 
@@ -205,8 +268,13 @@ Disponible sur la **page d'accueil** et dans le **dashboard** (colonne droite). 
 
 Tous les e-mails sortants sont interceptés par Mailpit : http://localhost:8025
 
-- Confirmation d'inscription
-- Code 2FA (6 chiffres, valable 10 min)
+| E-mail                        | Déclencheur                               |
+| :---------------------------- | :---------------------------------------- |
+| Confirmation d'inscription    | Après inscription par e-mail              |
+| Code 2FA                      | À chaque connexion avec 2FA activée       |
+| Notification de contact       | À la réception d'un message via `/contact` |
+| Confirmation de contact       | Envoyée à l'expéditeur du message         |
+| Réinitialisation de mot de passe | Après demande via `/reset-password`    |
 
 ---
 
@@ -253,28 +321,54 @@ POST /api/v1/auth/login
 ```
 src/
 ├── Controller/
-│   ├── Api/               # API REST stateless (JWT)
-│   ├── Admin/             # Tableau de bord EasyAdmin
-│   ├── GoogleController   # OAuth2 Google (connect + callback)
-│   └── *.php              # Contrôleurs web (dashboard, vaults, 2FA…)
-├── Entity/                # 15 entités Doctrine (User, Vault, PasswordEntry…)
+│   ├── Api/                    # API REST stateless (JWT)
+│   ├── Admin/                  # AdminDashboardController + EasyAdmin CRUD controllers
+│   ├── ContactController.php   # Formulaire de contact public
+│   ├── GoogleController.php    # OAuth2 Google (connect + callback)
+│   └── *.php                   # Dashboard, Vault, Passwords, 2FA…
+├── Entity/
+│   ├── User.php                # encryptionKey = salt PBKDF2
+│   ├── PasswordEntry.php       # keyVersion (0=shared, 1=per-user)
+│   ├── ContactMessage.php      # Messages de contact public
+│   └── …                       # Vault, SharedVault, Alert, Notification…
 ├── Security/
-│   └── GoogleAuthenticator.php  # Authenticator OAuth2 Google
-├── Service/               # EncryptionService, TwoFactorService, AlertService…
-├── EventSubscriber/       # TwoFactorSubscriber, EmailVerificationSubscriber…
-├── Repository/            # Dont PasswordEntryRepository (searchByUser)
-└── Command/               # GenerateImagesCommand (Gemini API)
+│   └── GoogleAuthenticator.php
+├── Service/
+│   ├── VaultKeyService.php     # Dérivation PBKDF2, stockage session
+│   ├── EncryptionService.php   # AES-256-GCM
+│   └── …                       # TwoFactor, Alert, Notification, ActivityLog…
+├── EventSubscriber/
+│   ├── LoginSuccessSubscriber.php  # Derive clé + migre keyVersion=0
+│   ├── TwoFactorSubscriber.php
+│   └── EmailVerificationSubscriber.php
+└── Repository/
+    ├── ContactMessageRepository.php  # countUnread()
+    └── …
 templates/
-├── home/                  # Page d'accueil (avec générateur interactif)
-├── emails/                # Templates e-mails (thème marque)
-├── security/              # Login, 2FA
-├── registration/          # Inscription, vérification e-mail
+├── home/
+│   ├── index.html.twig         # Page d'accueil
+│   └── contact.html.twig       # Formulaire de contact
+├── admin/
+│   └── dashboard.html.twig     # Contenu du dashboard EasyAdmin (stats + activité récente)
+├── emails/
+│   ├── base_email.html.twig
+│   ├── contact_admin.html.twig       # Notification à l'admin
+│   ├── contact_confirmation.html.twig # Confirmation à l'expéditeur
+│   └── …
+├── security/                   # Login, 2FA
+├── registration/               # Inscription, vérification e-mail
+├── reset_password/             # Mot de passe oublié (request, check-email, reset, email)
 └── dashboard/, vault/, passwords/, alerts/, …
-migrations/                # Migrations Doctrine
+migrations/
+├── Version20260705000000.php   # Table contact_message
+├── Version20260705000001.php   # Colonne key_version sur password_entry
+├── Version20260705000002.php   # STI : fusion alert + notification dans base_notification
+├── Version20260705135241.php   # Table reset_password_request
+└── …
 config/
-├── jwt/                   # Clés RSA (gitignorées)
+├── jwt/                        # Clés RSA (gitignorées)
 └── packages/
-    └── knpu_oauth2_client.yaml  # Config Google OAuth2
+    └── knpu_oauth2_client.yaml
 ```
 
 **Infrastructure :**
@@ -287,3 +381,5 @@ config/
 ## Configuration base de données
 
 PostgreSQL 16 — utilisateur `app`, base `app`, port `5432`.
+
+En développement Docker, la connexion se fait via le nom de service `database` (résolution interne Docker). Depuis l'hôte, utilisez `localhost:5432`.

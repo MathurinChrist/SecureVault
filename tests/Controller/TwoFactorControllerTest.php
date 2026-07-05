@@ -5,6 +5,7 @@ namespace App\Tests\Controller;
 use App\Entity\User;
 use App\Service\TwoFactorService;
 use Doctrine\ORM\EntityManagerInterface;
+use Symfony\Bundle\FrameworkBundle\KernelBrowser;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 use Symfony\Component\HttpFoundation\Session\SessionInterface;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
@@ -17,6 +18,27 @@ class TwoFactorControllerTest extends WebTestCase
             static::getContainer()->get('doctrine.dbal.default_connection')->executeQuery('SELECT 1');
         } catch (\Exception) {
             $this->markTestSkipped('Database not available.');
+        }
+    }
+
+    /**
+     * Fetching a CSRF token from the container requires a "current request" on the
+     * request stack (SessionTokenStorage resolves the session through it), which no
+     * longer exists once $client->request() has returned. Push the last request back
+     * on temporarily to generate the token, then save the session again — writing the
+     * token adds a new key that the earlier $session->save() call didn't persist.
+     */
+    private function csrfToken(KernelBrowser $client, string $tokenId): string
+    {
+        $requestStack = $client->getContainer()->get('request_stack');
+        $requestStack->push($client->getRequest());
+        try {
+            $token = $client->getContainer()->get('security.csrf.token_manager')->getToken($tokenId)->getValue();
+            $client->getRequest()->getSession()->save();
+
+            return $token;
+        } finally {
+            $requestStack->pop();
         }
     }
 
@@ -83,7 +105,7 @@ class TwoFactorControllerTest extends WebTestCase
         $session->save();
 
         $client->request('POST', '/2fa/verify', [
-            '_token' => $client->getContainer()->get('security.csrf.token_manager')->getToken('2fa_verify')->getValue(),
+            '_token' => $this->csrfToken($client, '2fa_verify'),
             'code'   => '123456',
         ]);
 
@@ -111,13 +133,12 @@ class TwoFactorControllerTest extends WebTestCase
         $session->save();
 
         $client->request('POST', '/2fa/verify', [
-            '_token' => $client->getContainer()->get('security.csrf.token_manager')->getToken('2fa_verify')->getValue(),
+            '_token' => $this->csrfToken($client, '2fa_verify'),
             'code'   => '000000',
         ]);
 
-        $this->assertResponseRedirects('/2fa/verify');
-        $client->followRedirect();
-        $this->assertSelectorTextContains('.text-red-400', 'Code incorrect');
+        $this->assertResponseIsSuccessful();
+        $this->assertSelectorTextContains('.text-warn', 'Code incorrect');
     }
 
     public function testExpiredCodeShowsError(): void
@@ -136,13 +157,12 @@ class TwoFactorControllerTest extends WebTestCase
         $session->save();
 
         $client->request('POST', '/2fa/verify', [
-            '_token' => $client->getContainer()->get('security.csrf.token_manager')->getToken('2fa_verify')->getValue(),
+            '_token' => $this->csrfToken($client, '2fa_verify'),
             'code'   => '111111',
         ]);
 
-        $this->assertResponseRedirects('/2fa/verify');
-        $client->followRedirect();
-        $this->assertSelectorTextContains('.text-red-400', 'Code incorrect');
+        $this->assertResponseIsSuccessful();
+        $this->assertSelectorTextContains('.text-warn', 'Code incorrect');
     }
 
     public function testInvalidCsrfTokenReturnsError(): void
@@ -201,7 +221,7 @@ class TwoFactorControllerTest extends WebTestCase
         $this->assertResponseRedirects('/alerts');
 
         $conn    = static::getContainer()->get('doctrine.dbal.default_connection');
-        $enabled = $conn->fetchOne('SELECT is_2fa_enabled FROM "user" WHERE id = ?', [$user->getId()]);
+        $enabled = $conn->fetchOne('SELECT is2fa_enabled FROM "user" WHERE id = ?', [$user->getId()]);
         $this->assertTrue((bool) $enabled);
     }
 
@@ -219,7 +239,7 @@ class TwoFactorControllerTest extends WebTestCase
         $this->assertResponseRedirects('/alerts');
 
         $conn    = static::getContainer()->get('doctrine.dbal.default_connection');
-        $enabled = $conn->fetchOne('SELECT is_2fa_enabled FROM "user" WHERE id = ?', [$user->getId()]);
+        $enabled = $conn->fetchOne('SELECT is2fa_enabled FROM "user" WHERE id = ?', [$user->getId()]);
         $this->assertFalse((bool) $enabled);
     }
 
@@ -241,7 +261,7 @@ class TwoFactorControllerTest extends WebTestCase
         $session->save();
 
         $client->request('POST', '/2fa/resend', [
-            '_token' => $client->getContainer()->get('security.csrf.token_manager')->getToken('2fa_resend')->getValue(),
+            '_token' => $this->csrfToken($client, '2fa_resend'),
         ]);
 
         $this->assertResponseRedirects('/2fa/verify');
@@ -255,8 +275,10 @@ class TwoFactorControllerTest extends WebTestCase
         [$user] = $this->createUser();
         $client->loginUser($user);
 
+        $client->request('GET', '/dashboard');
+
         $client->request('POST', '/2fa/resend', [
-            '_token' => $client->getContainer()->get('security.csrf.token_manager')->getToken('2fa_resend')->getValue(),
+            '_token' => $this->csrfToken($client, '2fa_resend'),
         ]);
 
         $this->assertResponseRedirects('/dashboard');

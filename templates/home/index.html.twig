@@ -85,6 +85,7 @@
       <a href="{{ path('app_home') }}#features" class="text-[14.5px] font-semibold text-ink-soft px-4 py-2.5 rounded-full hover:text-ink hover:bg-brand/[.05] transition">Fonctionnalités</a>
       <a href="{{ path('app_home') }}#pricing"  class="text-[14.5px] font-semibold text-ink-soft px-4 py-2.5 rounded-full hover:text-ink hover:bg-brand/[.05] transition">Tarifs</a>
       <a href="{{ path('app_home') }}#security" class="text-[14.5px] font-semibold text-ink-soft px-4 py-2.5 rounded-full hover:text-ink hover:bg-brand/[.05] transition">Sécurité</a>
+      <a href="{{ path('app_contact') }}"       class="text-[14.5px] font-semibold text-ink-soft px-4 py-2.5 rounded-full hover:text-ink hover:bg-brand/[.05] transition">Contact</a>
     </nav>
 
     {# Desktop CTA #}
@@ -122,6 +123,10 @@
     <a href="{{ path('app_home') }}#security" onclick="svMenuToggle()" class="flex items-center gap-3 px-4 py-3 rounded-2xl text-[15px] font-semibold text-ink-soft hover:text-ink hover:bg-brand/[.04] transition">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 3v5c0 4.5-3 7.8-7 9-4-1.2-7-4.5-7-9V6l7-3z"/></svg>
       Sécurité
+    </a>
+    <a href="{{ path('app_contact') }}" onclick="svMenuToggle()" class="flex items-center gap-3 px-4 py-3 rounded-2xl text-[15px] font-semibold text-ink-soft hover:text-ink hover:bg-brand/[.04] transition">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+      Contact
     </a>
     <div class="pt-3 border-t border-line flex flex-col gap-2">
       <a href="{{ path('app_register') }}" class="w-full text-center bg-brand hover:bg-brand-light text-white font-bold text-[14.5px] py-3 rounded-full transition">Créer un compte</a>
@@ -547,18 +552,13 @@ window.addEventListener('resize', function () {
 {% block visitor_footer %}
 <footer class="home-foot bg-charcoal text-white">
   <div class="max-w-[1180px] mx-auto px-7">
-    <div class="grid grid-cols-2 min-[980px]:grid-cols-[1.4fr_1fr_1fr_1fr_1.1fr] gap-8 pt-16 pb-10">
+    <div class="grid grid-cols-2 min-[980px]:grid-cols-[1.4fr_1fr_1fr] gap-8 pt-16 pb-10">
       <div>
         <div class="flex items-center gap-2.5 font-extrabold text-[18px] tracking-tight text-white">
           <svg class="w-[30px] h-[30px] flex-none" viewBox="0 0 32 32" fill="none"><circle cx="16" cy="16" r="13" stroke="#E3FFCC" stroke-width="5" stroke-dasharray="56 26" stroke-linecap="round"/><circle cx="16" cy="16" r="4.5" fill="#2f7d5b"/></svg>
           SecureVault
         </div>
         <p class="text-[13.5px] text-white/50 leading-[1.6] mt-4 max-w-[230px]">La gestion de mots de passe pensée pour la confiance. Chiffrée, surveillée, et toujours sous votre contrôle.</p>
-        <div class="flex gap-[9px] mt-3.5">
-          <a href="#" aria-label="LinkedIn" class="w-[34px] h-[34px] rounded-[9px] bg-white/[.07] grid place-items-center text-white hover:bg-accent/[.16] hover:text-accent transition"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M4.98 3.5A2.5 2.5 0 002.5 6a2.5 2.5 0 005 0 2.5 2.5 0 00-2.52-2.5zM3 9h4v12H3zM9 9h3.8v1.7h.1c.5-.95 1.8-1.95 3.7-1.95 4 0 4.7 2.6 4.7 6V21h-4v-5.3c0-1.27-.02-2.9-1.8-2.9s-2 1.4-2 2.8V21H9z"/></svg></a>
-          <a href="#" aria-label="X" class="w-[34px] h-[34px] rounded-[9px] bg-white/[.07] grid place-items-center text-white hover:bg-accent/[.16] hover:text-accent transition"><svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M18.2 3h3.3l-7.2 8.2L23 21h-6.6l-5.2-6.8L5.3 21H2l7.7-8.8L1.7 3h6.8l4.7 6.2zM17 19h1.8L7.1 5H5.1z"/></svg></a>
-          <a href="#" aria-label="GitHub" class="w-[34px] h-[34px] rounded-[9px] bg-white/[.07] grid place-items-center text-white hover:bg-accent/[.16] hover:text-accent transition"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a10 10 0 00-3.2 19.5c.5.1.7-.2.7-.5v-1.7c-2.8.6-3.4-1.3-3.4-1.3-.5-1.2-1.1-1.5-1.1-1.5-.9-.6 0-.6 0-.6 1 .1 1.5 1 1.5 1 .9 1.5 2.3 1.1 2.9.8 0-.7.3-1.1.6-1.4-2.2-.2-4.6-1.1-4.6-5 0-1.1.4-2 1-2.7 0-.3-.4-1.3.1-2.7 0 0 .8-.3 2.7 1a9.4 9.4 0 015 0c1.9-1.3 2.7-1 2.7-1 .5 1.4.2 2.4.1 2.7.6.7 1 1.6 1 2.7 0 3.9-2.4 4.8-4.6 5 .3.3.7 1 .7 2v2.9c0 .3.2.6.7.5A10 10 0 0012 2z"/></svg></a>
-        </div>
       </div>
       <div>
         <h5 class="text-[13px] font-bold text-white/50 mb-4">Produit</h5>
@@ -568,29 +568,13 @@ window.addEventListener('resize', function () {
         <a class="block text-[13.5px] text-white/80 py-1.5 hover:text-accent transition" href="{{ path('app_login') }}">Application</a>
       </div>
       <div>
-        <h5 class="text-[13px] font-bold text-white/50 mb-4">Entreprise</h5>
-        <a class="block text-[13.5px] text-white/80 py-1.5 hover:text-accent transition" href="#">À propos</a>
-        <a class="block text-[13.5px] text-white/80 py-1.5 hover:text-accent transition" href="#">Clients</a>
-        <a class="block text-[13.5px] text-white/80 py-1.5 hover:text-accent transition" href="#">Carrières</a>
-        <a class="block text-[13.5px] text-white/80 py-1.5 hover:text-accent transition" href="#">Blog</a>
-      </div>
-      <div>
         <h5 class="text-[13px] font-bold text-white/50 mb-4">Sécurité</h5>
         <a class="block text-[13.5px] text-white/80 py-1.5 hover:text-accent transition" href="{{ path('app_home') }}#security">Architecture</a>
-        <a class="block text-[13.5px] text-white/80 py-1.5 hover:text-accent transition" href="#">Conformité</a>
-        <a class="block text-[13.5px] text-white/80 py-1.5 hover:text-accent transition" href="#">Bug bounty</a>
-        <a class="block text-[13.5px] text-white/80 py-1.5 hover:text-accent transition" href="#">Statut</a>
-      </div>
-      <div>
-        <h5 class="text-[13px] font-bold text-white/50 mb-4">Contact</h5>
-        <a class="block text-[13.5px] text-white/80 py-1.5 hover:text-accent transition" href="mailto:contact@securevault.io">contact@securevault.io</a>
-        <a class="block text-[13.5px] text-white/80 py-1.5 hover:text-accent transition" href="#">Support 24/7</a>
-        <a class="block text-[13.5px] text-white/80 py-1.5 hover:text-accent transition" href="#">Presse</a>
+        <a class="block text-[13.5px] text-white/80 py-1.5 hover:text-accent transition" href="{{ path('app_contact') }}">Contact</a>
       </div>
     </div>
-    <div class="border-t border-white/[.07] py-[22px] flex flex-col min-[560px]:flex-row items-center justify-between gap-2.5 text-[13px] text-white/45">
+    <div class="border-t border-white/[.07] py-[22px] flex items-center justify-center text-[13px] text-white/45">
       <span>© 2026 SecureVault Inc. Tous droits réservés.</span>
-      <span class="flex gap-[22px]"><a href="#" class="text-white/60 hover:text-accent">Conditions</a><a href="#" class="text-white/60 hover:text-accent">Confidentialité</a><a href="#" class="text-white/60 hover:text-accent">Cookies</a></span>
     </div>
   </div>
 </footer>

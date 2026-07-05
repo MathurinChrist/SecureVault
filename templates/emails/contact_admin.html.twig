@@ -1,0 +1,31 @@
+{% extends 'emails/base_email.html.twig' %}
+
+{% block title %}[Contact] {{ subject }}{% endblock %}
+
+{% block body %}
+<h1>Nouveau message de contact</h1>
+
+<table style="width:100%;border-collapse:collapse;margin:0 0 24px;background:#f4f6f7;border:1px solid #e0e4e8;border-radius:14px;overflow:hidden;">
+  <tr>
+    <td style="padding:14px 18px;font-size:13px;font-weight:700;color:#6a7480;text-transform:uppercase;letter-spacing:.05em;border-bottom:1px solid #e0e4e8;width:30%">Expéditeur</td>
+    <td style="padding:14px 18px;font-size:14px;color:#181d22;border-bottom:1px solid #e0e4e8;">{{ sender_name }}</td>
+  </tr>
+  <tr>
+    <td style="padding:14px 18px;font-size:13px;font-weight:700;color:#6a7480;text-transform:uppercase;letter-spacing:.05em;border-bottom:1px solid #e0e4e8;">E-mail</td>
+    <td style="padding:14px 18px;font-size:14px;border-bottom:1px solid #e0e4e8;"><a href="mailto:{{ sender_email }}" style="color:#2f7d5b;text-decoration:none;font-weight:600;">{{ sender_email }}</a></td>
+  </tr>
+  <tr>
+    <td style="padding:14px 18px;font-size:13px;font-weight:700;color:#6a7480;text-transform:uppercase;letter-spacing:.05em;">Sujet</td>
+    <td style="padding:14px 18px;font-size:14px;color:#181d22;">{{ subject }}</td>
+  </tr>
+</table>
+
+<p style="font-size:13px;font-weight:700;color:#6a7480;text-transform:uppercase;letter-spacing:.05em;margin:0 0 10px;">Message</p>
+<div style="background:#f4f6f7;border:1px solid #e0e4e8;border-left:4px solid #142F32;border-radius:0 14px 14px 0;padding:18px 20px;margin-bottom:24px;">
+  <p style="margin:0;font-size:15px;color:#3c454c;line-height:1.7;white-space:pre-wrap;">{{ message }}</p>
+</div>
+
+<p style="font-size:13.5px;color:#6a7480;line-height:1.6;">
+  Vous pouvez répondre directement à cet e-mail — votre réponse sera envoyée à <strong style="color:#181d22;">{{ sender_email }}</strong>.
+</p>
+{% endblock %}

@@ -17,25 +17,28 @@ class HomeControllerTest extends WebTestCase
     public function testFeaturesPageLoads(): void
     {
         $client = static::createClient();
-        $client->request('GET', '/features');
+        $client->request('GET', '/');
 
         $this->assertResponseIsSuccessful();
+        $this->assertSelectorExists('#features');
     }
 
     public function testSecurityPageLoads(): void
     {
         $client = static::createClient();
-        $client->request('GET', '/security');
+        $client->request('GET', '/');
 
         $this->assertResponseIsSuccessful();
+        $this->assertSelectorExists('#security');
     }
 
     public function testPricingPageLoads(): void
     {
         $client = static::createClient();
-        $client->request('GET', '/pricing');
+        $client->request('GET', '/');
 
         $this->assertResponseIsSuccessful();
+        $this->assertSelectorExists('#pricing');
     }
 
     public function testHomepageIsPublic(): void

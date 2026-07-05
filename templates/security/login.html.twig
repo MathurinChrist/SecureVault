@@ -68,6 +68,15 @@
         </div>
         {% endif %}
 
+        {% for label, messages in app.flashes %}
+          {% for message in messages %}
+            <div class="mb-5 p-3.5 rounded-[12px] text-[13.5px] font-semibold
+              {{ label == 'error' ? 'bg-warn/[.08] border border-warn/20 text-warn' : 'bg-brand-mid/10 border border-brand-mid/20 text-brand-mid' }}">
+              {{ message }}
+            </div>
+          {% endfor %}
+        {% endfor %}
+
         <form method="post" class="space-y-4">
           <div>
             <label for="inputEmail" class="block text-[11px] font-bold text-ink-soft uppercase tracking-wider mb-1.5">E-mail</label>
@@ -78,7 +87,7 @@
           <div>
             <div class="flex items-center justify-between mb-1.5">
               <label for="inputPassword" class="text-[11px] font-bold text-ink-soft uppercase tracking-wider">Mot de passe</label>
-              <a href="#" class="text-[12.5px] text-brand-mid hover:text-brand font-semibold">Oublié ?</a>
+              <a href="{{ path('app_forgot_password_request') }}" class="text-[12.5px] text-brand-mid hover:text-brand font-semibold">Oublié ?</a>
             </div>
             <div class="relative">
               <input type="password" name="password" id="inputPassword"
