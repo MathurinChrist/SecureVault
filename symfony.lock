@@ -74,6 +74,9 @@
             "config/packages/lexik_jwt_authentication.yaml"
         ]
     },
+    "phpstan/phpstan": {
+        "version": "2.2.4"
+    },
     "phpunit/phpunit": {
         "version": "11.5",
         "recipe": {

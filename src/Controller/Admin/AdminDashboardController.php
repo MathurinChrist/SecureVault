@@ -14,7 +14,7 @@ use EasyCorp\Bundle\EasyAdminBundle\Controller\AbstractDashboardController;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 
-#[AdminDashboard(routePath: '/admin', routeName: 'admin_dashboard')]
+#[AdminDashboard(routePath: '/easyadmin', routeName: 'easyadmin_dashboard')]
 #[IsGranted('ROLE_ADMIN')]
 class AdminDashboardController extends AbstractDashboardController
 {
@@ -63,6 +63,8 @@ class AdminDashboardController extends AbstractDashboardController
         yield MenuItem::linkTo(AlertCrudController::class, 'Alertes', 'fa fa-bell');
         yield MenuItem::linkTo(LoginAttemptCrudController::class, 'Tentatives de connexion', 'fa fa-shield');
         yield MenuItem::linkTo(ActivityLogCrudController::class, 'Journaux d\'activité', 'fa fa-list');
+        yield MenuItem::section('Support');
+        yield MenuItem::linkTo(ContactMessageCrudController::class, 'Messages de contact', 'fa fa-envelope');
         yield MenuItem::section('');
         yield MenuItem::linkToUrl('← Application', 'fa fa-arrow-left', '/dashboard');
     }

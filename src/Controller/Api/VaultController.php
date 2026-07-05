@@ -11,14 +11,20 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
+use Symfony\Component\Serializer\SerializerInterface;
+use Symfony\Component\Serializer\Normalizer\AbstractNormalizer;
 
 #[Route('/api/v1/vaults', name: 'api_vault_')]
 #[IsGranted('ROLE_USER')]
 class VaultController extends AbstractController
 {
+    private const READ_CONTEXT  = [AbstractNormalizer::GROUPS => ['vault:read']];
+    private const WRITE_CONTEXT = [AbstractNormalizer::GROUPS => ['vault:write']];
+
     public function __construct(
         private readonly VaultRepository $vaultRepository,
         private readonly EntityManagerInterface $em,
+        private readonly SerializerInterface $serializer,
     ) {}
 
     #[Route('', name: 'list', methods: ['GET'])]
@@ -26,7 +32,7 @@ class VaultController extends AbstractController
     {
         $vaults = $this->vaultRepository->findBy(['user' => $this->getUser()]);
 
-        return $this->json(array_map(fn(Vault $v) => $this->serialize($v), $vaults));
+        return $this->json($vaults, Response::HTTP_OK, [], self::READ_CONTEXT);
     }
 
     #[Route('/{id}', name: 'show', methods: ['GET'], requirements: ['id' => '\d+'])]
@@ -36,7 +42,7 @@ class VaultController extends AbstractController
             return $this->json(['error' => 'Access denied.'], Response::HTTP_FORBIDDEN);
         }
 
-        return $this->json($this->serialize($vault));
+        return $this->json($vault, Response::HTTP_OK, [], self::READ_CONTEXT);
     }
 
     #[Route('', name: 'create', methods: ['POST'])]
@@ -56,7 +62,7 @@ class VaultController extends AbstractController
         $this->em->persist($vault);
         $this->em->flush();
 
-        return $this->json($this->serialize($vault), Response::HTTP_CREATED);
+        return $this->json($vault, Response::HTTP_CREATED, [], self::READ_CONTEXT);
     }
 
     #[Route('/{id}', name: 'update', methods: ['PUT', 'PATCH'], requirements: ['id' => '\d+'])]
@@ -85,7 +91,7 @@ class VaultController extends AbstractController
 
         $this->em->flush();
 
-        return $this->json($this->serialize($vault));
+        return $this->json($vault, Response::HTTP_OK, [], self::READ_CONTEXT);
     }
 
     #[Route('/{id}', name: 'delete', methods: ['DELETE'], requirements: ['id' => '\d+'])]
@@ -99,18 +105,5 @@ class VaultController extends AbstractController
         $this->em->flush();
 
         return $this->json(null, Response::HTTP_NO_CONTENT);
-    }
-
-    private function serialize(Vault $vault): array
-    {
-        return [
-            'id'             => $vault->getId(),
-            'name'           => $vault->getName(),
-            'description'    => $vault->getDescription(),
-            'archived'       => $vault->isArchived(),
-            'entries_count'  => $vault->getPasswordEntries()->count(),
-            'created_at'     => $vault->getCreatedAt()?->format(\DateTimeInterface::ATOM),
-            'updated_at'     => $vault->getUpdatedAt()?->format(\DateTimeInterface::ATOM),
-        ];
     }
 }

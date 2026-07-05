@@ -6,6 +6,7 @@ use App\Repository\PasswordEntryRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Serializer\Annotation\Groups;
 
 #[ORM\Entity(repositoryClass: PasswordEntryRepository::class)]
 #[ORM\HasLifecycleCallbacks]
@@ -14,30 +15,42 @@ class PasswordEntry
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
+    #[Groups(['password:read'])]
     private ?int $id = null;
 
     #[ORM\Column(length: 255)]
+    #[Groups(['password:read', 'password:write'])]
     private ?string $title = null;
 
     #[ORM\Column(length: 255, nullable: true)]
+    #[Groups(['password:read', 'password:write'])]
     private ?string $username = null;
 
     #[ORM\Column(type: 'text')]
     private ?string $encryptedPassword = null;
 
     #[ORM\Column(length: 500, nullable: true)]
+    #[Groups(['password:read', 'password:write'])]
     private ?string $url = null;
 
     #[ORM\Column(type: 'text', nullable: true)]
+    #[Groups(['password:read', 'password:write'])]
     private ?string $notes = null;
 
     #[ORM\Column]
+    #[Groups(['password:read', 'password:write'])]
     private bool $favorite = false;
 
+    /** 0 = shared env key (legacy), 1 = per-user PBKDF2 key */
+    #[ORM\Column(options: ['default' => 0])]
+    private int $keyVersion = 0;
+
     #[ORM\Column]
+    #[Groups(['password:read'])]
     private ?\DateTimeImmutable $createdAt = null;
 
     #[ORM\Column(nullable: true)]
+    #[Groups(['password:read'])]
     private ?\DateTimeImmutable $updatedAt = null;
 
     #[ORM\ManyToOne(inversedBy: 'passwordEntries')]
@@ -174,4 +187,8 @@ class PasswordEntry
     }
 
     public function getPasswordHistory(): Collection { return $this->passwordHistory; }
+
+    public function getKeyVersion(): int { return $this->keyVersion; }
+
+    public function setKeyVersion(int $keyVersion): static { $this->keyVersion = $keyVersion; return $this; }
 }

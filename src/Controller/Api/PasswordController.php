@@ -14,15 +14,20 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
+use Symfony\Component\Serializer\Normalizer\AbstractNormalizer;
+use Symfony\Component\Serializer\SerializerInterface;
 
 #[Route('/api/v1/vaults/{vaultId}/passwords', name: 'api_password_', requirements: ['vaultId' => '\d+'])]
 #[IsGranted('ROLE_USER')]
 class PasswordController extends AbstractController
 {
+    private const READ_CONTEXT = [AbstractNormalizer::GROUPS => ['password:read']];
+
     public function __construct(
         private readonly PasswordEntryRepository $passwordEntryRepository,
         private readonly EncryptionService $encryptionService,
         private readonly EntityManagerInterface $em,
+        private readonly SerializerInterface $serializer,
         #[Autowire(env: 'VAULT_ENCRYPTION_KEY')] private readonly string $encryptionKey,
     ) {}
 
@@ -36,7 +41,7 @@ class PasswordController extends AbstractController
 
         $entries = $this->passwordEntryRepository->findBy(['vault' => $vault]);
 
-        return $this->json(array_map(fn(PasswordEntry $e) => $this->serializeSafe($e), $entries));
+        return $this->json($entries, Response::HTTP_OK, [], self::READ_CONTEXT);
     }
 
     #[Route('', name: 'create', methods: ['POST'])]
@@ -67,7 +72,7 @@ class PasswordController extends AbstractController
         $this->em->persist($entry);
         $this->em->flush();
 
-        return $this->json($this->serializeSafe($entry), Response::HTTP_CREATED);
+        return $this->json($entry, Response::HTTP_CREATED, [], self::READ_CONTEXT);
     }
 
     #[Route('/{id}', name: 'show', methods: ['GET'], requirements: ['id' => '\d+'])]
@@ -78,12 +83,13 @@ class PasswordController extends AbstractController
             return $check;
         }
 
-        $key = hash('sha256', $this->encryptionKey, true);
+        $key      = hash('sha256', $this->encryptionKey, true);
+        $context  = self::READ_CONTEXT;
 
-        return $this->json([
-            ...$this->serializeSafe($entry),
-            'password' => $this->encryptionService->decrypt($entry->getEncryptedPassword(), $key),
-        ]);
+        $normalized = $this->serializer->normalize($entry, null, $context);
+        $normalized['password'] = $this->encryptionService->decrypt($entry->getEncryptedPassword(), $key);
+
+        return $this->json($normalized);
     }
 
     #[Route('/{id}', name: 'update', methods: ['PUT', 'PATCH'], requirements: ['id' => '\d+'])]
@@ -129,7 +135,7 @@ class PasswordController extends AbstractController
 
         $this->em->flush();
 
-        return $this->json($this->serializeSafe($entry));
+        return $this->json($entry, Response::HTTP_OK, [], self::READ_CONTEXT);
     }
 
     #[Route('/{id}', name: 'delete', methods: ['DELETE'], requirements: ['id' => '\d+'])]
@@ -173,19 +179,5 @@ class PasswordController extends AbstractController
         }
 
         return null;
-    }
-
-    private function serializeSafe(PasswordEntry $entry): array
-    {
-        return [
-            'id'         => $entry->getId(),
-            'title'      => $entry->getTitle(),
-            'username'   => $entry->getUsername(),
-            'url'        => $entry->getUrl(),
-            'notes'      => $entry->getNotes(),
-            'favorite'   => $entry->isFavorite(),
-            'created_at' => $entry->getCreatedAt()?->format(\DateTimeInterface::ATOM),
-            'updated_at' => $entry->getUpdatedAt()?->format(\DateTimeInterface::ATOM),
-        ];
     }
 }

@@ -250,3 +250,55 @@ jobs:
 
       - name: Check YAML configs
         run: php bin/console lint:yaml config/
+
+  phpstan:
+    name: PHPStan (level 5)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          extensions: pdo_pgsql, openssl, intl, ctype, iconv
+          coverage: none
+
+      - name: Cache Composer packages
+        uses: actions/cache@v4
+        with:
+          path: vendor
+          key: ${{ runner.os }}-php8.2-composer-${{ hashFiles('composer.lock') }}
+          restore-keys: ${{ runner.os }}-php8.2-composer-
+
+      - name: Install dependencies
+        run: composer install --prefer-dist --no-progress --no-interaction
+
+      - name: Generate JWT keys (required by container build)
+        env:
+          VAULT_ENCRYPTION_KEY: phpstan-key
+          JWT_PASSPHRASE: securevault
+        run: |
+          mkdir -p config/jwt
+          openssl genpkey -algorithm RSA -out config/jwt/private.pem -pkeyopt rsa_keygen_bits:2048 -pass pass:securevault 2>/dev/null
+          openssl rsa -pubout -in config/jwt/private.pem -out config/jwt/public.pem -passin pass:securevault 2>/dev/null
+
+      - name: Warm up cache (required by phpstan-symfony)
+        env:
+          VAULT_ENCRYPTION_KEY: phpstan-key
+          JWT_SECRET_KEY: '%kernel.project_dir%/config/jwt/private.pem'
+          JWT_PUBLIC_KEY: '%kernel.project_dir%/config/jwt/public.pem'
+          JWT_PASSPHRASE: securevault
+          DATABASE_URL: postgresql://app:app@127.0.0.1:5432/app?serverVersion=16
+        run: php bin/console cache:warmup --env=dev --no-debug
+
+      - name: Run PHPStan
+        env:
+          VAULT_ENCRYPTION_KEY: phpstan-key
+          JWT_SECRET_KEY: '%kernel.project_dir%/config/jwt/private.pem'
+          JWT_PUBLIC_KEY: '%kernel.project_dir%/config/jwt/public.pem'
+          JWT_PASSPHRASE: securevault
+          DATABASE_URL: postgresql://app:app@127.0.0.1:5432/app?serverVersion=16
+        run: php vendor/bin/phpstan analyse --memory-limit=512M --no-progress

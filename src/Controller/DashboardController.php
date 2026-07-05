@@ -9,6 +9,7 @@ use App\Repository\AlertRepository;
 use App\Repository\PasswordEntryRepository;
 use App\Repository\VaultRepository;
 use App\Service\EncryptionService;
+use App\Service\VaultKeyService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
@@ -22,7 +23,8 @@ class DashboardController extends AbstractController
 {
     public function __construct(
         #[Autowire(env: 'VAULT_ENCRYPTION_KEY')]
-        private readonly string $encryptionKey,
+        private readonly string $sharedEncryptionKey,
+        private readonly VaultKeyService $vaultKeyService,
     ) {}
 
     #[Route('/dashboard', name: 'app_dashboard')]
@@ -49,7 +51,9 @@ class DashboardController extends AbstractController
             $vault->setUser($user);
             $entityManager->persist($vault);
 
-            $key = hash('sha256', $this->encryptionKey, true);
+            $key = $this->vaultKeyService->getFromSession()
+                ?? hash('sha256', $this->sharedEncryptionKey, true);
+            $keyVersion = $this->vaultKeyService->getFromSession() ? 1 : 0;
 
             $services = [
                 ['title' => 'Google',  'username' => 'john.doe@gmail.com'],
@@ -62,6 +66,7 @@ class DashboardController extends AbstractController
                 $p->setTitle($s['title']);
                 $p->setUsername($s['username']);
                 $p->setEncryptedPassword($encryptionService->encrypt('demo_password', $key));
+                $p->setKeyVersion($keyVersion);
                 $p->setVault($vault);
                 $p->setUser($user);
                 $entityManager->persist($p);
@@ -92,7 +97,6 @@ class DashboardController extends AbstractController
 
         $editForm = $formFactory->createNamed('edit_password_entry', PasswordEntryType::class, new PasswordEntry(), [
             'vaults'           => $vaults,
-            'require_password' => false,
         ]);
 
         return $this->render('dashboard/index.html.twig', [

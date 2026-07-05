@@ -1,0 +1,29 @@
+{% extends 'emails/base_email.html.twig' %}
+
+{% block title %}Nous avons bien reçu votre message — SecureVault{% endblock %}
+
+{% block body %}
+<h1>Votre message est bien arrivé ✓</h1>
+
+<p>Bonjour <strong style="color:#181d22;">{{ sender_name }}</strong>,</p>
+
+<p>
+  Merci de nous avoir contactés. Nous avons bien reçu votre demande concernant <strong style="color:#181d22;">« {{ subject }} »</strong>
+  et notre équipe vous répondra dans les <strong style="color:#181d22;">48 heures ouvrées</strong>.
+</p>
+
+<div class="tip-box">
+  <p>
+    💡 <strong>En attendant</strong>, vous pouvez consulter notre
+    <a href="#" style="color:#2f7d5b;font-weight:600;">centre d'aide</a>
+    — la réponse à votre question s'y trouve peut-être déjà.
+  </p>
+</div>
+
+<p>
+  Si votre demande est urgente ou concerne un problème de sécurité critique, vous pouvez nous joindre directement à
+  <a href="mailto:contact@securevault.com" style="color:#2f7d5b;font-weight:600;">contact@securevault.com</a>.
+</p>
+
+<p>À très bientôt,<br><strong style="color:#181d22;">L'équipe SecureVault</strong></p>
+{% endblock %}

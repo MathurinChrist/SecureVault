@@ -23,3 +23,7 @@ services:
     App\Service\FileUploader:
         arguments:
             $targetDirectory: '%profiles_directory%'
+
+    App\EventSubscriber\LoginSuccessSubscriber:
+        arguments:
+            $sharedEncryptionKey: '%env(VAULT_ENCRYPTION_KEY)%'

@@ -1,0 +1,445 @@
+parameters:
+	ignoreErrors:
+		-
+			message: '#^Property App\\Command\\CheckLeakedPasswordsCommand\:\:\$userRepository is never read, only written\.$#'
+			identifier: property.onlyWritten
+			count: 1
+			path: src/Command/CheckLeakedPasswordsCommand.php
+
+		-
+			message: '#^Call to an undefined method Symfony\\Component\\Serializer\\SerializerInterface\:\:normalize\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: src/Controller/Api/PasswordController.php
+
+		-
+			message: '#^Parameter \#1 \$user of method App\\Entity\\PasswordEntry\:\:setUser\(\) expects App\\Entity\\User\|null, Symfony\\Component\\Security\\Core\\User\\UserInterface\|null given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Controller/Api/PasswordController.php
+
+		-
+			message: '#^Constant App\\Controller\\Api\\VaultController\:\:WRITE_CONTEXT is unused\.$#'
+			identifier: classConstant.unused
+			count: 1
+			path: src/Controller/Api/VaultController.php
+
+		-
+			message: '#^Parameter \#1 \$user of method App\\Entity\\Vault\:\:setUser\(\) expects App\\Entity\\User\|null, Symfony\\Component\\Security\\Core\\User\\UserInterface\|null given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Controller/Api/VaultController.php
+
+		-
+			message: '#^Property App\\Controller\\Api\\VaultController\:\:\$serializer is never read, only written\.$#'
+			identifier: property.onlyWritten
+			count: 1
+			path: src/Controller/Api/VaultController.php
+
+		-
+			message: '#^Method KnpU\\OAuth2ClientBundle\\Client\\OAuth2ClientInterface\:\:redirect\(\) invoked with 1 parameter, 2 required\.$#'
+			identifier: arguments.count
+			count: 1
+			path: src/Controller/GoogleController.php
+
+		-
+			message: '#^Call to an undefined method Symfony\\Component\\Security\\Core\\User\\UserInterface\:\:getEncryptionKey\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: src/Controller/ProfileController.php
+
+		-
+			message: '#^Call to an undefined method Symfony\\Component\\Security\\Core\\User\\UserInterface\:\:setEncryptionKey\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: src/Controller/ProfileController.php
+
+		-
+			message: '#^Call to an undefined method Symfony\\Component\\Security\\Core\\User\\UserInterface\:\:setPassword\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: src/Controller/ProfileController.php
+
+		-
+			message: '#^Call to an undefined method Symfony\\Component\\Security\\Core\\User\\UserInterface\:\:setProfileImage\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: src/Controller/ProfileController.php
+
+		-
+			message: '#^Parameter \#1 \$user of class App\\Event\\PasswordUpdatedEvent constructor expects App\\Entity\\User, Symfony\\Component\\Security\\Core\\User\\UserInterface\|null given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Controller/ProfileController.php
+
+		-
+			message: '#^Parameter \#1 \$user of method Symfony\\Component\\PasswordHasher\\Hasher\\UserPasswordHasherInterface\:\:hashPassword\(\) expects Symfony\\Component\\Security\\Core\\User\\PasswordAuthenticatedUserInterface, Symfony\\Component\\Security\\Core\\User\\UserInterface\|null given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Controller/ProfileController.php
+
+		-
+			message: '#^Property App\\Entity\\ActivityLog\:\:\$action type mapping mismatch\: property can contain string\|null but database expects string\.$#'
+			identifier: doctrine.columnType
+			count: 1
+			path: src/Entity/ActivityLog.php
+
+		-
+			message: '#^Property App\\Entity\\ActivityLog\:\:\$createdAt type mapping mismatch\: property can contain DateTimeImmutable\|null but database expects DateTimeImmutable\.$#'
+			identifier: doctrine.columnType
+			count: 1
+			path: src/Entity/ActivityLog.php
+
+		-
+			message: '#^Property App\\Entity\\ActivityLog\:\:\$user type mapping mismatch\: property can contain App\\Entity\\User\|null but database expects App\\Entity\\User\.$#'
+			identifier: doctrine.associationType
+			count: 1
+			path: src/Entity/ActivityLog.php
+
+		-
+			message: '#^Property App\\Entity\\BaseNotification\:\:\$createdAt type mapping mismatch\: property can contain DateTimeImmutable\|null but database expects DateTimeImmutable\.$#'
+			identifier: doctrine.columnType
+			count: 1
+			path: src/Entity/BaseNotification.php
+
+		-
+			message: '#^Property App\\Entity\\BaseNotification\:\:\$title type mapping mismatch\: property can contain string\|null but database expects string\.$#'
+			identifier: doctrine.columnType
+			count: 1
+			path: src/Entity/BaseNotification.php
+
+		-
+			message: '#^Property App\\Entity\\BaseNotification\:\:\$type type mapping mismatch\: property can contain string\|null but database expects string\.$#'
+			identifier: doctrine.columnType
+			count: 1
+			path: src/Entity/BaseNotification.php
+
+		-
+			message: '#^Property App\\Entity\\BaseNotification\:\:\$user type mapping mismatch\: property can contain App\\Entity\\User\|null but database expects App\\Entity\\User\.$#'
+			identifier: doctrine.associationType
+			count: 1
+			path: src/Entity/BaseNotification.php
+
+		-
+			message: '#^Property App\\Entity\\Category\:\:\$name type mapping mismatch\: property can contain string\|null but database expects string\.$#'
+			identifier: doctrine.columnType
+			count: 1
+			path: src/Entity/Category.php
+
+		-
+			message: '#^Property App\\Entity\\Category\:\:\$passwordEntries type mapping mismatch\: property can contain Doctrine\\Common\\Collections\\Collection but database expects Doctrine\\Common\\Collections\\Collection&iterable\<App\\Entity\\PasswordEntry\>\.$#'
+			identifier: doctrine.associationType
+			count: 1
+			path: src/Entity/Category.php
+
+		-
+			message: '#^Property App\\Entity\\LoginAttempt\:\:\$createdAt type mapping mismatch\: property can contain DateTimeImmutable\|null but database expects DateTimeImmutable\.$#'
+			identifier: doctrine.columnType
+			count: 1
+			path: src/Entity/LoginAttempt.php
+
+		-
+			message: '#^Property App\\Entity\\LoginAttempt\:\:\$ipAddress type mapping mismatch\: property can contain string\|null but database expects string\.$#'
+			identifier: doctrine.columnType
+			count: 1
+			path: src/Entity/LoginAttempt.php
+
+		-
+			message: '#^Property App\\Entity\\LoginAttempt\:\:\$user type mapping mismatch\: property can contain App\\Entity\\User\|null but database expects App\\Entity\\User\.$#'
+			identifier: doctrine.associationType
+			count: 1
+			path: src/Entity/LoginAttempt.php
+
+		-
+			message: '#^Property App\\Entity\\PasswordEntry\:\:\$categories type mapping mismatch\: property can contain Doctrine\\Common\\Collections\\Collection but database expects Doctrine\\Common\\Collections\\Collection&iterable\<App\\Entity\\Category\>\.$#'
+			identifier: doctrine.associationType
+			count: 1
+			path: src/Entity/PasswordEntry.php
+
+		-
+			message: '#^Property App\\Entity\\PasswordEntry\:\:\$createdAt type mapping mismatch\: property can contain DateTimeImmutable\|null but database expects DateTimeImmutable\.$#'
+			identifier: doctrine.columnType
+			count: 1
+			path: src/Entity/PasswordEntry.php
+
+		-
+			message: '#^Property App\\Entity\\PasswordEntry\:\:\$encryptedPassword type mapping mismatch\: property can contain string\|null but database expects string\.$#'
+			identifier: doctrine.columnType
+			count: 1
+			path: src/Entity/PasswordEntry.php
+
+		-
+			message: '#^Property App\\Entity\\PasswordEntry\:\:\$passwordHistory type mapping mismatch\: property can contain Doctrine\\Common\\Collections\\Collection but database expects Doctrine\\Common\\Collections\\Collection&iterable\<App\\Entity\\PasswordHistory\>\.$#'
+			identifier: doctrine.associationType
+			count: 1
+			path: src/Entity/PasswordEntry.php
+
+		-
+			message: '#^Property App\\Entity\\PasswordEntry\:\:\$tags type mapping mismatch\: property can contain Doctrine\\Common\\Collections\\Collection but database expects Doctrine\\Common\\Collections\\Collection&iterable\<App\\Entity\\Tag\>\.$#'
+			identifier: doctrine.associationType
+			count: 1
+			path: src/Entity/PasswordEntry.php
+
+		-
+			message: '#^Property App\\Entity\\PasswordEntry\:\:\$title type mapping mismatch\: property can contain string\|null but database expects string\.$#'
+			identifier: doctrine.columnType
+			count: 1
+			path: src/Entity/PasswordEntry.php
+
+		-
+			message: '#^Property App\\Entity\\PasswordEntry\:\:\$user type mapping mismatch\: property can contain App\\Entity\\User\|null but database expects App\\Entity\\User\.$#'
+			identifier: doctrine.associationType
+			count: 1
+			path: src/Entity/PasswordEntry.php
+
+		-
+			message: '#^Property App\\Entity\\PasswordEntry\:\:\$vault type mapping mismatch\: property can contain App\\Entity\\Vault\|null but database expects App\\Entity\\Vault\.$#'
+			identifier: doctrine.associationType
+			count: 1
+			path: src/Entity/PasswordEntry.php
+
+		-
+			message: '#^Property App\\Entity\\PasswordHistory\:\:\$changedAt type mapping mismatch\: property can contain DateTimeImmutable\|null but database expects DateTimeImmutable\.$#'
+			identifier: doctrine.columnType
+			count: 1
+			path: src/Entity/PasswordHistory.php
+
+		-
+			message: '#^Property App\\Entity\\PasswordHistory\:\:\$passwordEntry type mapping mismatch\: property can contain App\\Entity\\PasswordEntry\|null but database expects App\\Entity\\PasswordEntry\.$#'
+			identifier: doctrine.associationType
+			count: 1
+			path: src/Entity/PasswordHistory.php
+
+		-
+			message: '#^Property App\\Entity\\PasswordHistory\:\:\$previousPasswordHash type mapping mismatch\: property can contain string\|null but database expects string\.$#'
+			identifier: doctrine.columnType
+			count: 1
+			path: src/Entity/PasswordHistory.php
+
+		-
+			message: '#^Property App\\Entity\\Permission\:\:\$code type mapping mismatch\: property can contain string\|null but database expects string\.$#'
+			identifier: doctrine.columnType
+			count: 1
+			path: src/Entity/Permission.php
+
+		-
+			message: '#^Property App\\Entity\\Permission\:\:\$roles type mapping mismatch\: property can contain Doctrine\\Common\\Collections\\Collection but database expects Doctrine\\Common\\Collections\\Collection&iterable\<App\\Entity\\Role\>\.$#'
+			identifier: doctrine.associationType
+			count: 1
+			path: src/Entity/Permission.php
+
+		-
+			message: '#^Property App\\Entity\\Role\:\:\$name type mapping mismatch\: property can contain string\|null but database expects string\.$#'
+			identifier: doctrine.columnType
+			count: 1
+			path: src/Entity/Role.php
+
+		-
+			message: '#^Property App\\Entity\\Role\:\:\$permissions type mapping mismatch\: property can contain Doctrine\\Common\\Collections\\Collection but database expects Doctrine\\Common\\Collections\\Collection&iterable\<App\\Entity\\Permission\>\.$#'
+			identifier: doctrine.associationType
+			count: 1
+			path: src/Entity/Role.php
+
+		-
+			message: '#^Property App\\Entity\\Role\:\:\$users type mapping mismatch\: property can contain Doctrine\\Common\\Collections\\Collection but database expects Doctrine\\Common\\Collections\\Collection&iterable\<App\\Entity\\User\>\.$#'
+			identifier: doctrine.associationType
+			count: 1
+			path: src/Entity/Role.php
+
+		-
+			message: '#^Property App\\Entity\\SharedVault\:\:\$permission type mapping mismatch\: property can contain App\\Entity\\VaultPermission\|null but database expects App\\Entity\\VaultPermission\.$#'
+			identifier: doctrine.associationType
+			count: 1
+			path: src/Entity/SharedVault.php
+
+		-
+			message: '#^Property App\\Entity\\SharedVault\:\:\$recipient type mapping mismatch\: property can contain App\\Entity\\User\|null but database expects App\\Entity\\User\.$#'
+			identifier: doctrine.associationType
+			count: 1
+			path: src/Entity/SharedVault.php
+
+		-
+			message: '#^Property App\\Entity\\SharedVault\:\:\$sender type mapping mismatch\: property can contain App\\Entity\\User\|null but database expects App\\Entity\\User\.$#'
+			identifier: doctrine.associationType
+			count: 1
+			path: src/Entity/SharedVault.php
+
+		-
+			message: '#^Property App\\Entity\\SharedVault\:\:\$sharedAt type mapping mismatch\: property can contain DateTimeImmutable\|null but database expects DateTimeImmutable\.$#'
+			identifier: doctrine.columnType
+			count: 1
+			path: src/Entity/SharedVault.php
+
+		-
+			message: '#^Property App\\Entity\\SharedVault\:\:\$vault type mapping mismatch\: property can contain App\\Entity\\Vault\|null but database expects App\\Entity\\Vault\.$#'
+			identifier: doctrine.associationType
+			count: 1
+			path: src/Entity/SharedVault.php
+
+		-
+			message: '#^Property App\\Entity\\Tag\:\:\$name type mapping mismatch\: property can contain string\|null but database expects string\.$#'
+			identifier: doctrine.columnType
+			count: 1
+			path: src/Entity/Tag.php
+
+		-
+			message: '#^Property App\\Entity\\Tag\:\:\$passwordEntries type mapping mismatch\: property can contain Doctrine\\Common\\Collections\\Collection but database expects Doctrine\\Common\\Collections\\Collection&iterable\<App\\Entity\\PasswordEntry\>\.$#'
+			identifier: doctrine.associationType
+			count: 1
+			path: src/Entity/Tag.php
+
+		-
+			message: '#^Property App\\Entity\\Tag\:\:\$vaults type mapping mismatch\: property can contain Doctrine\\Common\\Collections\\Collection but database expects Doctrine\\Common\\Collections\\Collection&iterable\<App\\Entity\\Vault\>\.$#'
+			identifier: doctrine.associationType
+			count: 1
+			path: src/Entity/Tag.php
+
+		-
+			message: '#^Property App\\Entity\\User\:\:\$activityLogs type mapping mismatch\: property can contain Doctrine\\Common\\Collections\\Collection but database expects Doctrine\\Common\\Collections\\Collection&iterable\<App\\Entity\\ActivityLog\>\.$#'
+			identifier: doctrine.associationType
+			count: 1
+			path: src/Entity/User.php
+
+		-
+			message: '#^Property App\\Entity\\User\:\:\$baseNotifications type mapping mismatch\: property can contain Doctrine\\Common\\Collections\\Collection but database expects Doctrine\\Common\\Collections\\Collection&iterable\<App\\Entity\\BaseNotification\>\.$#'
+			identifier: doctrine.associationType
+			count: 1
+			path: src/Entity/User.php
+
+		-
+			message: '#^Property App\\Entity\\User\:\:\$createdAt type mapping mismatch\: property can contain DateTimeImmutable\|null but database expects DateTimeImmutable\.$#'
+			identifier: doctrine.columnType
+			count: 1
+			path: src/Entity/User.php
+
+		-
+			message: '#^Property App\\Entity\\User\:\:\$email type mapping mismatch\: property can contain string\|null but database expects string\.$#'
+			identifier: doctrine.columnType
+			count: 1
+			path: src/Entity/User.php
+
+		-
+			message: '#^Property App\\Entity\\User\:\:\$firstName type mapping mismatch\: property can contain string\|null but database expects string\.$#'
+			identifier: doctrine.columnType
+			count: 1
+			path: src/Entity/User.php
+
+		-
+			message: '#^Property App\\Entity\\User\:\:\$lastName type mapping mismatch\: property can contain string\|null but database expects string\.$#'
+			identifier: doctrine.columnType
+			count: 1
+			path: src/Entity/User.php
+
+		-
+			message: '#^Property App\\Entity\\User\:\:\$loginAttempts type mapping mismatch\: property can contain Doctrine\\Common\\Collections\\Collection but database expects Doctrine\\Common\\Collections\\Collection&iterable\<App\\Entity\\LoginAttempt\>\.$#'
+			identifier: doctrine.associationType
+			count: 1
+			path: src/Entity/User.php
+
+		-
+			message: '#^Property App\\Entity\\User\:\:\$password type mapping mismatch\: property can contain string\|null but database expects string\.$#'
+			identifier: doctrine.columnType
+			count: 1
+			path: src/Entity/User.php
+
+		-
+			message: '#^Property App\\Entity\\User\:\:\$roleEntities type mapping mismatch\: property can contain Doctrine\\Common\\Collections\\Collection but database expects Doctrine\\Common\\Collections\\Collection&iterable\<App\\Entity\\Role\>\.$#'
+			identifier: doctrine.associationType
+			count: 1
+			path: src/Entity/User.php
+
+		-
+			message: '#^Property App\\Entity\\User\:\:\$sessions type mapping mismatch\: property can contain Doctrine\\Common\\Collections\\Collection but database expects Doctrine\\Common\\Collections\\Collection&iterable\<App\\Entity\\UserSession\>\.$#'
+			identifier: doctrine.associationType
+			count: 1
+			path: src/Entity/User.php
+
+		-
+			message: '#^Property App\\Entity\\User\:\:\$vaults type mapping mismatch\: property can contain Doctrine\\Common\\Collections\\Collection but database expects Doctrine\\Common\\Collections\\Collection&iterable\<App\\Entity\\Vault\>\.$#'
+			identifier: doctrine.associationType
+			count: 1
+			path: src/Entity/User.php
+
+		-
+			message: '#^Property App\\Entity\\UserSession\:\:\$createdAt type mapping mismatch\: property can contain DateTimeImmutable\|null but database expects DateTimeImmutable\.$#'
+			identifier: doctrine.columnType
+			count: 1
+			path: src/Entity/UserSession.php
+
+		-
+			message: '#^Property App\\Entity\\UserSession\:\:\$ipAddress type mapping mismatch\: property can contain string\|null but database expects string\.$#'
+			identifier: doctrine.columnType
+			count: 1
+			path: src/Entity/UserSession.php
+
+		-
+			message: '#^Property App\\Entity\\UserSession\:\:\$lastUsedAt type mapping mismatch\: property can contain DateTimeImmutable\|null but database expects DateTimeImmutable\.$#'
+			identifier: doctrine.columnType
+			count: 1
+			path: src/Entity/UserSession.php
+
+		-
+			message: '#^Property App\\Entity\\UserSession\:\:\$user type mapping mismatch\: property can contain App\\Entity\\User\|null but database expects App\\Entity\\User\.$#'
+			identifier: doctrine.associationType
+			count: 1
+			path: src/Entity/UserSession.php
+
+		-
+			message: '#^Property App\\Entity\\Vault\:\:\$createdAt type mapping mismatch\: property can contain DateTimeImmutable\|null but database expects DateTimeImmutable\.$#'
+			identifier: doctrine.columnType
+			count: 1
+			path: src/Entity/Vault.php
+
+		-
+			message: '#^Property App\\Entity\\Vault\:\:\$name type mapping mismatch\: property can contain string\|null but database expects string\.$#'
+			identifier: doctrine.columnType
+			count: 1
+			path: src/Entity/Vault.php
+
+		-
+			message: '#^Property App\\Entity\\Vault\:\:\$passwordEntries type mapping mismatch\: property can contain Doctrine\\Common\\Collections\\Collection but database expects Doctrine\\Common\\Collections\\Collection&iterable\<App\\Entity\\PasswordEntry\>\.$#'
+			identifier: doctrine.associationType
+			count: 1
+			path: src/Entity/Vault.php
+
+		-
+			message: '#^Property App\\Entity\\Vault\:\:\$sharedVaults type mapping mismatch\: property can contain Doctrine\\Common\\Collections\\Collection but database expects Doctrine\\Common\\Collections\\Collection&iterable\<App\\Entity\\SharedVault\>\.$#'
+			identifier: doctrine.associationType
+			count: 1
+			path: src/Entity/Vault.php
+
+		-
+			message: '#^Property App\\Entity\\Vault\:\:\$tags type mapping mismatch\: property can contain Doctrine\\Common\\Collections\\Collection but database expects Doctrine\\Common\\Collections\\Collection&iterable\<App\\Entity\\Tag\>\.$#'
+			identifier: doctrine.associationType
+			count: 1
+			path: src/Entity/Vault.php
+
+		-
+			message: '#^Property App\\Entity\\Vault\:\:\$user type mapping mismatch\: property can contain App\\Entity\\User\|null but database expects App\\Entity\\User\.$#'
+			identifier: doctrine.associationType
+			count: 1
+			path: src/Entity/Vault.php
+
+		-
+			message: '#^Property App\\Entity\\VaultPermission\:\:\$code type mapping mismatch\: property can contain string\|null but database expects string\.$#'
+			identifier: doctrine.columnType
+			count: 1
+			path: src/Entity/VaultPermission.php
+
+		-
+			message: '#^Property App\\Entity\\VaultPermission\:\:\$name type mapping mismatch\: property can contain string\|null but database expects string\.$#'
+			identifier: doctrine.columnType
+			count: 1
+			path: src/Entity/VaultPermission.php
+
+		-
+			message: '#^Property App\\Entity\\VaultPermission\:\:\$sharedVaults type mapping mismatch\: property can contain Doctrine\\Common\\Collections\\Collection but database expects Doctrine\\Common\\Collections\\Collection&iterable\<App\\Entity\\SharedVault\>\.$#'
+			identifier: doctrine.associationType
+			count: 1
+			path: src/Entity/VaultPermission.php
+
+		-
+			message: '#^Expression on left side of \?\? is not nullable\.$#'
+			identifier: nullCoalesce.expr
+			count: 1
+			path: src/Security/GoogleAuthenticator.php

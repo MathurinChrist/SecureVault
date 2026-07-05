@@ -11,6 +11,8 @@ use Symfony\Component\Form\Extension\Core\Type\PasswordType;
 use Symfony\Component\Form\Extension\Core\Type\TextareaType;
 use Symfony\Component\Form\Extension\Core\Type\TextType;
 use Symfony\Component\Form\FormBuilderInterface;
+use Symfony\Component\Form\FormEvent;
+use Symfony\Component\Form\FormEvents;
 use Symfony\Component\OptionsResolver\OptionsResolver;
 use Symfony\Component\Validator\Constraints\NotBlank;
 
@@ -21,16 +23,14 @@ class PasswordEntryType extends AbstractType
 
     public function buildForm(FormBuilderInterface $builder, array $options): void
     {
-        $requirePassword = $options['require_password'];
-
         $builder
             ->add('vault', EntityType::class, [
-                'class'       => Vault::class,
+                'class'        => Vault::class,
                 'choice_label' => 'name',
-                'choices'     => $options['vaults'],
-                'placeholder' => '-- Sélectionner un coffre --',
-                'attr'        => ['class' => self::SELECT_CLASS],
-                'constraints' => [new NotBlank(message: 'Veuillez sélectionner un coffre.')],
+                'choices'      => $options['vaults'],
+                'placeholder'  => '-- Sélectionner un coffre --',
+                'attr'         => ['class' => self::SELECT_CLASS],
+                'constraints'  => [new NotBlank(message: 'Veuillez sélectionner un coffre.')],
             ])
             ->add('title', TextType::class, [
                 'attr' => [
@@ -45,20 +45,6 @@ class PasswordEntryType extends AbstractType
                     'class'       => self::INPUT_CLASS,
                     'placeholder' => "email ou nom d'utilisateur",
                 ],
-            ])
-            ->add('plainPassword', PasswordType::class, [
-                'mapped'       => false,
-                'always_empty' => false,
-                'required'     => $requirePassword,
-                'attr'         => [
-                    'class'       => self::INPUT_CLASS . ' pr-20',
-                    'placeholder' => $requirePassword
-                        ? '••••••••'
-                        : 'Laisser vide pour conserver le mot de passe actuel',
-                ],
-                'constraints' => $requirePassword
-                    ? [new NotBlank(message: 'Le mot de passe est obligatoire.')]
-                    : [],
             ])
             ->add('url', TextType::class, [
                 'required' => false,
@@ -80,14 +66,58 @@ class PasswordEntryType extends AbstractType
                 'label'    => 'Marquer comme favori',
                 'attr'     => ['class' => 'h-4 w-4 rounded border-white/20 bg-slate-800 text-indigo-500 focus:ring-indigo-500'],
             ]);
+
+        // PRE_SET_DATA: detect creation vs edition to configure the password field accordingly
+        $builder->addEventListener(FormEvents::PRE_SET_DATA, function (FormEvent $event): void {
+            $entry = $event->getData();
+            $form  = $event->getForm();
+
+            $isNew = !($entry instanceof PasswordEntry && $entry->getId() !== null);
+
+            $form->add('plainPassword', PasswordType::class, [
+                'mapped'       => false,
+                'always_empty' => false,
+                'required'     => $isNew,
+                'attr'         => [
+                    'class'       => self::INPUT_CLASS . ' pr-20',
+                    'placeholder' => $isNew
+                        ? '••••••••'
+                        : 'Laisser vide pour conserver le mot de passe actuel',
+                ],
+                'constraints' => $isNew
+                    ? [new NotBlank(message: 'Le mot de passe est obligatoire.')]
+                    : [],
+            ]);
+        });
+
+        // PRE_SUBMIT: if editing and password field is empty, remove the NotBlank constraint
+        $builder->addEventListener(FormEvents::PRE_SUBMIT, function (FormEvent $event): void {
+            $data = $event->getData();
+            $form = $event->getForm();
+
+            $entry = $form->getData();
+            $isNew = !($entry instanceof PasswordEntry && $entry->getId() !== null);
+
+            if (!$isNew && empty($data['plainPassword'] ?? '')) {
+                $form->add('plainPassword', PasswordType::class, [
+                    'mapped'       => false,
+                    'always_empty' => false,
+                    'required'     => false,
+                    'attr'         => [
+                        'class'       => self::INPUT_CLASS . ' pr-20',
+                        'placeholder' => 'Laisser vide pour conserver le mot de passe actuel',
+                    ],
+                    'constraints' => [],
+                ]);
+            }
+        });
     }
 
     public function configureOptions(OptionsResolver $resolver): void
     {
         $resolver->setDefaults([
-            'data_class'       => PasswordEntry::class,
-            'vaults'           => [],
-            'require_password' => true,
+            'data_class' => PasswordEntry::class,
+            'vaults'     => [],
         ]);
     }
 }

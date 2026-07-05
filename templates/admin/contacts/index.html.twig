@@ -1,0 +1,70 @@
+{% extends 'admin/layout.html.twig' %}
+
+{% block title %}Messages de contact{% endblock %}
+{% block page_label %}Messages de contact{% endblock %}
+
+{% block content %}
+
+<div class="flex items-center justify-between mb-6 gap-4 flex-wrap">
+    <div>
+        <h1 class="text-[22px] font-extrabold text-ink tracking-tight">Messages de contact</h1>
+        <p class="text-[14px] text-ink-muted mt-0.5">{{ messages|length }} message{{ messages|length != 1 ? 's' }} — {{ unread_count }} non lu{{ unread_count != 1 ? 's' }}</p>
+    </div>
+
+    {# Filters #}
+    <div class="flex items-center gap-2 bg-white border border-line rounded-full p-1">
+        <a href="{{ path('admin_contacts') }}"
+           class="px-4 py-1.5 rounded-full text-[13px] font-semibold transition {{ filter == 'all' ? 'bg-brand text-white' : 'text-ink-muted hover:text-ink' }}">
+            Tous
+        </a>
+        <a href="{{ path('admin_contacts', {filter: 'unread'}) }}"
+           class="px-4 py-1.5 rounded-full text-[13px] font-semibold transition {{ filter == 'unread' ? 'bg-brand text-white' : 'text-ink-muted hover:text-ink' }}">
+            Non lus
+            {% if unread_count > 0 %}<span class="ml-1 bg-warn text-white text-[10px] font-extrabold px-1.5 py-0.5 rounded-full">{{ unread_count }}</span>{% endif %}
+        </a>
+        <a href="{{ path('admin_contacts', {filter: 'read'}) }}"
+           class="px-4 py-1.5 rounded-full text-[13px] font-semibold transition {{ filter == 'read' ? 'bg-brand text-white' : 'text-ink-muted hover:text-ink' }}">
+            Lus
+        </a>
+    </div>
+</div>
+
+{% if messages is empty %}
+<div class="bg-white rounded-2xl border border-line p-16 flex flex-col items-center text-ink-muted">
+    <svg class="h-12 w-12 mb-4 opacity-25" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+    <p class="text-[15px] font-semibold">Aucun message</p>
+</div>
+{% else %}
+<div class="bg-white rounded-2xl border border-line overflow-hidden">
+    {% for msg in messages %}
+    <a href="{{ path('admin_contacts_show', {id: msg.id}) }}"
+       class="flex items-center gap-4 px-6 py-4 hover:bg-surface transition border-b border-line last:border-0 group {{ not msg.isRead ? 'bg-warn/[.03]' : '' }}">
+
+        <div class="h-10 w-10 rounded-full {{ not msg.isRead ? 'bg-warn/10' : 'bg-surface' }} flex items-center justify-center flex-shrink-0">
+            <svg class="h-5 w-5 {{ not msg.isRead ? 'text-warn' : 'text-ink-muted' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+        </div>
+
+        <div class="flex-1 min-w-0 grid grid-cols-1 sm:grid-cols-[1fr_1.5fr_auto] gap-x-4 items-center">
+            <div class="min-w-0">
+                <p class="text-[13.5px] font-{{ not msg.isRead ? 'extrabold' : 'semibold' }} text-ink truncate">{{ msg.name }}</p>
+                <p class="text-[12px] text-ink-muted truncate">{{ msg.email }}</p>
+            </div>
+            <div class="min-w-0 hidden sm:block">
+                <p class="text-[13.5px] {{ not msg.isRead ? 'font-bold text-ink' : 'font-semibold text-ink-soft' }} truncate">{{ msg.subject }}</p>
+                <p class="text-[12px] text-ink-muted truncate">{{ msg.message|slice(0, 70) }}…</p>
+            </div>
+            <div class="flex items-center gap-3 flex-shrink-0">
+                {% if not msg.isRead %}
+                    <span class="h-2 w-2 rounded-full bg-warn flex-shrink-0"></span>
+                {% endif %}
+                <span class="text-[12px] text-ink-muted whitespace-nowrap">{{ msg.createdAt|date('d/m/Y H:i') }}</span>
+            </div>
+        </div>
+
+        <svg class="h-4 w-4 text-ink-muted group-hover:text-ink flex-shrink-0 transition" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+    </a>
+    {% endfor %}
+</div>
+{% endif %}
+
+{% endblock %}
