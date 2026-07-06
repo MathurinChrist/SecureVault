@@ -15,6 +15,7 @@ use App\Service\VaultKeyService;
 use Doctrine\Bundle\FixturesBundle\Fixture;
 use Doctrine\Persistence\ObjectManager;
 use Faker\Factory;
+use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 
 class AppFixtures extends Fixture
@@ -25,6 +26,7 @@ class AppFixtures extends Fixture
         private readonly UserPasswordHasherInterface $hasher,
         private readonly EncryptionService $encryptionService,
         private readonly VaultKeyService $vaultKeyService,
+        #[Autowire(env: 'VAULT_ENCRYPTION_KEY')] private readonly string $sharedEncryptionKey,
     ) {}
 
     public function load(ObjectManager $manager): void
@@ -195,7 +197,7 @@ class AppFixtures extends Fixture
             ['Microsoft',   'https://microsoft.com'],
         ];
 
-        $sharedKey = hash('sha256', 'placeholder-key-fixtures', true);
+        $sharedKey = hash('sha256', $this->sharedEncryptionKey, true);
 
         foreach ($vaults as $vault) {
             $entryCount = random_int(2, 5);
