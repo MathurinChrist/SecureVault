@@ -3,13 +3,13 @@
 namespace App\EventSubscriber;
 
 use App\Entity\User;
-use App\Security\GoogleAuthenticator;
 use App\Service\TwoFactorService;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpKernel\Event\RequestEvent;
 use Symfony\Component\HttpKernel\KernelEvents;
 use Symfony\Component\Routing\RouterInterface;
+use Symfony\Component\Security\Core\Exception\CustomUserMessageAuthenticationException;
 use Symfony\Component\Security\Http\Event\LoginSuccessEvent;
 
 class TwoFactorSubscriber implements EventSubscriberInterface
@@ -41,17 +41,29 @@ class TwoFactorSubscriber implements EventSubscriberInterface
 
     public function onLoginSuccess(LoginSuccessEvent $event): void
     {
-        // Google OAuth already proves identity — skip 2FA
-        if ($event->getAuthenticator() instanceof GoogleAuthenticator) {
-            return;
-        }
-
         $user = $event->getUser();
-
-        if (!$user instanceof User || !$user->is2faEnabled()) {
+        if (!$user instanceof User) {
             return;
         }
 
+        // The stateless JWT API firewall has no session, so the redirect-based 2FA challenge
+        // below cannot run there. Rather than issue a single-factor token, refuse to log a
+        // 2FA-enabled account in over the API — it must use the web flow.
+        if ($event->getFirewallName() === 'api') {
+            if ($user->is2faEnabled()) {
+                throw new CustomUserMessageAuthenticationException(
+                    'Les comptes avec double authentification doivent se connecter via l\'interface web.'
+                );
+            }
+            return;
+        }
+
+        if (!$user->is2faEnabled()) {
+            return;
+        }
+
+        // Enforced for every authenticator (including Google): if the user opted into 2FA,
+        // possession of the first factor alone must not grant access.
         $this->twoFactorService->generateAndSendCode($user, $event->getRequest());
 
         $event->setResponse(new RedirectResponse(

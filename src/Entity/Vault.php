@@ -30,8 +30,16 @@ class Vault
     #[Groups(['vault:read', 'vault:write'])]
     private bool $archived = false;
 
+    /**
+     * The vault's data-encryption key (DEK), randomly generated and stored here wrapped
+     * (encrypted) with the server master key. Never stored in plaintext.
+     */
     #[ORM\Column(type: 'text', nullable: true)]
     private ?string $encryptedKey = null;
+
+    /** Which master-key version wrapped {@see $encryptedKey}, so the master can be rotated. */
+    #[ORM\Column(options: ['default' => 1])]
+    private int $keyEncryptionVersion = 1;
 
     #[ORM\ManyToOne(inversedBy: 'vaults')]
     #[ORM\JoinColumn(nullable: false)]
@@ -93,6 +101,14 @@ class Vault
     public function setEncryptedKey(?string $encryptedKey): static
     {
         $this->encryptedKey = $encryptedKey;
+        return $this;
+    }
+
+    public function getKeyEncryptionVersion(): int { return $this->keyEncryptionVersion; }
+
+    public function setKeyEncryptionVersion(int $keyEncryptionVersion): static
+    {
+        $this->keyEncryptionVersion = $keyEncryptionVersion;
         return $this;
     }
 

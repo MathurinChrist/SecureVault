@@ -53,6 +53,9 @@ class ProfileController extends AbstractController
         $passwordForm->handleRequest($request);
 
         if ($passwordForm->isSubmitted() && $passwordForm->isValid()) {
+            // Vault data is encrypted with per-vault keys wrapped by the server master key,
+            // independent of the account password — so changing the password never touches
+            // or orphans stored secrets.
             $user->setPassword(
                 $userPasswordHasher->hashPassword(
                     $user,
@@ -65,11 +68,6 @@ class ProfileController extends AbstractController
 
             $this->addFlash('success', 'Mot de passe modifié avec succès !');
             return $this->redirectToRoute('app_profile');
-        }
-
-        if (!$user->getEncryptionKey()) {
-            $user->setEncryptionKey(bin2hex(random_bytes(32)));
-            $entityManager->flush();
         }
 
         $sessions = $entityManager->getRepository(\App\Entity\UserSession::class)->findBy(

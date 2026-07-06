@@ -31,7 +31,7 @@
                     </div>
                     <h2 class="font-bold text-gray-900">Inviter un utilisateur</h2>
                 </div>
-                <form method="post" action="{{ path('app_vault_share_new', {id: vault.id}) }}" novalidate class="px-6 py-5 space-y-4">
+                <form method="post" action="{{ path('app_vault_share_new', {id: vault.id}) }}" class="px-6 py-5 space-y-4">
                     <input type="hidden" name="_token" value="{{ csrf_token('vault_share_' ~ vault.id) }}">
 
                     <div>

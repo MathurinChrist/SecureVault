@@ -124,7 +124,7 @@
                         {%- set _is = (_route starts with 'app_password') -%}
                         <a href="{{ path('app_passwords') }}" class="{{ _li }} {{ _is ? _active : _inactive }}">
                             <svg class="w-[18px] h-[18px] flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
-                            <span>Tous les éléments</span>
+                            <span>Tous les mots de passe</span>
                         </a>
 
                         {%- set _is = (_route == 'app_alerts') -%}
@@ -228,7 +228,7 @@
                             </span>
                             <input type="text" name="q"
                                 value="{{ app.request.query.get('q', '') }}"
-                                placeholder="Rechercher coffres, éléments…"
+                                placeholder="Rechercher coffres, mots de passe…"
                                 id="topbarSearch"
                                 autocomplete="off"
                                 class="block w-full pl-9 pr-12 py-2.5 bg-white border border-line rounded-xl text-[13.5px] placeholder-ink-muted/60 text-ink focus:outline-none focus:ring-2 focus:ring-brand/25 focus:border-brand transition">
@@ -238,15 +238,15 @@
                         </form>
                     </div>
 
-                    <!-- spacer pushes actions right on mobile -->
-                    <div class="flex-1 sm:hidden"></div>
+                    <!-- spacer pushes actions to the far right -->
+                    <div class="flex-1"></div>
 
                     <!-- Right actions -->
                     <div class="flex items-center gap-2 sm:gap-3 flex-shrink-0">
                         <button onclick="if(typeof openAddModal==='function'){openAddModal();}else{window.location.href='{{ path('app_dashboard') }}'}"
                             class="flex items-center gap-1.5 bg-brand hover:bg-brand-light text-white text-[13.5px] font-bold px-3 sm:px-4 py-2.5 rounded-full transition">
                             <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M12 4v16m8-8H4"/></svg>
-                            <span class="hidden sm:inline">Nouvel élément</span>
+                            <span class="hidden sm:inline">Nouveau mot de passe</span>
                         </button>
 
                         {# séparateur visuel #}

@@ -164,7 +164,7 @@
                 <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
             </button>
         </div>
-        {{ form_start(password_form, {'action': path('app_password_new'), 'attr': {'novalidate': 'novalidate'}}) }}
+        {{ form_start(password_form, {'action': path('app_password_new')}) }}
         <div class="px-6 py-5 space-y-4 max-h-[60vh] overflow-y-auto">
             {% include 'dashboard/_form_fields.html.twig' with {'form': password_form, 'pwd_input_id': 'add-pwd'} %}
         </div>
@@ -197,7 +197,7 @@
                 <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
             </button>
         </div>
-        {{ form_start(edit_form, {'attr': {'id': 'edit-form', 'novalidate': 'novalidate'}}) }}
+        {{ form_start(edit_form, {'attr': {'id': 'edit-form'}}) }}
         <div class="px-6 py-5 space-y-4 max-h-[60vh] overflow-y-auto">
             {% include 'dashboard/_form_fields.html.twig' with {'form': edit_form, 'pwd_input_id': 'edit-pwd'} %}
         </div>

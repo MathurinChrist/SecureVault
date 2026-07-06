@@ -73,6 +73,9 @@ class VaultController extends AbstractController
         }
 
         $data = json_decode($request->getContent(), true);
+        if (!is_array($data)) {
+            return $this->json(['error' => 'Invalid JSON body.'], Response::HTTP_UNPROCESSABLE_ENTITY);
+        }
 
         if (isset($data['name'])) {
             if (empty(trim($data['name']))) {
