@@ -3,6 +3,8 @@
 namespace App\Controller\Admin;
 
 use App\Entity\User;
+use App\Repository\ResetPasswordRequestRepository;
+use App\Repository\SharedVaultRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Action;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Actions;
@@ -27,6 +29,8 @@ class UserCrudController extends AbstractCrudController
 {
     public function __construct(
         private readonly UserPasswordHasherInterface $hasher,
+        private readonly SharedVaultRepository $sharedVaultRepository,
+        private readonly ResetPasswordRequestRepository $resetPasswordRequestRepository,
     ) {}
 
     public static function getEntityFqcn(): string
@@ -92,6 +96,27 @@ class UserCrudController extends AbstractCrudController
     {
         $this->hashPasswordIfProvided($entity);
         parent::updateEntity($em, $entity);
+    }
+
+    public function deleteEntity(EntityManagerInterface $entityManager, mixed $entityInstance): void
+    {
+        if (!$entityInstance instanceof User) {
+            parent::deleteEntity($entityManager, $entityInstance);
+            return;
+        }
+
+        // These rows reference the user via foreign keys that are neither
+        // ON DELETE CASCADE in the schema nor mapped as cascading Doctrine
+        // relations on User, so they must be cleared explicitly first.
+        foreach ($this->sharedVaultRepository->findAsSenderOrRecipient($entityInstance) as $share) {
+            $entityManager->remove($share);
+        }
+        foreach ($this->resetPasswordRequestRepository->findBy(['user' => $entityInstance]) as $resetRequest) {
+            $entityManager->remove($resetRequest);
+        }
+        $entityManager->flush();
+
+        parent::deleteEntity($entityManager, $entityInstance);
     }
 
     private function hashPasswordIfProvided(mixed $entity): void

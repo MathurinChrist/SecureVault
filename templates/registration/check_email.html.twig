@@ -3,51 +3,51 @@
 
 {% block title %}Vérifiez vos e-mails — SecureVault{% endblock %}
 
+{% block visitor_navbar %}{% endblock %}
+{% block visitor_footer %}{% endblock %}
+{% block main_classes %}{% endblock %}
+
 {% block body %}
-<div class="min-h-screen flex items-center justify-center px-4">
+<div class="min-h-screen flex items-center justify-center px-4 bg-canvas text-ink">
     <div class="w-full max-w-md text-center">
 
         <a href="{{ path('app_home') }}" class="inline-flex items-center space-x-2 mb-10">
-            <div class="h-10 w-10 rounded-xl bg-brand flex items-center justify-center">
-                <svg class="h-5 w-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
-                </svg>
-            </div>
-            <span class="text-xl font-bold">SecureVault</span>
+            <svg class="w-9 h-9 flex-none" viewBox="0 0 32 32" fill="none"><circle cx="16" cy="16" r="13" stroke="#142F32" stroke-width="5" stroke-dasharray="56 26" stroke-linecap="round"/><circle cx="16" cy="16" r="4.5" fill="#2f7d5b"/></svg>
+            <span class="text-xl font-bold text-ink">SecureVault</span>
         </a>
 
-        <div class="glass-card rounded-3xl p-10">
+        <div class="bg-white rounded-[28px] border border-line shadow-[0_30px_70px_rgba(20,47,50,.14)] p-10">
             <div class="h-20 w-20 rounded-full bg-brand/10 flex items-center justify-center mx-auto mb-6">
                 <svg class="h-10 w-10 text-brand-mid" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
                 </svg>
             </div>
 
-            <h1 class="text-2xl font-bold mb-3">Vérifiez vos e-mails</h1>
-            <p class="text-slate-400 mb-2">
+            <h1 class="text-2xl font-bold mb-3 text-ink">Vérifiez vos e-mails</h1>
+            <p class="text-ink-muted mb-2">
                 Un e-mail de confirmation a été envoyé à
             </p>
             <p class="text-brand-mid font-semibold mb-6">{{ email }}</p>
-            <p class="text-slate-400 text-sm mb-8">
+            <p class="text-ink-muted text-sm mb-8">
                 Cliquez sur le lien dans l'e-mail pour activer votre compte.
-                Le lien expire dans <strong class="text-slate-300">1 heure</strong>.
+                Le lien expire dans <strong class="text-ink-soft">1 heure</strong>.
             </p>
 
-            <div class="border-t border-white/10 pt-6">
-                <p class="text-slate-500 text-sm mb-4">Vous n'avez pas reçu l'e-mail ?</p>
+            <div class="border-t border-line pt-6">
+                <p class="text-ink-muted text-sm mb-4">Vous n'avez pas reçu l'e-mail ?</p>
                 <form method="post" action="{{ path('app_resend_verification') }}">
                     <input type="hidden" name="_token" value="{{ csrf_token('resend_verification') }}">
                     <input type="hidden" name="email" value="{{ email }}">
-                    <button type="submit" class="btn btn-ghost border border-white/10 text-sm w-full">
+                    <button type="submit" class="w-full bg-white border border-line hover:border-brand hover:bg-surface font-bold text-[13.5px] text-ink py-3 rounded-full transition">
                         Renvoyer l'e-mail de confirmation
                     </button>
                 </form>
             </div>
         </div>
 
-        <p class="mt-6 text-slate-500 text-sm">
+        <p class="mt-6 text-ink-muted text-sm">
             Déjà confirmé ?
-            <a href="{{ path('app_login') }}" class="text-brand-mid hover:text-[#7090e0]">Se connecter</a>
+            <a href="{{ path('app_login') }}" class="text-brand-mid font-semibold hover:text-brand">Se connecter</a>
         </p>
 
     </div>
