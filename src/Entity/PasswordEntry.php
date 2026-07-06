@@ -41,7 +41,7 @@ class PasswordEntry
     #[Groups(['password:read', 'password:write'])]
     private bool $favorite = false;
 
-    /** 0 = shared env key (legacy), 1 = per-user PBKDF2 key */
+    /** 0 = shared env key (legacy), 1 = per-user PBKDF2 key (deprecated, breaks sharing), 2 = per-vault key */
     #[ORM\Column(options: ['default' => 0])]
     private int $keyVersion = 0;
 

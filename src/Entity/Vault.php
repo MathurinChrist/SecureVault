@@ -30,6 +30,9 @@ class Vault
     #[Groups(['vault:read', 'vault:write'])]
     private bool $archived = false;
 
+    #[ORM\Column(type: 'text', nullable: true)]
+    private ?string $encryptedKey = null;
+
     #[ORM\ManyToOne(inversedBy: 'vaults')]
     #[ORM\JoinColumn(nullable: false)]
     private ?User $user = null;
@@ -82,6 +85,14 @@ class Vault
     public function setArchived(bool $archived): static
     {
         $this->archived = $archived;
+        return $this;
+    }
+
+    public function getEncryptedKey(): ?string { return $this->encryptedKey; }
+
+    public function setEncryptedKey(?string $encryptedKey): static
+    {
+        $this->encryptedKey = $encryptedKey;
         return $this;
     }
 

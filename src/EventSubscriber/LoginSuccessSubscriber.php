@@ -6,6 +6,7 @@ use App\Entity\PasswordEntry;
 use App\Entity\User;
 use App\Repository\PasswordEntryRepository;
 use App\Service\EncryptionService;
+use App\Service\VaultKeyProvider;
 use App\Service\VaultKeyService;
 use Doctrine\ORM\EntityManagerInterface;
 use Psr\Log\LoggerInterface;
@@ -16,6 +17,7 @@ class LoginSuccessSubscriber implements EventSubscriberInterface
 {
     public function __construct(
         private readonly VaultKeyService         $vaultKeyService,
+        private readonly VaultKeyProvider         $vaultKeyProvider,
         private readonly EncryptionService        $encryptionService,
         private readonly EntityManagerInterface   $em,
         private readonly PasswordEntryRepository  $passwordEntryRepository,
@@ -55,29 +57,33 @@ class LoginSuccessSubscriber implements EventSubscriberInterface
 
         $this->vaultKeyService->storeInSession($vaultKey);
 
-        // Auto-migrate legacy entries (keyVersion = 0 → encrypted with shared key)
+        // Auto-migrate legacy entries (keyVersion 0/1) to the per-vault key (keyVersion 2),
+        // which — unlike the per-user session key — can also be decrypted by share recipients.
         $this->migrateLegacyPasswords($user, $vaultKey);
     }
 
-    private function migrateLegacyPasswords(User $user, string $vaultKey): void
+    private function migrateLegacyPasswords(User $user, string $sessionVaultKey): void
     {
         $legacy = $this->passwordEntryRepository->findBy([
             'user'       => $user,
-            'keyVersion' => 0,
+            'keyVersion' => [0, 1],
         ]);
 
         if (empty($legacy)) {
             return;
         }
 
-        $oldKey = hash('sha256', $this->sharedEncryptionKey, true);
-        $count  = 0;
+        $oldSharedKey = hash('sha256', $this->sharedEncryptionKey, true);
+        $count        = 0;
 
         foreach ($legacy as $entry) {
             try {
-                $plain = $this->encryptionService->decrypt($entry->getEncryptedPassword(), $oldKey);
+                $sourceKey = $entry->getKeyVersion() === 1 ? $sessionVaultKey : $oldSharedKey;
+                $plain     = $this->encryptionService->decrypt($entry->getEncryptedPassword(), $sourceKey);
+
+                $vaultKey = $this->vaultKeyProvider->getOrCreateKey($entry->getVault());
                 $entry->setEncryptedPassword($this->encryptionService->encrypt($plain, $vaultKey));
-                $entry->setKeyVersion(1);
+                $entry->setKeyVersion(2);
                 $count++;
             } catch (\RuntimeException $e) {
                 $this->logger->warning('Failed to migrate password entry #{id}: {msg}', [
@@ -89,7 +95,7 @@ class LoginSuccessSubscriber implements EventSubscriberInterface
 
         if ($count > 0) {
             $this->em->flush();
-            $this->logger->info('Migrated {n} password entries to per-user key for {email}', [
+            $this->logger->info('Migrated {n} password entries to per-vault key for {email}', [
                 'n'     => $count,
                 'email' => $user->getEmail(),
             ]);

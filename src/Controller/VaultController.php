@@ -14,6 +14,7 @@ use App\Repository\VaultRepository;
 use App\Service\ActivityLogService;
 use App\Service\AlertService;
 use App\Service\EncryptionService;
+use App\Service\VaultKeyProvider;
 use App\Service\VaultKeyService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -34,13 +35,8 @@ class VaultController extends AbstractController
         private readonly string $sharedEncryptionKey,
         private readonly ActivityLogService $activityLogService,
         private readonly VaultKeyService $vaultKeyService,
+        private readonly VaultKeyProvider $vaultKeyProvider,
     ) {}
-
-    private function resolveKey(): string
-    {
-        return $this->vaultKeyService->getFromSession()
-            ?? hash('sha256', $this->sharedEncryptionKey, true);
-    }
 
     // ============================= VAULTS =============================
 
@@ -242,9 +238,10 @@ class VaultController extends AbstractController
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
-            $plain = $form->get('plainPassword')->getData();
-            $entry->setEncryptedPassword($encryptionService->encrypt($plain, $this->resolveKey()));
-            $entry->setKeyVersion($this->vaultKeyService->getFromSession() ? 1 : 0);
+            $plain    = $form->get('plainPassword')->getData();
+            $vaultKey = $this->vaultKeyProvider->getOrCreateKey($entry->getVault());
+            $entry->setEncryptedPassword($encryptionService->encrypt($plain, $vaultKey));
+            $entry->setKeyVersion(2);
             $entry->setUser($user);
             $em->persist($entry);
             $this->activityLogService->log($user, 'Mot de passe ajouté : ' . $entry->getTitle());
@@ -306,8 +303,9 @@ class VaultController extends AbstractController
         if ($form->isSubmitted() && $form->isValid()) {
             $plain = $form->get('plainPassword')->getData();
             if ($plain !== null && $plain !== '') {
-                $passwordEntry->setEncryptedPassword($encryptionService->encrypt($plain, $this->resolveKey()));
-                $passwordEntry->setKeyVersion($this->vaultKeyService->getFromSession() ? 1 : 0);
+                $vaultKey = $this->vaultKeyProvider->getOrCreateKey($vault);
+                $passwordEntry->setEncryptedPassword($encryptionService->encrypt($plain, $vaultKey));
+                $passwordEntry->setKeyVersion(2);
             }
             $this->activityLogService->log($user, 'Mot de passe modifié : ' . $passwordEntry->getTitle());
             $em->flush();
@@ -381,9 +379,11 @@ class VaultController extends AbstractController
             return $this->json(['error' => 'Accès refusé.'], 403);
         }
 
-        $key   = $passwordEntry->getKeyVersion() === 1
-            ? ($this->vaultKeyService->getFromSession() ?? throw new \RuntimeException('Session expirée.'))
-            : hash('sha256', $this->sharedEncryptionKey, true);
+        $key = match ($passwordEntry->getKeyVersion()) {
+            2       => $this->vaultKeyProvider->getOrCreateKey($vault),
+            1       => $this->vaultKeyService->getFromSession() ?? throw new \RuntimeException('Session expirée.'),
+            default => hash('sha256', $this->sharedEncryptionKey, true),
+        };
         $plain = $encryptionService->decrypt($passwordEntry->getEncryptedPassword(), $key);
 
         $this->activityLogService->log($user, 'Mot de passe consulté : ' . $passwordEntry->getTitle());
