@@ -455,9 +455,12 @@ class VaultController extends AbstractController
     #[Route('/security/2fa-setup', name: 'app_2fa_setup', methods: ['POST'])]
     public function setup2fa(Request $request, EntityManagerInterface $em): Response
     {
+        $referer = $request->headers->get('referer', '');
+        $redirectRoute = str_contains($referer, '/profile') ? 'app_profile' : 'app_alerts';
+
         if (!$this->isCsrfTokenValid('2fa_toggle', $request->request->get('_token'))) {
             $this->addFlash('error', 'Token CSRF invalide.');
-            return $this->redirectToRoute('app_alerts');
+            return $this->redirectToRoute($redirectRoute);
         }
 
         /** @var \App\Entity\User $user */
@@ -472,7 +475,7 @@ class VaultController extends AbstractController
                 : 'Authentification à deux facteurs désactivée.'
         );
 
-        return $this->redirectToRoute('app_alerts');
+        return $this->redirectToRoute($redirectRoute);
     }
 
 }

@@ -23,7 +23,7 @@
             </a>
             <button onclick="openAddModal()" class="flex items-center gap-2 bg-brand hover:bg-brand-light text-white text-[13.5px] font-bold px-4 py-2.5 rounded-full transition">
                 <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M12 4v16m8-8H4"/></svg>
-                <span>Nouvel élément</span>
+                <span>Nouveau mot de passe</span>
             </button>
         </div>
     </div>
@@ -292,7 +292,7 @@
                     <svg class="h-5 w-5 text-brand" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
                 </div>
                 <div>
-                    <h2 class="text-[15px] font-extrabold text-ink">Ajouter un élément</h2>
+                    <h2 class="text-[15px] font-extrabold text-ink">Ajouter un mot de passe</h2>
                     <p class="text-[12px] text-ink-muted">Identifiants de connexion</p>
                 </div>
             </div>
@@ -300,7 +300,7 @@
                 <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
             </button>
         </div>
-        {{ form_start(password_form, {'attr': {'novalidate': 'novalidate'}}) }}
+        {{ form_start(password_form) }}
         <div class="px-6 py-5 space-y-4 max-h-[60vh] overflow-y-auto">
             {% include 'dashboard/_form_fields.html.twig' with {'form': password_form, 'pwd_input_id': 'add-pwd'} %}
         </div>
@@ -308,7 +308,7 @@
             <button type="button" onclick="closeAddModal()" class="px-4 py-2.5 text-[13.5px] font-semibold text-ink-soft hover:text-ink hover:bg-surface rounded-full transition">Annuler</button>
             <button type="submit" class="flex items-center gap-2 bg-brand hover:bg-brand-light text-white text-[13.5px] font-bold px-5 py-2.5 rounded-full transition">
                 <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
-                <span>Ajouter l'élément</span>
+                <span>Ajouter le mot de passe</span>
             </button>
         </div>
         {{ form_end(password_form) }}
@@ -333,7 +333,7 @@
                 <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
             </button>
         </div>
-        {{ form_start(edit_form, {'attr': {'id': 'edit-form', 'novalidate': 'novalidate'}}) }}
+        {{ form_start(edit_form, {'attr': {'id': 'edit-form'}}) }}
         <div class="px-6 py-5 space-y-4 max-h-[60vh] overflow-y-auto">
             {% include 'dashboard/_form_fields.html.twig' with {'form': edit_form, 'pwd_input_id': 'edit-pwd'} %}
         </div>
