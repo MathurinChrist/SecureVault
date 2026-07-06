@@ -12,6 +12,10 @@ class EncryptionService
         $tag = '';
         $ciphertext = openssl_encrypt($data, self::METHOD, $key, OPENSSL_RAW_DATA, $iv, $tag);
 
+        if ($ciphertext === false) {
+            throw new \RuntimeException('Encryption failed.');
+        }
+
         return base64_encode($iv . $tag . $ciphertext);
     }
 

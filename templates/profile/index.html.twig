@@ -136,28 +136,18 @@
                         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"/></svg>
                     </div>
                     <div>
-                        <h2 class="text-lg font-bold text-gray-900">Votre Clé de Chiffrement</h2>
-                        <p class="text-gray-500 text-sm">Utilisée pour sécuriser vos données.</p>
+                        <h2 class="text-lg font-bold text-gray-900">Chiffrement de vos données</h2>
+                        <p class="text-gray-500 text-sm">Comment vos mots de passe sont protégés.</p>
                     </div>
                 </div>
-                <div class="p-4 rounded-xl bg-gray-50 border border-gray-200">
-                    <p class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3">Master Key (Récupération)</p>
-                    <div class="flex items-center space-x-3">
-                        <input type="password" readonly value="{{ app.user.encryptionKey }}" id="master-key"
-                            class="flex-1 bg-transparent border-none text-brand-mid font-mono text-sm focus:ring-0 outline-none">
-                        <button onclick="toggleKeyVisibility()" class="text-gray-400 hover:text-gray-700 transition p-1.5 rounded-lg hover:bg-gray-100">
-                            <svg id="eye-icon" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
-                        </button>
-                        <button onclick="copyKey()" class="text-gray-400 hover:text-gray-700 transition p-1.5 rounded-lg hover:bg-gray-100">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"/></svg>
-                        </button>
-                    </div>
+                <div class="p-4 rounded-xl bg-gray-50 border border-gray-200 text-sm text-gray-600 space-y-2">
+                    <p>Chaque coffre possède sa propre clé de chiffrement (AES-256-GCM), générée aléatoirement et stockée sous forme chiffrée par le serveur.</p>
+                    <p>Vous n'avez aucune clé à conserver : changer votre mot de passe n'affecte jamais vos données chiffrées.</p>
                 </div>
                 <div class="bg-amber-50 border border-amber-200 p-4 rounded-xl flex items-start space-x-3 text-amber-700 text-sm">
                     <svg class="w-5 h-5 mt-0.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
-                    <p>Ne partagez jamais cette clé. Elle permet de déchiffrer tous vos mots de passe.</p>
+                    <p>Utilisez un mot de passe de compte fort : c'est votre première ligne de défense.</p>
                 </div>
-                <button class="w-full border border-gray-200 text-gray-600 hover:bg-gray-50 font-medium py-2.5 rounded-lg text-sm transition">Régénérer la clé (Action Dangereuse)</button>
             </div>
 
             <!-- Activité -->

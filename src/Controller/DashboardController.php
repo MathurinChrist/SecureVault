@@ -61,7 +61,6 @@ class DashboardController extends AbstractController
                 $p->setTitle($s['title']);
                 $p->setUsername($s['username']);
                 $p->setEncryptedPassword($encryptionService->encrypt('demo_password', $key));
-                $p->setKeyVersion(2);
                 $p->setVault($vault);
                 $p->setUser($user);
                 $entityManager->persist($p);

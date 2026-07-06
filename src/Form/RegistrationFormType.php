@@ -13,6 +13,7 @@ use Symfony\Component\OptionsResolver\OptionsResolver;
 use Symfony\Component\Validator\Constraints\IsTrue;
 use Symfony\Component\Validator\Constraints\Length;
 use Symfony\Component\Validator\Constraints\NotBlank;
+use Symfony\Component\Validator\Constraints\NotCompromisedPassword;
 
 class RegistrationFormType extends AbstractType
 {
@@ -42,7 +43,8 @@ class RegistrationFormType extends AbstractType
                 ],
                 'constraints' => [
                     new NotBlank(message: 'Veuillez entrer un mot de passe'),
-                    new Length(min: 6, minMessage: 'Votre mot de passe doit faire au moins {{ limit }} caractères', max: 4096),
+                    new Length(min: 12, minMessage: 'Votre mot de passe doit faire au moins {{ limit }} caractères', max: 4096),
+                    new NotCompromisedPassword(message: 'Ce mot de passe est apparu dans une fuite de données. Choisissez-en un autre.', skipOnError: true),
                 ],
             ])
         ;

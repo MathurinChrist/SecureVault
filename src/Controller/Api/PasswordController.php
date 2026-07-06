@@ -6,9 +6,9 @@ use App\Entity\PasswordEntry;
 use App\Entity\Vault;
 use App\Repository\PasswordEntryRepository;
 use App\Service\EncryptionService;
+use App\Service\VaultKeyProvider;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
-use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -28,7 +28,7 @@ class PasswordController extends AbstractController
         private readonly EncryptionService $encryptionService,
         private readonly EntityManagerInterface $em,
         private readonly SerializerInterface $serializer,
-        #[Autowire(env: 'VAULT_ENCRYPTION_KEY')] private readonly string $encryptionKey,
+        private readonly VaultKeyProvider $vaultKeyProvider,
     ) {}
 
     #[Route('', name: 'list', methods: ['GET'])]
@@ -58,7 +58,7 @@ class PasswordController extends AbstractController
             return $this->json(['error' => 'title and password are required.'], Response::HTTP_UNPROCESSABLE_ENTITY);
         }
 
-        $key   = hash('sha256', $this->encryptionKey, true);
+        $key   = $this->vaultKeyProvider->getOrCreateKey($vault);
         $entry = (new PasswordEntry())
             ->setTitle(trim($data['title']))
             ->setUsername($data['username'] ?? null)
@@ -83,10 +83,9 @@ class PasswordController extends AbstractController
             return $check;
         }
 
-        $key      = hash('sha256', $this->encryptionKey, true);
-        $context  = self::READ_CONTEXT;
+        $key = $this->vaultKeyProvider->getOrCreateKey($entry->getVault());
 
-        $normalized = $this->serializer->normalize($entry, null, $context);
+        $normalized = $this->serializer->normalize($entry, null, self::READ_CONTEXT);
         $normalized['password'] = $this->encryptionService->decrypt($entry->getEncryptedPassword(), $key);
 
         return $this->json($normalized);
@@ -101,7 +100,9 @@ class PasswordController extends AbstractController
         }
 
         $data = json_decode($request->getContent(), true);
-        $key  = hash('sha256', $this->encryptionKey, true);
+        if (!is_array($data)) {
+            return $this->json(['error' => 'Invalid JSON body.'], Response::HTTP_UNPROCESSABLE_ENTITY);
+        }
 
         if (isset($data['title'])) {
             if (empty(trim($data['title']))) {
@@ -130,6 +131,7 @@ class PasswordController extends AbstractController
             if (empty($data['password'])) {
                 return $this->json(['error' => 'password cannot be empty.'], Response::HTTP_UNPROCESSABLE_ENTITY);
             }
+            $key = $this->vaultKeyProvider->getOrCreateKey($entry->getVault());
             $entry->setEncryptedPassword($this->encryptionService->encrypt($data['password'], $key));
         }
 

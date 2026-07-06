@@ -14,6 +14,7 @@ use Symfony\Component\HttpFoundation\Session\FlashBagAwareSessionInterface;
 use Symfony\Component\Routing\RouterInterface;
 use Symfony\Component\Security\Core\Authentication\Token\TokenInterface;
 use Symfony\Component\Security\Core\Exception\AuthenticationException;
+use Symfony\Component\Security\Core\Exception\CustomUserMessageAuthenticationException;
 use Symfony\Component\Security\Http\Authenticator\Passport\Badge\UserBadge;
 use Symfony\Component\Security\Http\Authenticator\Passport\Passport;
 use Symfony\Component\Security\Http\Authenticator\Passport\SelfValidatingPassport;
@@ -46,6 +47,16 @@ class GoogleAuthenticator extends OAuth2Authenticator implements AuthenticationE
                 $email    = $googleUser->getEmail();
                 $googleId = $googleUser->getId();
 
+                // Only trust the email if Google asserts it is verified. Without this check an
+                // attacker who controls an OAuth identity with an arbitrary/unverified email
+                // claim could match a victim's address.
+                $claims = $googleUser->toArray();
+                if (($claims['email_verified'] ?? false) !== true) {
+                    throw new CustomUserMessageAuthenticationException(
+                        'Votre adresse Google n\'est pas vérifiée. Connexion impossible.'
+                    );
+                }
+
                 // already linked to this Google account → silent login
                 $user = $this->em->getRepository(User::class)->findOneBy(['googleId' => $googleId]);
                 if ($user) {
@@ -53,16 +64,16 @@ class GoogleAuthenticator extends OAuth2Authenticator implements AuthenticationE
                     return $user;
                 }
 
-                // existing account by email → link Google + login with notice
-                $user = $this->em->getRepository(User::class)->findOneBy(['email' => $email]);
-                if ($user) {
-                    $user->setGoogleId($googleId);
-                    if (!$user->isEmailVerified()) {
-                        $user->setEmailVerified(true);
-                    }
-                    $this->em->flush();
-                    $session->set('_google_login', 'linked');
-                    return $user;
+                // An account already exists for this email but is NOT linked to this Google
+                // identity. Do not silently link and log in — that would let anyone holding a
+                // Google token for the address take over a password-protected account. Require
+                // the user to sign in with their password and link Google explicitly.
+                $existing = $this->em->getRepository(User::class)->findOneBy(['email' => $email]);
+                if ($existing) {
+                    throw new CustomUserMessageAuthenticationException(
+                        'Un compte existe déjà avec cet e-mail. Connectez-vous avec votre mot de passe, '
+                        . 'puis liez votre compte Google depuis votre profil.'
+                    );
                 }
 
                 // new user → create account
@@ -72,7 +83,9 @@ class GoogleAuthenticator extends OAuth2Authenticator implements AuthenticationE
                     ->setGoogleId($googleId)
                     ->setFirstName($nameParts[0])
                     ->setLastName($nameParts[1] ?? '')
-                    ->setPassword('')
+                    // Random unusable credential: not a valid hash, so form login can never
+                    // match it — these accounts must authenticate through Google.
+                    ->setPassword(bin2hex(random_bytes(32)))
                     ->setEmailVerified(true)
                     ->setIsActive(true);
 

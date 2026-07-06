@@ -26,6 +26,7 @@ class PasswordEntry
     #[Groups(['password:read', 'password:write'])]
     private ?string $username = null;
 
+    /** Encrypted (AES-256-GCM) with the owning vault's data-encryption key. */
     #[ORM\Column(type: 'text')]
     private ?string $encryptedPassword = null;
 
@@ -40,10 +41,6 @@ class PasswordEntry
     #[ORM\Column]
     #[Groups(['password:read', 'password:write'])]
     private bool $favorite = false;
-
-    /** 0 = shared env key (legacy), 1 = per-user PBKDF2 key (deprecated, breaks sharing), 2 = per-vault key */
-    #[ORM\Column(options: ['default' => 0])]
-    private int $keyVersion = 0;
 
     #[ORM\Column]
     #[Groups(['password:read'])]
@@ -187,8 +184,4 @@ class PasswordEntry
     }
 
     public function getPasswordHistory(): Collection { return $this->passwordHistory; }
-
-    public function getKeyVersion(): int { return $this->keyVersion; }
-
-    public function setKeyVersion(int $keyVersion): static { $this->keyVersion = $keyVersion; return $this; }
 }

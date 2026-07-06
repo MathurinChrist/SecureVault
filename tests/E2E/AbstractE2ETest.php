@@ -7,7 +7,7 @@ use Symfony\Component\Panther\PantherTestCase;
 
 abstract class AbstractE2ETest extends PantherTestCase
 {
-    private const DEFAULT_PASSWORD = 'E2eTest123!';
+    private const DEFAULT_PASSWORD = 'E2eTestPass123!';
 
     protected function skipIfUnavailable(): void
     {

@@ -11,22 +11,18 @@ use App\Entity\User;
 use App\Entity\Vault;
 use App\Entity\VaultPermission;
 use App\Service\EncryptionService;
-use App\Service\VaultKeyService;
+use App\Service\VaultKeyProvider;
 use Doctrine\Bundle\FixturesBundle\Fixture;
 use Doctrine\Persistence\ObjectManager;
 use Faker\Factory;
-use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 
 class AppFixtures extends Fixture
 {
-    private const SHARED_KEY_VERSION = 0;
-
     public function __construct(
         private readonly UserPasswordHasherInterface $hasher,
         private readonly EncryptionService $encryptionService,
-        private readonly VaultKeyService $vaultKeyService,
-        #[Autowire(env: 'VAULT_ENCRYPTION_KEY')] private readonly string $sharedEncryptionKey,
+        private readonly VaultKeyProvider $vaultKeyProvider,
     ) {}
 
     public function load(ObjectManager $manager): void
@@ -102,8 +98,7 @@ class AppFixtures extends Fixture
             ->setFirstName('Admin')
             ->setLastName('SecureVault')
             ->setRoles(['ROLE_ADMIN', 'ROLE_USER'])
-            ->setEmailVerified(true)
-            ->setEncryptionKey($this->vaultKeyService->generateSalt());
+            ->setEmailVerified(true);
 
         $admin->setPassword($this->hasher->hashPassword($admin, 'Admin1234!'));
         $manager->persist($admin);
@@ -131,8 +126,7 @@ class AppFixtures extends Fixture
                 ->setFirstName($first)
                 ->setLastName($last)
                 ->setRoles(['ROLE_USER'])
-                ->setEmailVerified(true)
-                ->setEncryptionKey($this->vaultKeyService->generateSalt());
+                ->setEmailVerified(true);
 
             $user->setPassword($this->hasher->hashPassword($user, $pass));
             $manager->persist($user);
@@ -149,8 +143,7 @@ class AppFixtures extends Fixture
                 ->setFirstName($faker->firstName())
                 ->setLastName($faker->lastName())
                 ->setRoles(['ROLE_USER'])
-                ->setEmailVerified($faker->boolean(80))
-                ->setEncryptionKey($this->vaultKeyService->generateSalt());
+                ->setEmailVerified($faker->boolean(80));
 
             $user->setPassword($this->hasher->hashPassword($user, 'User1234!'));
             $manager->persist($user);
@@ -197,9 +190,8 @@ class AppFixtures extends Fixture
             ['Microsoft',   'https://microsoft.com'],
         ];
 
-        $sharedKey = hash('sha256', $this->sharedEncryptionKey, true);
-
         foreach ($vaults as $vault) {
+            $vaultKey   = $this->vaultKeyProvider->getOrCreateKey($vault);
             $entryCount = random_int(2, 5);
             shuffle($services);
 
@@ -210,8 +202,7 @@ class AppFixtures extends Fixture
                 $entry = (new PasswordEntry())
                     ->setTitle($title)
                     ->setUsername($faker->boolean(70) ? $faker->email() : $faker->userName())
-                    ->setEncryptedPassword($this->encryptionService->encrypt($plaintext, $sharedKey))
-                    ->setKeyVersion(self::SHARED_KEY_VERSION)
+                    ->setEncryptedPassword($this->encryptionService->encrypt($plaintext, $vaultKey))
                     ->setUrl($url)
                     ->setNotes($faker->boolean(30) ? $faker->sentence() : null)
                     ->setFavorite($faker->boolean(20))

@@ -42,7 +42,7 @@ class ProfileE2ETest extends AbstractE2ETest
     {
         $this->skipIfUnavailable();
 
-        $newPassword = 'NewPass456!';
+        $newPassword = 'NewStrongPass456!';
         [$client, $email] = $this->registerAndLogin();
 
         $client->request('GET', '/profile');

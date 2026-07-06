@@ -126,8 +126,8 @@ class ResetPasswordControllerTest extends WebTestCase
         $this->assertResponseIsSuccessful();
 
         $form = $crawler->selectButton('Réinitialiser le mot de passe')->form([
-            'change_password_form[plainPassword][first]'  => 'NewPass456!',
-            'change_password_form[plainPassword][second]' => 'NewPass456!',
+            'change_password_form[plainPassword][first]'  => 'NewStrongPass456!',
+            'change_password_form[plainPassword][second]' => 'NewStrongPass456!',
         ]);
         $client->submit($form);
 
@@ -146,7 +146,7 @@ class ResetPasswordControllerTest extends WebTestCase
         $client->request('GET', '/login');
         $client->submitForm('Se connecter', [
             'email'    => $user->getEmail(),
-            'password' => 'NewPass456!',
+            'password' => 'NewStrongPass456!',
         ]);
         $this->assertResponseRedirects('/dashboard');
     }
@@ -164,8 +164,8 @@ class ResetPasswordControllerTest extends WebTestCase
         $client->request('GET', '/reset-password/reset/' . $token);
         $crawler = $client->request('GET', '/reset-password/reset');
         $form    = $crawler->selectButton('Réinitialiser le mot de passe')->form([
-            'change_password_form[plainPassword][first]'  => 'NewPass456!',
-            'change_password_form[plainPassword][second]' => 'NewPass456!',
+            'change_password_form[plainPassword][first]'  => 'NewStrongPass456!',
+            'change_password_form[plainPassword][second]' => 'NewStrongPass456!',
         ]);
         $client->submit($form);
         $this->assertResponseRedirects('/login');

@@ -38,7 +38,7 @@ class RegistrationControllerTest extends WebTestCase
             'registration_form[email]'         => $email,
             'registration_form[firstName]'     => 'Test',
             'registration_form[lastName]'      => 'User',
-            'registration_form[plainPassword]' => 'SecurePass123!',
+            'registration_form[plainPassword]' => 'Zq7!vaultTestPhrase2026',
             'registration_form[agreeTerms]'    => true,
         ]);
 

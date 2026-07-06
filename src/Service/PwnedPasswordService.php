@@ -23,7 +23,9 @@ class PwnedPasswordService
         $suffix = substr($hash, 5);
 
         $response = $this->httpClient->request('GET', self::API_URL . $prefix, [
-            'headers' => ['Add-Padding' => 'true'],
+            'headers'      => ['Add-Padding' => 'true'],
+            'timeout'      => 5,
+            'max_duration' => 10,
         ]);
 
         foreach (explode("\n", $response->getContent()) as $line) {

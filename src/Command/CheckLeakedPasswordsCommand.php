@@ -8,14 +8,15 @@ use App\Repository\PasswordEntryRepository;
 use App\Repository\UserRepository;
 use App\Service\EncryptionService;
 use App\Service\PwnedPasswordService;
+use App\Service\VaultKeyProvider;
 use Doctrine\ORM\EntityManagerInterface;
+use Psr\Log\LoggerInterface;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
-use Symfony\Component\DependencyInjection\Attribute\Autowire;
 
 #[AsCommand(
     name: 'securevault:check-leaked-passwords',
@@ -29,7 +30,8 @@ class CheckLeakedPasswordsCommand extends Command
         private readonly EncryptionService $encryptionService,
         private readonly PwnedPasswordService $pwnedService,
         private readonly EntityManagerInterface $em,
-        #[Autowire(env: 'VAULT_ENCRYPTION_KEY')] private readonly string $encryptionKey,
+        private readonly VaultKeyProvider $vaultKeyProvider,
+        private readonly LoggerInterface $logger,
     ) {
         parent::__construct();
     }
@@ -43,10 +45,9 @@ class CheckLeakedPasswordsCommand extends Command
 
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
-        $io        = new SymfonyStyle($input, $output);
-        $dryRun    = (bool) $input->getOption('dry-run');
-        $userId    = $input->getOption('user-id');
-        $sharedKey = hash('sha256', $this->encryptionKey, true);
+        $io     = new SymfonyStyle($input, $output);
+        $dryRun = (bool) $input->getOption('dry-run');
+        $userId = $input->getOption('user-id');
 
         $io->title('SecureVault — Leaked Password Check (HaveIBeenPwned)');
 
@@ -54,25 +55,39 @@ class CheckLeakedPasswordsCommand extends Command
             $io->note('Dry-run mode: no alerts will be created.');
         }
 
-        $criteria = $userId ? ['user' => (int) $userId] : [];
+        // Guard against "0" (falsy) and non-numeric input, which the old ternary silently turned
+        // into "scan everyone".
+        $criteria = [];
+        if ($userId !== null) {
+            if (!ctype_digit((string) $userId)) {
+                $io->error('--user-id must be a positive integer.');
+                return Command::INVALID;
+            }
+            $criteria = ['user' => (int) $userId];
+        }
+
         $entries  = $this->passwordEntryRepository->findBy($criteria);
 
         $io->progressStart(\count($entries));
 
         $breachedCount = 0;
+        $skipped       = 0;
 
         foreach ($entries as $entry) {
             $io->progressAdvance();
 
-            if ($entry->getKeyVersion() !== 0) {
-                // Per-user encrypted passwords require the user's session key — skip in CLI context
-                continue;
-            }
-
+            // Every entry is decryptable server-side: the vault DEK is unwrapped with the
+            // master key, no user session required.
             try {
-                $plaintext = $this->encryptionService->decrypt($entry->getEncryptedPassword(), $sharedKey);
+                $key       = $this->vaultKeyProvider->getOrCreateKey($entry->getVault());
+                $plaintext = $this->encryptionService->decrypt($entry->getEncryptedPassword(), $key);
                 $count     = $this->pwnedService->countBreaches($plaintext);
-            } catch (\Throwable) {
+            } catch (\Throwable $e) {
+                $skipped++;
+                $this->logger->error('Leak check failed for entry #{id}: {msg}', [
+                    'id'  => $entry->getId(),
+                    'msg' => $e->getMessage(),
+                ]);
                 continue;
             }
 
@@ -100,8 +115,9 @@ class CheckLeakedPasswordsCommand extends Command
         $this->em->flush();
 
         $io->success(sprintf(
-            'Checked %d entries — %d leaked password(s) %s.',
-            \count($entries),
+            'Checked %d entries (%d skipped) — %d leaked password(s) %s.',
+            \count($entries) - $skipped,
+            $skipped,
             $breachedCount,
             $dryRun ? 'found (dry-run)' : 'flagged with alerts'
         ));

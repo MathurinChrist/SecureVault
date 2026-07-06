@@ -247,19 +247,26 @@
                         <p class="text-[13.5px] font-bold text-ink leading-tight">{{ alert.title }}</p>
                         <p class="text-[12px] text-ink-muted mt-0.5 leading-relaxed">{{ alert.description|slice(0, 75) }}{% if alert.description|length > 75 %}…{% endif %}</p>
                     </div>
-                    <a href="{{ path('app_alerts_mark_read', {id: alert.id, redirect: 'app_dashboard'}) }}"
-                       title="Marquer comme lu"
-                       class="flex-shrink-0 opacity-0 group-hover:opacity-100 transition text-ink-muted hover:text-brand-mid mt-1">
-                        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
-                    </a>
+                    <form method="post" action="{{ path('app_alerts_mark_read', {id: alert.id}) }}"
+                          class="flex-shrink-0 opacity-0 group-hover:opacity-100 transition mt-1">
+                        <input type="hidden" name="_token" value="{{ csrf_token('alert_action') }}">
+                        <input type="hidden" name="redirect" value="app_dashboard">
+                        <button type="submit" title="Marquer comme lu" class="text-ink-muted hover:text-brand-mid">
+                            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
+                        </button>
+                    </form>
                 </div>
                 {% endfor %}
             </div>
-            <a href="{{ path('app_alerts_mark_all_read', {redirect: 'app_dashboard'}) }}"
-               class="mt-3 flex items-center justify-center gap-2 w-full border border-line hover:bg-surface text-ink-soft hover:text-ink text-[13px] font-semibold py-2.5 rounded-full transition">
-                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                <span>Tout marquer comme lu</span>
-            </a>
+            <form method="post" action="{{ path('app_alerts_mark_all_read') }}" class="mt-3">
+                <input type="hidden" name="_token" value="{{ csrf_token('alert_action') }}">
+                <input type="hidden" name="redirect" value="app_dashboard">
+                <button type="submit"
+                        class="flex items-center justify-center gap-2 w-full border border-line hover:bg-surface text-ink-soft hover:text-ink text-[13px] font-semibold py-2.5 rounded-full transition">
+                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                    <span>Tout marquer comme lu</span>
+                </button>
+            </form>
             {% else %}
             <div class="text-center py-8">
                 <div class="h-12 w-12 rounded-full bg-brand-mid/10 flex items-center justify-center mx-auto mb-3">
