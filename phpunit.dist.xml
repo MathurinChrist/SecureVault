@@ -22,6 +22,8 @@
     <testsuites>
         <testsuite name="Project Test Suite">
             <directory>tests</directory>
+            <!-- Abstract base class; matches the *Test.php suffix but isn't itself a test -->
+            <exclude>tests/E2E/AbstractE2ETest.php</exclude>
         </testsuite>
     </testsuites>
 
