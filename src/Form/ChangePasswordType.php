@@ -20,7 +20,6 @@ class ChangePasswordType extends AbstractType
                 'first_options' => [
                     'label' => 'Nouveau mot de passe',
                     'attr' => ['placeholder' => '••••••••'],
-                    'hash_property_path' => 'password',
                 ],
                 'second_options' => [
                     'label' => 'Confirmer le mot de passe',

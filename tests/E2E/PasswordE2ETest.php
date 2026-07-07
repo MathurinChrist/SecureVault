@@ -49,11 +49,13 @@ class PasswordE2ETest extends AbstractE2ETest
         [$client, $vaultUrl] = $this->loginAndGetVaultShowUrl();
         $title = 'E2E Entry ' . uniqid();
 
-        // Submit the add-password form
-        $crawler = $client->getCrawler();
-        $form = $crawler->filter('form[name="add_password_entry"]')->form([
+        // Open the add-password modal so its form fields are interactable
+        $client->executeScript('openAddModal()');
+        $client->waitForVisibility('#add-modal');
+
+        $form = $client->getCrawler()->filter('form[name="add_password_entry"]')->form([
             'add_password_entry[title]'    => $title,
-            'add_password_entry[password]' => 'S3cr3tPa$$!',
+            'add_password_entry[plainPassword]' => 'S3cr3tPa$$!',
             'add_password_entry[username]' => 'alice',
             'add_password_entry[url]'      => 'https://example.com',
         ]);
@@ -71,10 +73,12 @@ class PasswordE2ETest extends AbstractE2ETest
         [$client, $vaultUrl] = $this->loginAndGetVaultShowUrl();
         $pageUrl = $client->getCurrentURL();
 
-        $crawler = $client->getCrawler();
-        $form = $crawler->filter('form[name="add_password_entry"]')->form([
+        $client->executeScript('openAddModal()');
+        $client->waitForVisibility('#add-modal');
+
+        $form = $client->getCrawler()->filter('form[name="add_password_entry"]')->form([
             'add_password_entry[title]'    => '',
-            'add_password_entry[password]' => 'SomePass1!',
+            'add_password_entry[plainPassword]' => 'SomePass1!',
         ]);
         $client->submit($form);
         $client->waitFor('body');
@@ -97,11 +101,19 @@ class PasswordE2ETest extends AbstractE2ETest
         $client->waitFor('body');
         $title = 'PW Page Entry ' . uniqid();
 
-        $crawler = $client->getCrawler();
-        $form = $crawler->filter('form[name="add_password_entry"]')->form([
-            'add_password_entry[title]'    => $title,
-            'add_password_entry[password]' => 'S3cr3tPa$$!',
-            'add_password_entry[username]' => 'bob',
+        $client->executeScript('openAddModal()');
+        $client->waitForVisibility('#add-modal');
+
+        // On the passwords page the modal isn't tied to a vault, so a vault must be chosen
+        // explicitly (it's a required field). Pick the last option (the placeholder is first).
+        $modal   = $client->getCrawler()->filter('form[name="add_password_entry"]');
+        $vaultId = $modal->filter('select[name="add_password_entry[vault]"] option')->last()->attr('value');
+
+        $form = $modal->form([
+            'add_password_entry[title]'         => $title,
+            'add_password_entry[plainPassword]' => 'S3cr3tPa$$!',
+            'add_password_entry[username]'      => 'bob',
+            'add_password_entry[vault]'         => $vaultId,
         ]);
         $client->submit($form);
         $client->waitFor('body');
@@ -129,11 +141,13 @@ class PasswordE2ETest extends AbstractE2ETest
         [$client, $vaultUrl] = $this->loginAndGetVaultShowUrl();
         $title = 'To Delete ' . uniqid();
 
-        // Add a password
-        $crawler = $client->getCrawler();
-        $form = $crawler->filter('form[name="add_password_entry"]')->form([
+        // Add a password (open the modal first so the fields are interactable)
+        $client->executeScript('openAddModal()');
+        $client->waitForVisibility('#add-modal');
+
+        $form = $client->getCrawler()->filter('form[name="add_password_entry"]')->form([
             'add_password_entry[title]'    => $title,
-            'add_password_entry[password]' => 'DeleteMe1!',
+            'add_password_entry[plainPassword]' => 'DeleteMe1!',
         ]);
         $client->submit($form);
         $client->waitFor('body');
@@ -144,6 +158,10 @@ class PasswordE2ETest extends AbstractE2ETest
         $client->submit($deleteForm);
         $client->waitFor('body');
 
+        // Reload so the one-time success flash (which echoes the deleted title) is cleared,
+        // then confirm the entry is truly gone from the list.
+        $client->request('GET', $vaultUrl);
+        $client->waitFor('body');
         $this->assertSelectorTextNotContains('body', $title);
     }
 }

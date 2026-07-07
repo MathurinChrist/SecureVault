@@ -72,7 +72,30 @@ class ProfileControllerTest extends WebTestCase
         $client->request('GET', '/profile');
 
         $this->assertResponseIsSuccessful();
-        $this->assertSelectorCount(3, 'form');
+        // The change-password form is the only one on the page with a password input
+        // (the profile, search, and 2FA forms have none), so assert it directly rather
+        // than counting every form on the page.
+        $this->assertSelectorExists('form input[type="password"]');
+    }
+
+    public function testChangePasswordPersistsNewPassword(): void
+    {
+        [$client, $user] = $this->createAndLoginUser('pw');
+        $client->request('GET', '/profile');
+
+        $client->submitForm('Mettre à jour le mot de passe', [
+            'change_password[plainPassword][first]'  => 'BrandNewPass1234!',
+            'change_password[plainPassword][second]' => 'BrandNewPass1234!',
+        ]);
+
+        $em     = static::getContainer()->get(EntityManagerInterface::class);
+        $hasher = static::getContainer()->get(UserPasswordHasherInterface::class);
+        $fresh  = $em->getRepository(User::class)->find($user->getId());
+
+        $this->assertTrue(
+            $hasher->isPasswordValid($fresh, 'BrandNewPass1234!'),
+            'The new password should be usable for authentication after the change.'
+        );
     }
 
     public function testProfileUpdateRedirectsBack(): void

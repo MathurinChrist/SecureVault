@@ -59,9 +59,11 @@ class PasswordEntry
     private ?User $user = null;
 
     #[ORM\ManyToMany(targetEntity: Category::class, inversedBy: 'passwordEntries')]
+    #[Groups(['password:read'])]
     private Collection $categories;
 
     #[ORM\ManyToMany(targetEntity: Tag::class, inversedBy: 'passwordEntries')]
+    #[Groups(['password:read'])]
     private Collection $tags;
 
     #[ORM\OneToMany(mappedBy: 'passwordEntry', targetEntity: PasswordHistory::class, orphanRemoval: true)]

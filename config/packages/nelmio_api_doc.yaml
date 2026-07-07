@@ -1,0 +1,47 @@
+nelmio_api_doc:
+    documentation:
+        info:
+            title: SecureVault API
+            description: >-
+                API REST v1 de SecureVault — gestion des coffres, entrées de mots de passe,
+                partages, catégories, étiquettes, sessions et contact.
+            version: 1.0.0
+        components:
+            securitySchemes:
+                bearerAuth:
+                    type: http
+                    scheme: bearer
+                    bearerFormat: JWT
+        security:
+            - bearerAuth: []
+        paths:
+            /api/v1/auth/login:
+                post:
+                    tags: [Auth]
+                    summary: Authenticate and obtain a JWT bearer token.
+                    security: []
+                    requestBody:
+                        required: true
+                        content:
+                            application/json:
+                                schema:
+                                    type: object
+                                    required: [email, password]
+                                    properties:
+                                        email: { type: string, format: email }
+                                        password: { type: string, format: password }
+                    responses:
+                        '200':
+                            description: JWT issued.
+                            content:
+                                application/json:
+                                    schema:
+                                        type: object
+                                        properties:
+                                            token: { type: string }
+                        '401':
+                            description: Invalid credentials.
+    areas:
+        default:
+            path_patterns:
+                - ^/api(?!/doc$)(?!/doc\.json$)

@@ -9,3 +9,10 @@ when@test:
     framework:
         validation:
             not_compromised_password: false
+
+# The Panther-managed HTTP server runs E2E in the 'panther' env; disable the live
+# HaveIBeenPwned lookup there too so tests don't depend on an external service.
+when@panther:
+    framework:
+        validation:
+            not_compromised_password: false

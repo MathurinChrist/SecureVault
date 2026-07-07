@@ -36,9 +36,10 @@ class AlertsE2ETest extends AbstractE2ETest
         $client->request('GET', '/alerts');
         $client->waitFor('body');
 
-        // Login always creates one unread "new connection" alert, so the link should appear
-        $links = $client->getCrawler()->filter('a[href*="mark-all-read"]');
-        $this->assertGreaterThan(0, $links->count());
+        // Login always creates one unread "new connection" alert, so the control should appear.
+        // It is a POST form (CSRF-protected), not a link.
+        $forms = $client->getCrawler()->filter('form[action*="mark-all-read"]');
+        $this->assertGreaterThan(0, $forms->count());
     }
 
     /**
@@ -97,14 +98,14 @@ class AlertsE2ETest extends AbstractE2ETest
         $client->request('GET', '/alerts');
         $client->waitFor('body');
 
-        $markReadLinks = $client->getCrawler()->filter('a[href*="mark-as-read"]');
-        if ($markReadLinks->count() === 0) {
+        $markReadForms = $client->getCrawler()->filter('form[action*="mark-as-read"]');
+        if ($markReadForms->count() === 0) {
             // No alerts were created — acceptable, skip rather than fail
             $this->markTestSkipped('No alerts were created by failed login attempts.');
         }
 
-        $markReadUrl = $markReadLinks->first()->attr('href');
-        $client->request('GET', $markReadUrl);
+        // Submit the CSRF-protected POST form instead of following a link
+        $client->submit($markReadForms->first()->form());
         $client->waitFor('body');
 
         $this->assertStringContainsString('/alerts', $client->getCurrentURL());
@@ -132,13 +133,13 @@ class AlertsE2ETest extends AbstractE2ETest
         $client->request('GET', '/alerts');
         $client->waitFor('body');
 
-        $dismissLinks = $client->getCrawler()->filter('a[href*="dismiss"]');
-        if ($dismissLinks->count() === 0) {
+        $dismissForms = $client->getCrawler()->filter('form[action*="dismiss"]');
+        if ($dismissForms->count() === 0) {
             $this->markTestSkipped('No alerts to dismiss.');
         }
 
-        $dismissUrl = $dismissLinks->first()->attr('href');
-        $client->request('GET', $dismissUrl);
+        // Submit the CSRF-protected POST form instead of following a link
+        $client->submit($dismissForms->first()->form());
         $client->waitFor('body');
 
         $this->assertStringContainsString('/alerts', $client->getCurrentURL());

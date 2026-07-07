@@ -5,27 +5,29 @@ namespace App\Controller\Api;
 use App\Entity\Vault;
 use App\Repository\VaultRepository;
 use Doctrine\ORM\EntityManagerInterface;
+use OpenApi\Attributes as OA;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
-use Symfony\Component\Serializer\SerializerInterface;
 use Symfony\Component\Serializer\Normalizer\AbstractNormalizer;
 
+#[OA\Tag(name: 'Vaults')]
 #[Route('/api/v1/vaults', name: 'api_vault_')]
 #[IsGranted('ROLE_USER')]
 class VaultController extends AbstractController
 {
-    private const READ_CONTEXT  = [AbstractNormalizer::GROUPS => ['vault:read']];
+    private const READ_CONTEXT = [AbstractNormalizer::GROUPS => ['vault:read']];
     private const WRITE_CONTEXT = [AbstractNormalizer::GROUPS => ['vault:write']];
 
     public function __construct(
-        private readonly VaultRepository $vaultRepository,
+        private readonly VaultRepository        $vaultRepository,
         private readonly EntityManagerInterface $em,
-        private readonly SerializerInterface $serializer,
-    ) {}
+    )
+    {
+    }
 
     #[Route('', name: 'list', methods: ['GET'])]
     public function list(): JsonResponse
@@ -35,7 +37,7 @@ class VaultController extends AbstractController
         return $this->json($vaults, Response::HTTP_OK, [], self::READ_CONTEXT);
     }
 
-    #[Route('/{id}', name: 'show', methods: ['GET'], requirements: ['id' => '\d+'])]
+    #[Route('/{id}', name: 'show', requirements: ['id' => '\d+'], methods: ['GET'])]
     public function show(Vault $vault): JsonResponse
     {
         if ($vault->getUser() !== $this->getUser()) {
@@ -65,7 +67,7 @@ class VaultController extends AbstractController
         return $this->json($vault, Response::HTTP_CREATED, [], self::READ_CONTEXT);
     }
 
-    #[Route('/{id}', name: 'update', methods: ['PUT', 'PATCH'], requirements: ['id' => '\d+'])]
+    #[Route('/{id}', name: 'update', requirements: ['id' => '\d+'], methods: ['PUT', 'PATCH'])]
     public function update(Vault $vault, Request $request): JsonResponse
     {
         if ($vault->getUser() !== $this->getUser()) {
@@ -89,7 +91,7 @@ class VaultController extends AbstractController
         }
 
         if (isset($data['archived'])) {
-            $vault->setArchived((bool) $data['archived']);
+            $vault->setArchived((bool)$data['archived']);
         }
 
         $this->em->flush();
@@ -97,7 +99,7 @@ class VaultController extends AbstractController
         return $this->json($vault, Response::HTTP_OK, [], self::READ_CONTEXT);
     }
 
-    #[Route('/{id}', name: 'delete', methods: ['DELETE'], requirements: ['id' => '\d+'])]
+    #[Route('/{id}', name: 'delete', requirements: ['id' => '\d+'], methods: ['DELETE'])]
     public function delete(Vault $vault): JsonResponse
     {
         if ($vault->getUser() !== $this->getUser()) {
