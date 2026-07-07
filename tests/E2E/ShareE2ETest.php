@@ -134,7 +134,7 @@ class ShareE2ETest extends AbstractE2ETest
 
         // Register user B first
         $emailB    = static::generateEmail();
-        $passwordB = 'E2eTest123!';
+        $passwordB = 'E2eTestPass123!';
         $client    = static::createPantherClient();
         $this->logoutUser($client);
         $this->registerUser($client, $emailB, $passwordB);
@@ -228,7 +228,10 @@ class ShareE2ETest extends AbstractE2ETest
         $clientA->submit($revokeForm->form());
         $clientA->waitFor('body');
 
-        $this->assertSelectorTextNotContains('body', $emailB);
+        // After revoking, the share is gone from the list — no revoke control remains.
+        // (Asserting the email is absent from the page would be wrong: the success flash
+        // legitimately reads "Accès révoqué pour {email}".)
+        $this->assertSelectorNotExists('form[action*="/revoke"]');
     }
 
     private function findFirstVaultId(\Symfony\Component\Panther\Client $client): ?string

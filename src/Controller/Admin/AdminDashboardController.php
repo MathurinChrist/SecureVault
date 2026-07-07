@@ -75,10 +75,17 @@ class AdminDashboardController extends AbstractDashboardController
         yield MenuItem::section('Utilisateurs');
         yield MenuItem::linkTo(UserCrudController::class, 'Utilisateurs', 'fa fa-users');
         yield MenuItem::linkTo(RoleCrudController::class, 'Rôles', 'fa fa-tag');
+        yield MenuItem::linkTo(PermissionCrudController::class, 'Permissions', 'fa fa-key');
         yield MenuItem::section('Coffres');
         yield MenuItem::linkTo(VaultCrudController::class, 'Coffres', 'fa fa-lock');
+        yield MenuItem::linkTo(SharedVaultCrudController::class, 'Partages de coffre', 'fa fa-share-nodes');
+        yield MenuItem::linkTo(VaultPermissionCrudController::class, 'Permissions de coffre', 'fa fa-user-lock');
+        yield MenuItem::section('Données de référence');
+        yield MenuItem::linkTo(CategoryCrudController::class, 'Catégories', 'fa fa-folder');
+        yield MenuItem::linkTo(TagCrudController::class, 'Étiquettes', 'fa fa-hashtag');
         yield MenuItem::section('Sécurité');
         yield MenuItem::linkTo(AlertCrudController::class, 'Alertes', 'fa fa-bell');
+        yield MenuItem::linkTo(UserSessionCrudController::class, 'Sessions', 'fa fa-desktop');
         yield MenuItem::linkTo(LoginAttemptCrudController::class, 'Tentatives de connexion', 'fa fa-shield');
         yield MenuItem::linkTo(ActivityLogCrudController::class, 'Journaux d\'activité', 'fa fa-list');
         yield MenuItem::section('Support');

@@ -57,4 +57,15 @@ class SharedVaultRepository extends ServiceEntityRepository
             ->getQuery()
             ->getResult();
     }
+
+    /** @return SharedVault[] Shares where the user is sender or recipient (own vaults' shares are cascaded separately via Vault) */
+    public function findAsSenderOrRecipient(User $user): array
+    {
+        return $this->createQueryBuilder('sv')
+            ->where('sv.sender = :user')
+            ->orWhere('sv.recipient = :user')
+            ->setParameter('user', $user)
+            ->getQuery()
+            ->getResult();
+    }
 }

@@ -49,7 +49,12 @@ class PasswordGeneratorService
             $password[] = $pool[random_int(0, \strlen($pool) - 1)];
         }
 
-        shuffle($password);
+        // Fisher-Yates using the CSPRNG. shuffle() uses the non-cryptographic Mersenne-Twister,
+        // which would leak the arrangement (and the fixed positions of the guaranteed chars).
+        for ($i = \count($password) - 1; $i > 0; $i--) {
+            $j = random_int(0, $i);
+            [$password[$i], $password[$j]] = [$password[$j], $password[$i]];
+        }
 
         return implode('', $password);
     }

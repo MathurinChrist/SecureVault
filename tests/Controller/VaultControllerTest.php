@@ -10,8 +10,6 @@ use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 
 class VaultControllerTest extends WebTestCase
 {
-    private static ?User $testUser = null;
-
     protected function setUp(): void
     {
         parent::setUp();

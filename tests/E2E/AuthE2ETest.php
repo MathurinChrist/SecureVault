@@ -9,6 +9,9 @@ class AuthE2ETest extends AbstractE2ETest
         $this->skipIfUnavailable();
 
         $client = static::createPantherClient();
+        // Panther reuses one browser across tests; a prior test may have left it logged in,
+        // and /login redirects authenticated users away. Ensure an anonymous session first.
+        $this->logoutUser($client);
         $client->request('GET', '/login');
         $client->waitFor('input[name="email"]');
 

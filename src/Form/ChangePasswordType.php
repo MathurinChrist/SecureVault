@@ -8,6 +8,7 @@ use Symfony\Component\Form\Extension\Core\Type\RepeatedType;
 use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\Validator\Constraints\Length;
 use Symfony\Component\Validator\Constraints\NotBlank;
+use Symfony\Component\Validator\Constraints\NotCompromisedPassword;
 
 class ChangePasswordType extends AbstractType
 {
@@ -19,7 +20,6 @@ class ChangePasswordType extends AbstractType
                 'first_options' => [
                     'label' => 'Nouveau mot de passe',
                     'attr' => ['placeholder' => '••••••••'],
-                    'hash_property_path' => 'password',
                 ],
                 'second_options' => [
                     'label' => 'Confirmer le mot de passe',
@@ -28,7 +28,8 @@ class ChangePasswordType extends AbstractType
                 'mapped' => false,
                 'constraints' => [
                     new NotBlank(message: 'Entrez un mot de passe'),
-                    new Length(min: 6, minMessage: 'Au moins {{ limit }} caractères', max: 4096),
+                    new Length(min: 12, minMessage: 'Au moins {{ limit }} caractères', max: 4096),
+                    new NotCompromisedPassword(message: 'Ce mot de passe est apparu dans une fuite de données. Choisissez-en un autre.', skipOnError: true),
                 ],
             ])
         ;

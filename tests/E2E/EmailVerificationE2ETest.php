@@ -21,7 +21,7 @@ class EmailVerificationE2ETest extends AbstractE2ETest
             'registration_form[firstName]'     => 'Test',
             'registration_form[lastName]'      => 'Verify',
             'registration_form[email]'         => $email,
-            'registration_form[plainPassword]' => 'E2eTest123!',
+            'registration_form[plainPassword]' => 'E2eTestPass123!',
             'registration_form[agreeTerms]'    => true,
         ]);
         $client->submit($form);
@@ -46,7 +46,7 @@ class EmailVerificationE2ETest extends AbstractE2ETest
             'registration_form[firstName]'     => 'Test',
             'registration_form[lastName]'      => 'Verify',
             'registration_form[email]'         => $email,
-            'registration_form[plainPassword]' => 'E2eTest123!',
+            'registration_form[plainPassword]' => 'E2eTestPass123!',
             'registration_form[agreeTerms]'    => true,
         ]);
         $client->submit($form);
@@ -72,7 +72,7 @@ class EmailVerificationE2ETest extends AbstractE2ETest
             'registration_form[firstName]'     => 'Test',
             'registration_form[lastName]'      => 'Unverified',
             'registration_form[email]'         => $email,
-            'registration_form[plainPassword]' => 'E2eTest123!',
+            'registration_form[plainPassword]' => 'E2eTestPass123!',
             'registration_form[agreeTerms]'    => true,
         ]);
         $client->submit($form);
@@ -102,7 +102,7 @@ class EmailVerificationE2ETest extends AbstractE2ETest
             'registration_form[firstName]'     => 'Test',
             'registration_form[lastName]'      => 'Unverified',
             'registration_form[email]'         => $email,
-            'registration_form[plainPassword]' => 'E2eTest123!',
+            'registration_form[plainPassword]' => 'E2eTestPass123!',
             'registration_form[agreeTerms]'    => true,
         ]);
         $client->submit($form);
@@ -161,7 +161,7 @@ class EmailVerificationE2ETest extends AbstractE2ETest
             'registration_form[firstName]'     => 'Test',
             'registration_form[lastName]'      => 'Pending',
             'registration_form[email]'         => $email,
-            'registration_form[plainPassword]' => 'E2eTest123!',
+            'registration_form[plainPassword]' => 'E2eTestPass123!',
             'registration_form[agreeTerms]'    => true,
         ]);
         $client->submit($form);

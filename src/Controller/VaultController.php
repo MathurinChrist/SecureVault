@@ -14,12 +14,10 @@ use App\Repository\VaultRepository;
 use App\Service\ActivityLogService;
 use App\Service\AlertService;
 use App\Service\EncryptionService;
-use App\Service\VaultKeyService;
+use App\Service\VaultKeyProvider;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
-use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\Form\FormFactoryInterface;
-use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -30,17 +28,9 @@ use Symfony\Component\Security\Http\Attribute\IsGranted;
 class VaultController extends AbstractController
 {
     public function __construct(
-        #[Autowire(env: 'VAULT_ENCRYPTION_KEY')]
-        private readonly string $sharedEncryptionKey,
         private readonly ActivityLogService $activityLogService,
-        private readonly VaultKeyService $vaultKeyService,
+        private readonly VaultKeyProvider $vaultKeyProvider,
     ) {}
-
-    private function resolveKey(): string
-    {
-        return $this->vaultKeyService->getFromSession()
-            ?? hash('sha256', $this->sharedEncryptionKey, true);
-    }
 
     // ============================= VAULTS =============================
 
@@ -242,9 +232,9 @@ class VaultController extends AbstractController
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
-            $plain = $form->get('plainPassword')->getData();
-            $entry->setEncryptedPassword($encryptionService->encrypt($plain, $this->resolveKey()));
-            $entry->setKeyVersion($this->vaultKeyService->getFromSession() ? 1 : 0);
+            $plain    = $form->get('plainPassword')->getData();
+            $vaultKey = $this->vaultKeyProvider->getOrCreateKey($entry->getVault());
+            $entry->setEncryptedPassword($encryptionService->encrypt($plain, $vaultKey));
             $entry->setUser($user);
             $em->persist($entry);
             $this->activityLogService->log($user, 'Mot de passe ajouté : ' . $entry->getTitle());
@@ -297,6 +287,7 @@ class VaultController extends AbstractController
             return $this->redirectToRoute('app_vault_show', ['id' => $vault?->getId()]);
         }
 
+        $originalVault = $vault;
         $vaults = $vaultRepository->findByUser($user);
         $form   = $formFactory->createNamed('edit_password_entry', PasswordEntryType::class, $passwordEntry, [
             'vaults'           => $vaults,
@@ -304,10 +295,21 @@ class VaultController extends AbstractController
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
+            // Reassigning an entry to a different vault is owner-only. A WRITE collaborator has
+            // EDIT on the source vault but must not be able to move the owner's entry (and its
+            // plaintext columns) into a vault they control.
+            if ($passwordEntry->getVault() !== $originalVault
+                && (!$this->isGranted('DELETE', $originalVault) || !$this->isGranted('EDIT', $passwordEntry->getVault()))
+            ) {
+                $passwordEntry->setVault($originalVault);
+                $this->addFlash('error', 'Vous ne pouvez pas déplacer cette entrée vers ce coffre.');
+                return $this->redirectToRoute('app_vault_show', ['id' => $originalVault->getId()]);
+            }
+
             $plain = $form->get('plainPassword')->getData();
             if ($plain !== null && $plain !== '') {
-                $passwordEntry->setEncryptedPassword($encryptionService->encrypt($plain, $this->resolveKey()));
-                $passwordEntry->setKeyVersion($this->vaultKeyService->getFromSession() ? 1 : 0);
+                $vaultKey = $this->vaultKeyProvider->getOrCreateKey($vault);
+                $passwordEntry->setEncryptedPassword($encryptionService->encrypt($plain, $vaultKey));
             }
             $this->activityLogService->log($user, 'Mot de passe modifié : ' . $passwordEntry->getTitle());
             $em->flush();
@@ -381,9 +383,7 @@ class VaultController extends AbstractController
             return $this->json(['error' => 'Accès refusé.'], 403);
         }
 
-        $key   = $passwordEntry->getKeyVersion() === 1
-            ? ($this->vaultKeyService->getFromSession() ?? throw new \RuntimeException('Session expirée.'))
-            : hash('sha256', $this->sharedEncryptionKey, true);
+        $key   = $this->vaultKeyProvider->getOrCreateKey($vault);
         $plain = $encryptionService->decrypt($passwordEntry->getEncryptedPassword(), $key);
 
         $this->activityLogService->log($user, 'Mot de passe consulté : ' . $passwordEntry->getTitle());
@@ -407,30 +407,42 @@ class VaultController extends AbstractController
         ]);
     }
 
-    #[Route('/alerts/mark-as-read/{id}', name: 'app_alerts_mark_read')]
+    #[Route('/alerts/mark-as-read/{id}', name: 'app_alerts_mark_read', methods: ['POST'])]
     public function markRead(int $id, AlertRepository $alertRepository, AlertService $alertService, Request $request): Response
     {
+        if (!$this->isCsrfTokenValid('alert_action', $request->request->get('_token'))) {
+            $this->addFlash('error', 'Token CSRF invalide.');
+            return $this->redirectToRoute('app_alerts');
+        }
         $alert = $alertRepository->find($id);
         if ($alert && $alert->getUser() === $this->getUser()) {
             $alertService->markAsRead($alert);
         }
-        $redirect = $request->query->get('redirect', 'app_alerts');
+        $redirect = $request->request->get('redirect', 'app_alerts');
         return $this->redirectToRoute(in_array($redirect, ['app_alerts', 'app_dashboard']) ? $redirect : 'app_alerts');
     }
 
-    #[Route('/alerts/mark-all-read', name: 'app_alerts_mark_all_read')]
+    #[Route('/alerts/mark-all-read', name: 'app_alerts_mark_all_read', methods: ['POST'])]
     public function markAllRead(AlertService $alertService, Request $request): Response
     {
+        if (!$this->isCsrfTokenValid('alert_action', $request->request->get('_token'))) {
+            $this->addFlash('error', 'Token CSRF invalide.');
+            return $this->redirectToRoute('app_alerts');
+        }
         /** @var \App\Entity\User $user */
         $user = $this->getUser();
         $alertService->markAllAsRead($user);
-        $redirect = $request->query->get('redirect', 'app_alerts');
+        $redirect = $request->request->get('redirect', 'app_alerts');
         return $this->redirectToRoute(in_array($redirect, ['app_alerts', 'app_dashboard']) ? $redirect : 'app_alerts');
     }
 
-    #[Route('/alerts/dismiss/{id}', name: 'app_alerts_dismiss')]
-    public function dismiss(int $id, AlertRepository $alertRepository, EntityManagerInterface $entityManager): Response
+    #[Route('/alerts/dismiss/{id}', name: 'app_alerts_dismiss', methods: ['POST'])]
+    public function dismiss(int $id, AlertRepository $alertRepository, EntityManagerInterface $entityManager, Request $request): Response
     {
+        if (!$this->isCsrfTokenValid('alert_action', $request->request->get('_token'))) {
+            $this->addFlash('error', 'Token CSRF invalide.');
+            return $this->redirectToRoute('app_alerts');
+        }
         $alert = $alertRepository->find($id);
         if ($alert && $alert->getUser() === $this->getUser()) {
             $entityManager->remove($alert);
@@ -443,9 +455,12 @@ class VaultController extends AbstractController
     #[Route('/security/2fa-setup', name: 'app_2fa_setup', methods: ['POST'])]
     public function setup2fa(Request $request, EntityManagerInterface $em): Response
     {
+        $referer = $request->headers->get('referer', '');
+        $redirectRoute = str_contains($referer, '/profile') ? 'app_profile' : 'app_alerts';
+
         if (!$this->isCsrfTokenValid('2fa_toggle', $request->request->get('_token'))) {
             $this->addFlash('error', 'Token CSRF invalide.');
-            return $this->redirectToRoute('app_alerts');
+            return $this->redirectToRoute($redirectRoute);
         }
 
         /** @var \App\Entity\User $user */
@@ -460,7 +475,7 @@ class VaultController extends AbstractController
                 : 'Authentification à deux facteurs désactivée.'
         );
 
-        return $this->redirectToRoute('app_alerts');
+        return $this->redirectToRoute($redirectRoute);
     }
 
 }

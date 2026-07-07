@@ -52,9 +52,6 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Column(nullable: true)]
     private ?\DateTimeImmutable $updatedAt = null;
 
-    #[ORM\Column(length: 255, nullable: true)]
-    private ?string $encryptionKey = null;
-
     private ?string $plainPassword = null;
 
     #[ORM\Column]
@@ -189,14 +186,6 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     public function setUpdatedAtValue(): void
     {
         $this->updatedAt = new \DateTimeImmutable();
-    }
-
-    public function getEncryptionKey(): ?string { return $this->encryptionKey; }
-
-    public function setEncryptionKey(?string $encryptionKey): static
-    {
-        $this->encryptionKey = $encryptionKey;
-        return $this;
     }
 
     public function is2faEnabled(): bool { return $this->is2faEnabled; }

@@ -209,6 +209,11 @@ jobs:
           php bin/console doctrine:database:create --if-not-exists --env=test
           php bin/console doctrine:migrations:migrate --no-interaction --env=test
 
+      # The Panther server runs in the 'panther' env (PANTHER_APP_ENV). Warm its cache so the
+      # first browser request doesn't trigger a cold container compile and blow the 30s waitFor.
+      - name: Warm up Panther cache
+        run: php bin/console cache:warmup --env=panther
+
       - name: Run E2E tests
         run: php vendor/bin/phpunit tests/E2E/ --configuration phpunit.dist.xml
 

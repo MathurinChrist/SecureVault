@@ -20,7 +20,6 @@ entity User {
     isActive : BOOLEAN
     emailVerified : BOOLEAN
     profileImage : VARCHAR(255)
-    encryptionKey : VARCHAR(255)
     is2faEnabled : BOOLEAN
     twoFactorSecret : VARCHAR(255)
     googleId : VARCHAR(255) <<unique>>
@@ -49,9 +48,19 @@ entity Vault {
     name : VARCHAR(255)
     description : TEXT
     archived : BOOLEAN
+    encryptedKey : TEXT
+    keyEncryptionVersion : INT
     createdAt : TIMESTAMP
     updatedAt : TIMESTAMP
 }
+
+note right of Vault
+  encryptedKey : DEK du coffre, généré
+  aléatoirement et stocké wrappé (chiffré)
+  par la clé maître serveur. Jamais en clair.
+  keyEncryptionVersion : version de la clé
+  maître ayant wrappé encryptedKey (rotation).
+end note
 
 entity VaultPermission {
     * id : INT <<PK>>
@@ -81,7 +90,6 @@ entity PasswordEntry {
     title : VARCHAR(255)
     username : VARCHAR(255)
     encryptedPassword : TEXT
-    keyVersion : INT
     url : VARCHAR(500)
     notes : TEXT
     favorite : BOOLEAN
@@ -90,8 +98,8 @@ entity PasswordEntry {
 }
 
 note right of PasswordEntry
-  keyVersion = 0 : clé partagée (legacy)
-  keyVersion = 1 : clé PBKDF2 per-user
+  encryptedPassword : chiffré en AES-256-GCM
+  avec la clé de données (DEK) du coffre parent.
 end note
 
 entity PasswordHistory {

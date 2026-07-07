@@ -97,7 +97,7 @@
           <div>
             <label class="block text-[11px] font-bold text-ink-soft uppercase tracking-wider mb-1.5">Mot de passe</label>
             <div class="relative">
-              {{ form_widget(registrationForm.plainPassword, {'attr': {'class': 'field pr-12', 'placeholder': 'Minimum 6 caractères', 'id': 'reg_password'}}) }}
+              {{ form_widget(registrationForm.plainPassword, {'id': 'reg_password', 'attr': {'class': 'field pr-12', 'placeholder': 'Minimum 6 caractères'}}) }}
               <button type="button" onclick="togglePwd('reg_password', this)"
                 class="absolute right-2.5 top-1/2 -translate-y-1/2 h-8 w-8 grid place-items-center text-ink-muted hover:text-ink rounded-lg hover:bg-surface transition">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>

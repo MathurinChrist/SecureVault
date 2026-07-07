@@ -47,9 +47,11 @@ class SecuritySubscriber implements EventSubscriberInterface
 
         $session = new UserSession();
         $session->setUser($user);
-        $session->setIpAddress($request->getClientIp() ?? '127.0.0.1');
+        $session->setIpAddress($request->getClientIp() ?? 'unknown');
         $session->setUserAgent($request->headers->get('User-Agent'));
-        $session->setLocation('Paris, France');
+        // No geo-IP provider is wired; do not fabricate a location (it made the "where you
+        // logged in from" history and any anomaly detection meaningless).
+        $session->setLocation(null);
 
         $this->entityManager->persist($session);
         $this->entityManager->flush();

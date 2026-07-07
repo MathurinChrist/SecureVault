@@ -5,6 +5,7 @@ namespace App\Entity;
 use App\Repository\UserSessionRepository;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Serializer\Annotation\Groups;
 
 #[ORM\Entity(repositoryClass: UserSessionRepository::class)]
 class UserSession
@@ -12,6 +13,7 @@ class UserSession
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
+    #[Groups(['session:read'])]
     private ?int $id = null;
 
     #[ORM\ManyToOne(inversedBy: 'sessions')]
@@ -19,21 +21,27 @@ class UserSession
     private ?User $user = null;
 
     #[ORM\Column(length: 45)]
+    #[Groups(['session:read'])]
     private ?string $ipAddress = null;
 
     #[ORM\Column(type: Types::TEXT, nullable: true)]
+    #[Groups(['session:read'])]
     private ?string $userAgent = null;
 
     #[ORM\Column]
+    #[Groups(['session:read'])]
     private ?\DateTimeImmutable $createdAt = null;
 
     #[ORM\Column]
+    #[Groups(['session:read'])]
     private ?\DateTimeImmutable $lastUsedAt = null;
 
     #[ORM\Column]
+    #[Groups(['session:read'])]
     private bool $isActive = true;
 
     #[ORM\Column(length: 255, nullable: true)]
+    #[Groups(['session:read'])]
     private ?string $location = null;
 
     public function __construct()

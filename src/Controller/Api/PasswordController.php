@@ -2,13 +2,18 @@
 
 namespace App\Controller\Api;
 
+use App\Entity\Category;
 use App\Entity\PasswordEntry;
+use App\Entity\Tag;
 use App\Entity\Vault;
+use App\Repository\CategoryRepository;
 use App\Repository\PasswordEntryRepository;
+use App\Repository\TagRepository;
 use App\Service\EncryptionService;
+use App\Service\VaultKeyProvider;
 use Doctrine\ORM\EntityManagerInterface;
+use OpenApi\Attributes as OA;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
-use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -17,6 +22,7 @@ use Symfony\Component\Security\Http\Attribute\IsGranted;
 use Symfony\Component\Serializer\Normalizer\AbstractNormalizer;
 use Symfony\Component\Serializer\SerializerInterface;
 
+#[OA\Tag(name: 'Passwords')]
 #[Route('/api/v1/vaults/{vaultId}/passwords', name: 'api_password_', requirements: ['vaultId' => '\d+'])]
 #[IsGranted('ROLE_USER')]
 class PasswordController extends AbstractController
@@ -28,7 +34,9 @@ class PasswordController extends AbstractController
         private readonly EncryptionService $encryptionService,
         private readonly EntityManagerInterface $em,
         private readonly SerializerInterface $serializer,
-        #[Autowire(env: 'VAULT_ENCRYPTION_KEY')] private readonly string $encryptionKey,
+        private readonly VaultKeyProvider $vaultKeyProvider,
+        private readonly CategoryRepository $categoryRepository,
+        private readonly TagRepository $tagRepository,
     ) {}
 
     #[Route('', name: 'list', methods: ['GET'])]
@@ -58,7 +66,7 @@ class PasswordController extends AbstractController
             return $this->json(['error' => 'title and password are required.'], Response::HTTP_UNPROCESSABLE_ENTITY);
         }
 
-        $key   = hash('sha256', $this->encryptionKey, true);
+        $key   = $this->vaultKeyProvider->getOrCreateKey($vault);
         $entry = (new PasswordEntry())
             ->setTitle(trim($data['title']))
             ->setUsername($data['username'] ?? null)
@@ -83,10 +91,9 @@ class PasswordController extends AbstractController
             return $check;
         }
 
-        $key      = hash('sha256', $this->encryptionKey, true);
-        $context  = self::READ_CONTEXT;
+        $key = $this->vaultKeyProvider->getOrCreateKey($entry->getVault());
 
-        $normalized = $this->serializer->normalize($entry, null, $context);
+        $normalized = $this->serializer->normalize($entry, null, self::READ_CONTEXT);
         $normalized['password'] = $this->encryptionService->decrypt($entry->getEncryptedPassword(), $key);
 
         return $this->json($normalized);
@@ -101,7 +108,9 @@ class PasswordController extends AbstractController
         }
 
         $data = json_decode($request->getContent(), true);
-        $key  = hash('sha256', $this->encryptionKey, true);
+        if (!is_array($data)) {
+            return $this->json(['error' => 'Invalid JSON body.'], Response::HTTP_UNPROCESSABLE_ENTITY);
+        }
 
         if (isset($data['title'])) {
             if (empty(trim($data['title']))) {
@@ -130,6 +139,7 @@ class PasswordController extends AbstractController
             if (empty($data['password'])) {
                 return $this->json(['error' => 'password cannot be empty.'], Response::HTTP_UNPROCESSABLE_ENTITY);
             }
+            $key = $this->vaultKeyProvider->getOrCreateKey($entry->getVault());
             $entry->setEncryptedPassword($this->encryptionService->encrypt($data['password'], $key));
         }
 
@@ -150,6 +160,86 @@ class PasswordController extends AbstractController
         $this->em->flush();
 
         return $this->json(null, Response::HTTP_NO_CONTENT);
+    }
+
+    #[Route('/{id}/categories/{categoryId}', name: 'category_attach', methods: ['PUT'], requirements: ['id' => '\d+', 'categoryId' => '\d+'])]
+    #[OA\Response(response: 200, description: 'Category attached; returns the updated entry.')]
+    #[OA\Response(response: 404, description: 'Vault, entry or category not found.')]
+    public function attachCategory(int $vaultId, PasswordEntry $entry, int $categoryId): JsonResponse
+    {
+        if ($check = $this->checkEntryAccess($vaultId, $entry)) {
+            return $check;
+        }
+
+        $category = $this->categoryRepository->find($categoryId);
+        if ($category === null) {
+            return $this->json(['error' => 'Category not found.'], Response::HTTP_NOT_FOUND);
+        }
+
+        $entry->addCategory($category);
+        $this->em->flush();
+
+        return $this->json($entry, Response::HTTP_OK, [], self::READ_CONTEXT);
+    }
+
+    #[Route('/{id}/categories/{categoryId}', name: 'category_detach', methods: ['DELETE'], requirements: ['id' => '\d+', 'categoryId' => '\d+'])]
+    #[OA\Response(response: 200, description: 'Category detached; returns the updated entry.')]
+    #[OA\Response(response: 404, description: 'Vault, entry or category not found.')]
+    public function detachCategory(int $vaultId, PasswordEntry $entry, int $categoryId): JsonResponse
+    {
+        if ($check = $this->checkEntryAccess($vaultId, $entry)) {
+            return $check;
+        }
+
+        $category = $this->categoryRepository->find($categoryId);
+        if ($category === null) {
+            return $this->json(['error' => 'Category not found.'], Response::HTTP_NOT_FOUND);
+        }
+
+        $entry->removeCategory($category);
+        $this->em->flush();
+
+        return $this->json($entry, Response::HTTP_OK, [], self::READ_CONTEXT);
+    }
+
+    #[Route('/{id}/tags/{tagId}', name: 'tag_attach', methods: ['PUT'], requirements: ['id' => '\d+', 'tagId' => '\d+'])]
+    #[OA\Response(response: 200, description: 'Tag attached; returns the updated entry.')]
+    #[OA\Response(response: 404, description: 'Vault, entry or tag not found.')]
+    public function attachTag(int $vaultId, PasswordEntry $entry, int $tagId): JsonResponse
+    {
+        if ($check = $this->checkEntryAccess($vaultId, $entry)) {
+            return $check;
+        }
+
+        $tag = $this->tagRepository->find($tagId);
+        if ($tag === null) {
+            return $this->json(['error' => 'Tag not found.'], Response::HTTP_NOT_FOUND);
+        }
+
+        $entry->addTag($tag);
+        $this->em->flush();
+
+        return $this->json($entry, Response::HTTP_OK, [], self::READ_CONTEXT);
+    }
+
+    #[Route('/{id}/tags/{tagId}', name: 'tag_detach', methods: ['DELETE'], requirements: ['id' => '\d+', 'tagId' => '\d+'])]
+    #[OA\Response(response: 200, description: 'Tag detached; returns the updated entry.')]
+    #[OA\Response(response: 404, description: 'Vault, entry or tag not found.')]
+    public function detachTag(int $vaultId, PasswordEntry $entry, int $tagId): JsonResponse
+    {
+        if ($check = $this->checkEntryAccess($vaultId, $entry)) {
+            return $check;
+        }
+
+        $tag = $this->tagRepository->find($tagId);
+        if ($tag === null) {
+            return $this->json(['error' => 'Tag not found.'], Response::HTTP_NOT_FOUND);
+        }
+
+        $entry->removeTag($tag);
+        $this->em->flush();
+
+        return $this->json($entry, Response::HTTP_OK, [], self::READ_CONTEXT);
     }
 
     private function findVaultOrFail(int $vaultId): Vault|JsonResponse

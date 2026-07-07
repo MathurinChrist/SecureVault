@@ -13,7 +13,9 @@ class TwoFactorService
     private const SESSION_CODE       = '2fa_code';
     private const SESSION_EXPIRES_AT = '2fa_expires_at';
     private const SESSION_PENDING    = '2fa_pending';
+    private const SESSION_ATTEMPTS   = '2fa_attempts';
     private const TTL_SECONDS        = 600; // 10 minutes
+    private const MAX_ATTEMPTS       = 5;
 
     public function __construct(
         private readonly MailerInterface $mailer,
@@ -27,6 +29,7 @@ class TwoFactorService
         $session->set(self::SESSION_CODE, $code);
         $session->set(self::SESSION_EXPIRES_AT, time() + self::TTL_SECONDS);
         $session->set(self::SESSION_PENDING, true);
+        $session->set(self::SESSION_ATTEMPTS, 0);
 
         $email = (new TemplatedEmail())
             ->from(new Address('noreply@securevault.local', 'SecureVault'))
@@ -53,7 +56,26 @@ class TwoFactorService
             return false;
         }
 
-        return hash_equals($stored, $submitted);
+        // Cap guesses per issued code: once the budget is spent the code is invalidated,
+        // forcing a fresh send. This turns the 6-digit space from brute-forceable into a
+        // handful of tries per code.
+        $attempts = (int) $session->get(self::SESSION_ATTEMPTS, 0) + 1;
+        $session->set(self::SESSION_ATTEMPTS, $attempts);
+
+        if ($attempts > self::MAX_ATTEMPTS) {
+            $session->remove(self::SESSION_CODE);
+            return false;
+        }
+
+        if (!hash_equals($stored, $submitted)) {
+            return false;
+        }
+
+        // Consume the code on success so it cannot be replayed within its TTL.
+        $session->remove(self::SESSION_CODE);
+        $session->remove(self::SESSION_ATTEMPTS);
+
+        return true;
     }
 
     public function clearPending(Request $request): void
@@ -62,5 +84,6 @@ class TwoFactorService
         $session->remove(self::SESSION_CODE);
         $session->remove(self::SESSION_EXPIRES_AT);
         $session->remove(self::SESSION_PENDING);
+        $session->remove(self::SESSION_ATTEMPTS);
     }
 }
