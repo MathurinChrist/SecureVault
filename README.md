@@ -1,5 +1,15 @@
 # SecureVault — Gestionnaire de mots de passe sécurisé
 
+## Équipe
+
+| Nom Prénom | Pseudo GitHub |
+|---|---|
+| KIMBEMBE Mathurin Christ Bobann | [@MathurinChrist](https://github.com/MathurinChrist) |
+| Chaimaa Faris | [@chailafarah](https://github.com/chailafarah) |
+| Farid Gouirah | [@GouirahFarid](https://github.com/GouirahFarid) |
+
+---
+
 Application web de gestion de mots de passe développée avec **Symfony 7**, **PostgreSQL 16** et **FrankenPHP**. Interface responsive, chiffrement AES-256-GCM per-user (PBKDF2), authentification Google OAuth2, 2FA, administration EasyAdmin et API REST JWT.
 
 **Documentation :**
