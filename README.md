@@ -8,6 +8,13 @@
 | Chaimaa Faris | [@chailafarah](https://github.com/chailafarah) |
 | Farid Gouirah | [@GouirahFarid](https://github.com/GouirahFarid) |
 
+## Déploiement (VPS)
+
+| Service | URL |
+|---|---|
+| Application | http://161.35.31.174:8080/ |
+| Mailpit (mailing) | http://161.35.31.174:8025/ |
+
 ---
 
 Application web de gestion de mots de passe développée avec **Symfony 7**, **PostgreSQL 16** et **FrankenPHP**. Interface responsive, chiffrement AES-256-GCM per-user (PBKDF2), authentification Google OAuth2, 2FA, administration EasyAdmin et API REST JWT.
